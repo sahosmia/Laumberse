@@ -108,8 +108,21 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
     const addItem = (product: Product) => {
         const existingIdx = data.items.findIndex((i) => i.productId === product.id);
         let newItems = [...data.items];
-        const outletPrice = product.outlet_prices?.find(op => op.outlet_id === Number(data.outlet_id))?.price;
-        const price = outletPrice !== undefined ? Number(outletPrice) : Number(product.price);
+
+        const selectedClient = clients.find(c => c.id == data.client_id);
+        let price = Number(product.price);
+
+        if (selectedClient?.type === 'Corporate') {
+            const customPrice = selectedClient.custom_prices?.find(cp => cp.product_id === product.id)?.custom_price;
+            if (customPrice !== undefined) {
+                price = Number(customPrice);
+            }
+        } else {
+            const outletPrice = product.outlet_prices?.find(op => op.outlet_id === Number(data.outlet_id))?.price;
+            if (outletPrice !== undefined) {
+                price = Number(outletPrice);
+            }
+        }
 
         if (existingIdx > -1) {
             newItems[existingIdx].qty += 1;
@@ -220,6 +233,9 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
     const clientOptions = clients.map(c => ({ label: `${c.name} (${c.phone})`, value: c.id }));
     const outletOptions = outlets.map(o => ({ label: o.name, value: o.id }));
 
+    const selectedClient = clients.find(c => c.id == data.client_id);
+    const isCorporate = selectedClient?.type === 'Corporate';
+
     return (
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
             <div className="flex items-center justify-between">
@@ -293,7 +309,13 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-sm font-bold text-blue-600">
-                                                        {formatCurrency(Number(p.outlet_prices?.find(op => op.outlet_id === Number(data.outlet_id))?.price ?? p.price))}
+                                                        {(() => {
+                                                            if (isCorporate) {
+                                                                const cp = selectedClient?.custom_prices?.find(cp => cp.product_id === p.id);
+                                                                return formatCurrency(cp ? Number(cp.custom_price) : Number(p.price));
+                                                            }
+                                                            return formatCurrency(Number(p.outlet_prices?.find(op => op.outlet_id === Number(data.outlet_id))?.price ?? p.price));
+                                                        })()}
                                                     </span>
                                                 </div>
                                             </button>
@@ -376,6 +398,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                 </div>
 
                 <div className="space-y-4">
+                    {!isCorporate && (
                     <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 space-y-3">
                         <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-2"><Package className="w-4 h-4" /> Outlet</h3>
                         <select
@@ -412,6 +435,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                         </select>
                         {errors.outlet_id && <p className="text-xs text-red-500">{errors.outlet_id}</p>}
                     </div>
+                    )}
 
                     <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 space-y-4">
                         <div className="flex items-center justify-between">
@@ -435,7 +459,34 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                 <SearchableSelect
                                     options={clientOptions}
                                     value={data.client_id}
-                                    onChange={(val) => setData('client_id', val)}
+                                    onChange={(val) => {
+                                        const newClient = clients.find(c => c.id == val);
+                                        if (newClient?.type === 'Corporate') {
+                                            // Automatically load all custom priced products for Corporate clients
+                                            const corporateItems = (newClient.custom_prices || []).map(cp => {
+                                                const product = products.find(p => p.id === cp.product_id);
+                                                return {
+                                                    productId: cp.product_id,
+                                                    name: product?.name || 'Unknown Product',
+                                                    price: Number(cp.custom_price),
+                                                    qty: 1,
+                                                    imageUrl: product?.image_url || null
+                                                };
+                                            });
+
+                                            const { total, due } = calculateTotals(corporateItems, data.paid, data.discount_type, data.discount_amount);
+                                            setData(d => ({
+                                                ...d,
+                                                client_id: val,
+                                                items: corporateItems,
+                                                total,
+                                                due,
+                                                outlet_id: null // Corporate clients don't use outlets
+                                            }));
+                                        } else {
+                                            setData('client_id', val);
+                                        }
+                                    }}
                                     placeholder="Select Client"
                                     error={errors.client_id}
                                 />

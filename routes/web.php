@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\AssetController;
 use App\Http\Controllers\Clients\ClientController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Expenses\ExpenseCategoryController;
+use App\Http\Controllers\Expenses\ExpenseController;
 use App\Http\Controllers\Invoices\InvoiceController;
 use App\Http\Controllers\Products\ProductController;
 use App\Http\Controllers\Reports\ReportController;
@@ -28,6 +31,9 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/outlets/bulk-destroy', [OutletController::class, 'bulkDestroy'])->name('outlets.bulk-destroy');
     Route::resource('outlets', OutletController::class);
 
+    Route::resource('expenses', ExpenseController::class);
+    Route::resource('expense-categories', ExpenseCategoryController::class);
+    Route::resource('assets', AssetController::class);
 
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('history');
     Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('create-invoice');

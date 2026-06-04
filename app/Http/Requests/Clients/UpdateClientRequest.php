@@ -16,7 +16,11 @@ class UpdateClientRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
+            'type' => 'required|string|in:Consumer,Corporate',
             'address' => 'nullable|string|max:500',
+            'custom_prices' => 'nullable|array',
+            'custom_prices.*.product_id' => 'required|exists:products,id',
+            'custom_prices.*.custom_price' => 'required|numeric|min:0',
         ];
     }
 }

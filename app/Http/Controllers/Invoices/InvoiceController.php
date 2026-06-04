@@ -34,7 +34,7 @@ class InvoiceController extends Controller
     {
         return Inertia::render('invoices/create', [
             'products' => Product::with(['category', 'unit', 'outletPrices'])->get(),
-            'clients' => Client::all(),
+            'clients' => Client::with('customPrices')->get(),
             'categories' => \App\Models\Category::all(),
             'outlets' => Outlet::all(),
         ]);
@@ -51,7 +51,7 @@ class InvoiceController extends Controller
         return Inertia::render('invoices/edit', [
             'invoice' => $invoice->load(['items.product']),
             'products' => Product::with(['category', 'unit', 'outletPrices'])->get(),
-            'clients' => Client::all(),
+            'clients' => Client::with('customPrices')->get(),
             'categories' => \App\Models\Category::all(),
             'outlets' => Outlet::all(),
         ]);

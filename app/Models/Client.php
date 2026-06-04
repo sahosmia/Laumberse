@@ -9,6 +9,7 @@ class Client extends Model
     protected $fillable = [
         'name',
         'phone',
+        'type',
         'address',
         'total_orders',
         'total_due',
@@ -18,5 +19,10 @@ class Client extends Model
     public function invoices()
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    public function customPrices()
+    {
+        return $this->hasMany(CustomerProductPrice::class, 'customer_id');
     }
 }

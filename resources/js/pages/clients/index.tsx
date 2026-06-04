@@ -1,21 +1,13 @@
 import { Head, useForm } from '@inertiajs/react';
 import { useState } from "react";
-import { Search, Plus, Trash2, Edit3, X } from "lucide-react";
+import { Search, Plus, Trash2, Edit3, X, Settings2, PackagePlus } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
-
-interface Client {
-    id: number;
-    name: string;
-    phone: string;
-    address: string;
-    total_orders: number;
-    total_paid: number;
-    total_due: number;
-}
+import { SearchableSelect } from '@/components/ui/searchable-select';
+import { type BreadcrumbItem, Client, Product } from '@/types';
 
 interface ClientsProps {
     clients: Client[];
+    products: Product[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -35,7 +27,9 @@ export default function Clients({ clients }: ClientsProps) {
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
         phone: '',
+        type: 'Consumer',
         address: '',
+        custom_prices: [] as { product_id: number; custom_price: number }[],
     });
 
     const filtered = clients.filter((c) =>
@@ -53,7 +47,9 @@ export default function Clients({ clients }: ClientsProps) {
         setData({
             name: client.name,
             phone: client.phone,
-            address: client.address,
+            type: client.type,
+            address: client.address || '',
+            custom_prices: client.custom_prices?.map(cp => ({ product_id: cp.product_id, custom_price: cp.custom_price })) || [],
         });
         setShowModal(true);
     };
@@ -117,7 +113,12 @@ export default function Clients({ clients }: ClientsProps) {
                             </div>
                             <div className="flex items-start justify-between mb-3">
                                 <div>
-                                    <h4 className="font-bold text-neutral-900 dark:text-neutral-100">{c.name}</h4>
+                                    <div className="flex items-center gap-2">
+                                        <h4 className="font-bold text-neutral-900 dark:text-neutral-100">{c.name}</h4>
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase ${c.type === 'Corporate' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'}`}>
+                                            {c.type}
+                                        </span>
+                                    </div>
                                     <p className="text-xs text-neutral-400 mt-0.5">{c.phone}</p>
                                     <p className="text-xs text-neutral-400">{c.address}</p>
                                 </div>
@@ -154,8 +155,9 @@ export default function Clients({ clients }: ClientsProps) {
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Name</label>
+                                <label htmlFor="client_name" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Name</label>
                                 <input
+                                    id="client_name"
                                     type="text"
                                     value={data.name}
                                     onChange={e => setData('name', e.target.value)}
@@ -164,27 +166,106 @@ export default function Clients({ clients }: ClientsProps) {
                                 />
                                 {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
                             </div>
-                            <div>
-                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Phone</label>
-                                <input
-                                    type="text"
-                                    value={data.phone}
-                                    onChange={e => setData('phone', e.target.value)}
-                                    className="w-full mt-1 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                    required
-                                />
-                                {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label htmlFor="client_phone" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Phone</label>
+                                    <input
+                                        id="client_phone"
+                                        type="text"
+                                        value={data.phone}
+                                        onChange={e => setData('phone', e.target.value)}
+                                        className="w-full mt-1 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
+                                        required
+                                    />
+                                    {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
+                                </div>
+                                <div>
+                                    <label htmlFor="client_type" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Type</label>
+                                    <select
+                                        id="client_type"
+                                        value={data.type}
+                                        onChange={e => setData('type', e.target.value as any)}
+                                        className="w-full mt-1 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
+                                    >
+                                        <option value="Consumer">Consumer</option>
+                                        <option value="Corporate">Corporate</option>
+                                    </select>
+                                    {errors.type && <p className="text-xs text-red-500 mt-1">{errors.type}</p>}
+                                </div>
                             </div>
                             <div>
-                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Address</label>
+                                <label htmlFor="client_address" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Address</label>
                                 <textarea
+                                    id="client_address"
                                     value={data.address}
                                     onChange={e => setData('address', e.target.value)}
                                     className="w-full mt-1 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                    rows={3}
+                                    rows={2}
                                 />
                                 {errors.address && <p className="text-xs text-red-500 mt-1">{errors.address}</p>}
                             </div>
+
+                            {data.type === 'Corporate' && (
+                                <div className="space-y-3 pt-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-sm font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+                                            <Settings2 className="w-4 h-4 text-purple-500" /> Corporate Pricing
+                                        </label>
+                                    </div>
+
+                                    <div className="bg-neutral-50 dark:bg-neutral-800/50 p-3 rounded-xl border border-neutral-200 dark:border-neutral-800">
+                                        <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                            <PackagePlus className="w-3 h-3" /> Quick Add Product
+                                        </p>
+                                        <div className="flex gap-2">
+                                            <div className="flex-1">
+                                                <SearchableSelect
+                                                    options={products.map(p => ({ label: p.name, value: p.id }))}
+                                                    onChange={(val) => {
+                                                        if (data.custom_prices.some(cp => cp.product_id == val)) return;
+                                                        const product = products.find(p => p.id == val);
+                                                        setData('custom_prices', [...data.custom_prices, { product_id: Number(val), custom_price: product?.price || 0 }]);
+                                                    }}
+                                                    placeholder="Search product to add..."
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                                        {data.custom_prices.map((cp, idx) => (
+                                            <div key={idx} className="flex gap-2 items-center bg-white dark:bg-neutral-900 p-2 rounded-xl border border-neutral-100 dark:border-neutral-800">
+                                                <div className="flex-1 text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                                                    {products.find(p => p.id == cp.product_id)?.name}
+                                                </div>
+                                                <input
+                                                    type="number"
+                                                    value={cp.custom_price}
+                                                    onChange={e => {
+                                                        const newPrices = [...data.custom_prices];
+                                                        newPrices[idx].custom_price = Number(e.target.value);
+                                                        setData('custom_prices', newPrices);
+                                                    }}
+                                                    placeholder="Price"
+                                                    className="w-24 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-xs bg-transparent dark:text-neutral-100"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setData('custom_prices', data.custom_prices.filter((_, i) => i !== idx))}
+                                                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {data.custom_prices.length === 0 && (
+                                            <p className="text-center py-4 text-xs text-neutral-400 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-xl">
+                                                No custom prices set.
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                             <div className="flex gap-2 pt-2">
                                 <button
                                     type="submit"
