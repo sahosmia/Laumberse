@@ -71,6 +71,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
         due: invoice?.due || 0,
         status: invoice?.status || 'Processing',
         method: invoice?.method || 'Cash',
+        is_corporate: false,
         remarks: invoice?.remarks || '',
         discount_type: invoice?.discount_type || 'Fixed',
         discount_amount: invoice?.discount_amount || 0 as string | number,
@@ -481,10 +482,16 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                                 items: corporateItems,
                                                 total,
                                                 due,
+                                                is_corporate: true,
                                                 outlet_id: null // Corporate clients don't use outlets
                                             }));
                                         } else {
-                                            setData('client_id', val);
+                                            setData(d => ({
+                                                ...d,
+                                                client_id: val,
+                                                is_corporate: false,
+                                                outlet_id: d.outlet_id || (outlets.length > 0 ? outlets[0].id : null)
+                                            }));
                                         }
                                     }}
                                     placeholder="Select Client"

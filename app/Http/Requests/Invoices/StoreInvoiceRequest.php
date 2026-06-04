@@ -15,7 +15,8 @@ class StoreInvoiceRequest extends FormRequest
     {
         return [
             'invoice_uuid' => 'required|string|unique:invoices,invoice_uuid',
-            'outlet_id' => 'required|exists:outlets,id',
+            'outlet_id' => 'nullable|required_unless:is_corporate,true|exists:outlets,id',
+            'is_corporate' => 'boolean',
             'date' => 'required|date',
             'client_id' => 'required_without:create_new_client|required_if:create_new_client,false|nullable|exists:clients,id',
             'create_new_client' => 'boolean',
