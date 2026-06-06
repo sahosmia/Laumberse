@@ -65,6 +65,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
         create_new_client: false,
         new_client_name: '',
         new_client_phone: '',
+        new_client_type: 'Consumer',
         new_client_address: '',
         total: invoice?.total || 0,
         paid: invoice?.paid || 0 as string | number,
@@ -338,16 +339,31 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                     />
                                     {errors.new_client_name && <p className="text-[10px] text-red-500">{errors.new_client_name}</p>}
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="new_client_phone" className="text-[10px] uppercase tracking-wider text-neutral-500">Phone</Label>
-                                    <Input
-                                        id="new_client_phone"
-                                        value={data.new_client_phone}
-                                        onChange={e => setData('new_client_phone', e.target.value)}
-                                        placeholder="Phone Number"
-                                        className="h-9 text-xs"
-                                    />
-                                    {errors.new_client_phone && <p className="text-[10px] text-red-500">{errors.new_client_phone}</p>}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="new_client_phone" className="text-[10px] uppercase tracking-wider text-neutral-500">Phone</Label>
+                                        <Input
+                                            id="new_client_phone"
+                                            value={data.new_client_phone}
+                                            onChange={e => setData('new_client_phone', e.target.value)}
+                                            placeholder="Phone Number"
+                                            className="h-9 text-xs"
+                                        />
+                                        {errors.new_client_phone && <p className="text-[10px] text-red-500">{errors.new_client_phone}</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="new_client_type" className="text-[10px] uppercase tracking-wider text-neutral-500">Type</Label>
+                                        <select
+                                            id="new_client_type"
+                                            value={data.new_client_type}
+                                            onChange={e => setData('new_client_type', e.target.value)}
+                                            className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-9 text-xs bg-transparent dark:text-neutral-100"
+                                        >
+                                            <option value="Consumer">Consumer</option>
+                                            <option value="Corporate">Corporate</option>
+                                        </select>
+                                        {errors.new_client_type && <p className="text-[10px] text-red-500">{errors.new_client_type}</p>}
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="new_client_address" className="text-[10px] uppercase tracking-wider text-neutral-500">Address (Optional)</Label>

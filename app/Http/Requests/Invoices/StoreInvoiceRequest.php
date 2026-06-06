@@ -21,6 +21,7 @@ class StoreInvoiceRequest extends FormRequest
             'create_new_client' => 'boolean',
             'new_client_name' => 'required_if:create_new_client,true|nullable|string|max:255',
             'new_client_phone' => 'required_if:create_new_client,true|nullable|string|max:255',
+            'new_client_type' => 'required_if:create_new_client,true|nullable|string|in:Consumer,Corporate',
             'new_client_address' => 'nullable|string|max:255',
             'total' => 'required|numeric|min:0',
             'paid' => 'required|numeric|min:0',

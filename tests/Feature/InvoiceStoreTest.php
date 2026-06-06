@@ -94,6 +94,7 @@ test('invoice can be stored with new client', function () {
         'create_new_client' => true,
         'new_client_name' => 'New Client',
         'new_client_phone' => '01800000000',
+        'new_client_type' => 'Consumer',
         'new_client_address' => 'New Address',
         'total' => 100,
         'paid' => 100,

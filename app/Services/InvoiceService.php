@@ -18,6 +18,7 @@ class InvoiceService
                 $client = Client::create([
                     'name' => $data['new_client_name'],
                     'phone' => $data['new_client_phone'],
+                    'type' => $data['new_client_type'] ?? 'Consumer',
                     'address' => $data['new_client_address'] ?? null,
                 ]);
                 $clientId = $client->id;
