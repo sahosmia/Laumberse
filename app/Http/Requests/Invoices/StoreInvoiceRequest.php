@@ -15,7 +15,23 @@ class StoreInvoiceRequest extends FormRequest
     {
         return [
             'invoice_uuid' => 'required|string|unique:invoices,invoice_uuid',
-            'outlet_id' => 'required|exists:outlets,id',
+            'outlet_id' => [
+                'nullable',
+                'exists:outlets,id',
+                function ($attribute, $value, $fail) {
+                    $isNewClient = $this->input('create_new_client');
+                    if ($isNewClient) {
+                        $type = $this->input('new_client_type');
+                    } else {
+                        $client = \App\Models\Client::find($this->input('client_id'));
+                        $type = $client?->type;
+                    }
+
+                    if ($type !== 'Corporate' && empty($value)) {
+                        $fail('The outlet field is required for consumer clients.');
+                    }
+                },
+            ],
             'date' => 'required|date',
             'client_id' => 'required_without:create_new_client|required_if:create_new_client,false|nullable|exists:clients,id',
             'create_new_client' => 'boolean',
