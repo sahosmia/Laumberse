@@ -1,6 +1,6 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, Link } from '@inertiajs/react';
 import { useState } from "react";
-import { Search, Plus, Trash2, Edit3, X, Settings2, PackagePlus } from "lucide-react";
+import { Search, Plus, Trash2, Edit3, X, Settings2, PackagePlus, Eye } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { type BreadcrumbItem, Client, Product } from '@/types';
@@ -118,6 +118,7 @@ export default function Clients({ clients, products }: ClientsProps) {
                     {filtered.map((c) => (
                         <div key={c.id} className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 hover:shadow-lg transition-shadow duration-300 relative group">
                             <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Link href={route('clients.show', c.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600"><Eye className="w-3.5 h-3.5" /></Link>
                                 <button onClick={() => openEditModal(c)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600"><Edit3 className="w-3.5 h-3.5" /></button>
                                 <button onClick={() => handleDelete(c.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
                             </div>
