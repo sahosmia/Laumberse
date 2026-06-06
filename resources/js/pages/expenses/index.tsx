@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, Link } from '@inertiajs/react';
 import { useState } from "react";
 import { Search, Plus, Trash2, Edit3, X, Receipt, Tag } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
@@ -22,9 +22,7 @@ const formatCurrency = (n: number) => `৳${n.toLocaleString("en-BD")}`;
 export default function Expenses({ expenses, categories, outlets }: ExpensesProps) {
     const [search, setSearch] = useState("");
     const [showModal, setShowModal] = useState(false);
-    const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-    const [editingCategory, setEditingCategory] = useState<ExpenseCategory | null>(null);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         expense_category_id: '' as string | number,
@@ -33,11 +31,6 @@ export default function Expenses({ expenses, categories, outlets }: ExpensesProp
         date: new Date().toISOString().split('T')[0],
         description: '',
         outlet_id: '' as string | number,
-    });
-
-    const categoryForm = useForm({
-        name: '',
-        description: '',
     });
 
     const filtered = expenses.filter((e) =>
@@ -80,25 +73,6 @@ export default function Expenses({ expenses, categories, outlets }: ExpensesProp
         }
     };
 
-    const handleCategorySubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (editingCategory) {
-            categoryForm.put(route('expense-categories.update', editingCategory.id), {
-                onSuccess: () => {
-                    setShowCategoryModal(false);
-                    categoryForm.reset();
-                },
-            });
-        } else {
-            categoryForm.post(route('expense-categories.store'), {
-                onSuccess: () => {
-                    setShowCategoryModal(false);
-                    categoryForm.reset();
-                },
-            });
-        }
-    };
-
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this expense?')) {
             destroy(route('expenses.destroy', id));
@@ -115,12 +89,12 @@ export default function Expenses({ expenses, categories, outlets }: ExpensesProp
                         <p className="text-sm text-neutral-500 dark:text-neutral-400">Manage shop expenditures</p>
                     </div>
                     <div className="flex gap-2">
-                        <button
-                            onClick={() => setShowCategoryModal(true)}
+                        <Link
+                            href={route('expense-categories.index')}
                             className="flex items-center gap-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 px-4 py-2.5 rounded-xl text-sm font-semibold"
                         >
                             <Tag className="w-4 h-4" /> Categories
-                        </button>
+                        </Link>
                         <button
                             onClick={openCreateModal}
                             className="flex items-center gap-2 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg"
@@ -298,60 +272,6 @@ export default function Expenses({ expenses, categories, outlets }: ExpensesProp
                 </div>
             )}
 
-            {/* Category Modal */}
-            {showCategoryModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Expense Categories</h3>
-                            <button onClick={() => setShowCategoryModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"><X className="w-5 h-5 text-neutral-400" /></button>
-                        </div>
-                        <form onSubmit={handleCategorySubmit} className="space-y-4 mb-6 pb-6 border-b border-neutral-100 dark:border-neutral-800">
-                            <div className="space-y-1">
-                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Category Name</label>
-                                <input
-                                    type="text"
-                                    value={categoryForm.data.name}
-                                    onChange={e => categoryForm.setData('name', e.target.value)}
-                                    className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Description</label>
-                                <input
-                                    type="text"
-                                    value={categoryForm.data.description}
-                                    onChange={e => categoryForm.setData('description', e.target.value)}
-                                    className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                />
-                            </div>
-                            <button
-                                type="submit"
-                                disabled={categoryForm.processing}
-                                className="w-full bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 py-2 rounded-xl text-sm font-bold disabled:opacity-50"
-                            >
-                                {editingCategory ? 'Update' : 'Add'} Category
-                            </button>
-                        </form>
-
-                        <div className="space-y-2 max-h-60 overflow-y-auto">
-                            {categories.map(c => (
-                                <div key={c.id} className="flex items-center justify-between p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50">
-                                    <div>
-                                        <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100">{c.name}</p>
-                                        <p className="text-xs text-neutral-500">{c.description}</p>
-                                    </div>
-                                    <div className="flex gap-1">
-                                        <button type="button" onClick={() => { setEditingCategory(c); categoryForm.setData({ name: c.name, description: c.description || '' }); }} className="p-1.5 text-neutral-400 hover:text-blue-600"><Edit3 className="w-3.5 h-3.5" /></button>
-                                        <button type="button" onClick={() => { if(confirm('Delete category?')) categoryForm.delete(route('expense-categories.destroy', c.id)) }} className="p-1.5 text-neutral-400 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
         </AppLayout>
     );
 }
