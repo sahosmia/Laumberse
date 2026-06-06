@@ -4,6 +4,7 @@ import { Search, Plus, Trash2, Edit3, X, Settings2, PackagePlus } from "lucide-r
 import AppLayout from '@/layouts/app-layout';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { type BreadcrumbItem, Client, Product } from '@/types';
+import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 
 interface ClientsProps {
     clients: Client[];
@@ -23,6 +24,8 @@ export default function Clients({ clients, products }: ClientsProps) {
     const [search, setSearch] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [editingClient, setEditingClient] = useState<Client | null>(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -71,8 +74,15 @@ export default function Clients({ clients, products }: ClientsProps) {
     };
 
     const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this client?')) {
-            destroy(route('clients.destroy', id));
+        setDeleteId(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = () => {
+        if (deleteId) {
+            destroy(route('clients.destroy', deleteId), {
+                onSuccess: () => setShowDeleteModal(false),
+            });
         }
     };
 
@@ -144,6 +154,15 @@ export default function Clients({ clients, products }: ClientsProps) {
                     ))}
                 </div>
             </div>
+
+            <DeleteConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+                title="Delete Client"
+                description="Are you sure you want to delete this client? This action cannot be undone."
+                isProcessing={processing}
+            />
 
             {/* Client Modal */}
             {showModal && (

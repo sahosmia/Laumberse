@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Search, Plus, Trash2, Edit3, X, Receipt, Tag } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, Expense, ExpenseCategory, Outlet } from '@/types';
+import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 
 interface ExpensesProps {
     expenses: Expense[];
@@ -23,6 +24,8 @@ export default function Expenses({ expenses, categories, outlets }: ExpensesProp
     const [search, setSearch] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         expense_category_id: '' as string | number,
@@ -74,8 +77,15 @@ export default function Expenses({ expenses, categories, outlets }: ExpensesProp
     };
 
     const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this expense?')) {
-            destroy(route('expenses.destroy', id));
+        setDeleteId(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = () => {
+        if (deleteId) {
+            destroy(route('expenses.destroy', deleteId), {
+                onSuccess: () => setShowDeleteModal(false),
+            });
         }
     };
 
@@ -164,6 +174,15 @@ export default function Expenses({ expenses, categories, outlets }: ExpensesProp
                     </div>
                 </div>
             </div>
+
+            <DeleteConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+                title="Delete Expense"
+                description="Are you sure you want to delete this expense? This action cannot be undone."
+                isProcessing={processing}
+            />
 
             {/* Expense Modal */}
             {showModal && (

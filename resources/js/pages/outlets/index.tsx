@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Search, Plus, Trash2, Edit3, X, MapPin } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, Outlet } from '@/types';
+import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 
 interface OutletsProps {
     outlets: Outlet[];
@@ -20,6 +21,9 @@ export default function Outlets({ outlets }: OutletsProps) {
     const [showModal, setShowModal] = useState(false);
     const [editingOutlet, setEditingOutlet] = useState<Outlet | null>(null);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -62,23 +66,30 @@ export default function Outlets({ outlets }: OutletsProps) {
     };
 
     const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this outlet?')) {
-            destroy(route('outlets.destroy', id));
+        setDeleteId(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = () => {
+        if (deleteId) {
+            destroy(route('outlets.destroy', deleteId), {
+                onSuccess: () => setShowDeleteModal(false),
+            });
         }
     };
 
-  const handleBulkDelete = () => {
-        const isDeleteAll = selectedIds.length === 0;
-        const message = isDeleteAll
-            ? 'Are you sure you want to delete ALL outlets?'
-            : `Are you sure you want to delete ${selectedIds.length} selected outlets?`;
+    const handleBulkDelete = () => {
+        setShowBulkDeleteModal(true);
+    };
 
-        if (confirm(message)) {
-            router.delete(route('outlets.bulk-destroy'), {
-                data: { ids: selectedIds },
-                onSuccess: () => setSelectedIds([]),
-            });
-        }
+    const confirmBulkDelete = () => {
+        router.delete(route('outlets.bulk-destroy'), {
+            data: { ids: selectedIds },
+            onSuccess: () => {
+                setSelectedIds([]);
+                setShowBulkDeleteModal(false);
+            },
+        });
     };
 
     const toggleSelectAll = () => {
@@ -99,6 +110,25 @@ export default function Outlets({ outlets }: OutletsProps) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Outlets - Laurnverse" />
             <div className="p-4 space-y-4">
+                <DeleteConfirmationModal
+                    isOpen={showDeleteModal}
+                    onClose={() => setShowDeleteModal(false)}
+                    onConfirm={confirmDelete}
+                    title="Delete Outlet"
+                    description="Are you sure you want to delete this outlet? This action cannot be undone."
+                    isProcessing={processing}
+                />
+
+                <DeleteConfirmationModal
+                    isOpen={showBulkDeleteModal}
+                    onClose={() => setShowBulkDeleteModal(false)}
+                    onConfirm={confirmBulkDelete}
+                    title={selectedIds.length > 0 ? "Delete Selected Outlets" : "Delete All Outlets"}
+                    description={selectedIds.length > 0
+                        ? `Are you sure you want to delete ${selectedIds.length} selected outlets?`
+                        : "Are you sure you want to delete ALL outlets? This will remove every outlet from the system."}
+                    isProcessing={processing}
+                />
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Outlets</h1>

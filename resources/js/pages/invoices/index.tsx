@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Plus, Search, Eye, Trash2, Printer, Edit } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, Invoice } from '@/types';
+import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 
 interface InvoiceHistoryProps {
     invoices: Invoice[];
@@ -58,29 +59,44 @@ function StatusSelect({ invoice }: { invoice: Invoice }) {
 export default function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
     const [search, setSearch] = useState("");
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+    const [processing, setProcessing] = useState(false);
 
     const filtered = invoices.filter((inv) =>
         inv.client.name.toLowerCase().includes(search.toLowerCase()) || inv.invoice_uuid.toLowerCase().includes(search.toLowerCase())
     );
 
     const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this invoice?')) {
-            router.delete(route('invoices.destroy', id));
+        setDeleteId(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = () => {
+        if (deleteId) {
+            setProcessing(true);
+            router.delete(route('invoices.destroy', deleteId), {
+                onSuccess: () => setShowDeleteModal(false),
+                onFinish: () => setProcessing(false),
+            });
         }
     };
 
     const handleBulkDelete = () => {
-        const isDeleteAll = selectedIds.length === 0;
-        const message = isDeleteAll
-            ? 'Are you sure you want to delete ALL invoices?'
-            : `Are you sure you want to delete ${selectedIds.length} selected invoices?`;
+        setShowBulkDeleteModal(true);
+    };
 
-        if (confirm(message)) {
-            router.delete(route('invoices.bulk-destroy'), {
-                data: { ids: selectedIds },
-                onSuccess: () => setSelectedIds([]),
-            });
-        }
+    const confirmBulkDelete = () => {
+        setProcessing(true);
+        router.delete(route('invoices.bulk-destroy'), {
+            data: { ids: selectedIds },
+            onSuccess: () => {
+                setSelectedIds([]);
+                setShowBulkDeleteModal(false);
+            },
+            onFinish: () => setProcessing(false),
+        });
     };
 
     const toggleSelectAll = () => {
@@ -105,6 +121,25 @@ export default function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="History" />
             <div className="p-4 space-y-4">
+                <DeleteConfirmationModal
+                    isOpen={showDeleteModal}
+                    onClose={() => setShowDeleteModal(false)}
+                    onConfirm={confirmDelete}
+                    title="Delete Invoice"
+                    description="Are you sure you want to delete this invoice? This action cannot be undone."
+                    isProcessing={processing}
+                />
+
+                <DeleteConfirmationModal
+                    isOpen={showBulkDeleteModal}
+                    onClose={() => setShowBulkDeleteModal(false)}
+                    onConfirm={confirmBulkDelete}
+                    title={selectedIds.length > 0 ? "Delete Selected Invoices" : "Delete All Invoices"}
+                    description={selectedIds.length > 0
+                        ? `Are you sure you want to delete ${selectedIds.length} selected invoices?`
+                        : "Are you sure you want to delete ALL invoices? This will remove every invoice from the system."}
+                    isProcessing={processing}
+                />
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Invoice History</h1>

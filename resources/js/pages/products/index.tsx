@@ -4,6 +4,7 @@ import { Search, Plus, Trash2, Edit3, X } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, Category, Unit, Outlet, Product } from '@/types';
 import { SearchableSelect } from '@/components/ui/searchable-select';
+import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 
 interface ProductsProps {
     products: Product[];
@@ -27,6 +28,9 @@ export default function Products({ products, categories, filter, units, outlets 
     const [showModal, setShowModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -82,23 +86,30 @@ export default function Products({ products, categories, filter, units, outlets 
     };
 
     const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this product?')) {
-            destroy(route('products.destroy', id));
+        setDeleteId(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = () => {
+        if (deleteId) {
+            destroy(route('products.destroy', deleteId), {
+                onSuccess: () => setShowDeleteModal(false),
+            });
         }
     };
 
-     const handleBulkDelete = () => {
-        const isDeleteAll = selectedIds.length === 0;
-        const message = isDeleteAll
-            ? 'Are you sure you want to delete ALL products?'
-            : `Are you sure you want to delete ${selectedIds.length} selected products?`;
+    const handleBulkDelete = () => {
+        setShowBulkDeleteModal(true);
+    };
 
-        if (confirm(message)) {
-            router.delete(route('products.bulk-destroy'), {
-                data: { ids: selectedIds },
-                onSuccess: () => setSelectedIds([]),
-            });
-        }
+    const confirmBulkDelete = () => {
+        router.delete(route('products.bulk-destroy'), {
+            data: { ids: selectedIds },
+            onSuccess: () => {
+                setSelectedIds([]);
+                setShowBulkDeleteModal(false);
+            },
+        });
     };
 
     const toggleSelectAll = () => {
@@ -218,6 +229,26 @@ export default function Products({ products, categories, filter, units, outlets 
                     </div>
                 </div>
             </div>
+
+            <DeleteConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+                title="Delete Product"
+                description="Are you sure you want to delete this product? This action cannot be undone."
+                isProcessing={processing}
+            />
+
+            <DeleteConfirmationModal
+                isOpen={showBulkDeleteModal}
+                onClose={() => setShowBulkDeleteModal(false)}
+                onConfirm={confirmBulkDelete}
+                title={selectedIds.length > 0 ? "Delete Selected Products" : "Delete All Products"}
+                description={selectedIds.length > 0
+                    ? `Are you sure you want to delete ${selectedIds.length} selected products?`
+                    : "Are you sure you want to delete ALL products? This will remove every product from the system."}
+                isProcessing={processing}
+            />
 
             {/* Product Modal */}
             {showModal && (

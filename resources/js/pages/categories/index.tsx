@@ -1,8 +1,10 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 import { Plus, Pencil, Trash2, Tag } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
+import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 
 interface Category {
     id: number;
@@ -23,11 +25,20 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Index({ categories }: IndexProps) {
-    const { delete: destroy } = useForm();
+    const { delete: destroy, processing } = useForm();
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
 
     const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this category?')) {
-            destroy(route('categories.destroy', id));
+        setDeleteId(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = () => {
+        if (deleteId) {
+            destroy(route('categories.destroy', deleteId), {
+                onSuccess: () => setShowDeleteModal(false),
+            });
         }
     };
 
@@ -35,6 +46,14 @@ export default function Index({ categories }: IndexProps) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Categories" />
             <div className="p-4 space-y-4">
+                <DeleteConfirmationModal
+                    isOpen={showDeleteModal}
+                    onClose={() => setShowDeleteModal(false)}
+                    onConfirm={confirmDelete}
+                    title="Delete Category"
+                    description="Are you sure you want to delete this category? This action cannot be undone."
+                    isProcessing={processing}
+                />
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Categories</h1>

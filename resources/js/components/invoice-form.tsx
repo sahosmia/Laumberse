@@ -281,7 +281,9 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                     options={clientOptions}
                                     value={data.client_id}
                                     onChange={(val) => {
+                                        const oldClient = clients.find(c => c.id == data.client_id);
                                         const newClient = clients.find(c => c.id == val);
+
                                         if (newClient?.type === 'Corporate') {
                                             // Automatically populate items with custom prices for Corporate clients
                                             const corporateItems = (newClient.custom_prices || []).map(cp => {
@@ -306,17 +308,20 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                                 outlet_id: null // Corporate clients don't use outlets
                                             }));
                                         } else {
-                                            // For regular clients, clear items if it was previously corporate populated or keep it
-                                            // The user specifically asked: "if i select any corporate client that time show his all selected product or items but after select any corporate client if i select any consumer client so selected box so old corporate client products list"
-                                            // This suggests we should clear the list when switching to a consumer client.
-                                            const { total, due } = calculateTotals([], data.paid, data.discount_type, data.discount_amount);
-                                            setData(d => ({
-                                                ...d,
-                                                client_id: val,
-                                                items: [],
-                                                total,
-                                                due
-                                            }));
+                                            // If switching from Corporate to Consumer, clear items
+                                            if (oldClient?.type === 'Corporate') {
+                                                const { total, due } = calculateTotals([], data.paid, data.discount_type, data.discount_amount);
+                                                setData(d => ({
+                                                    ...d,
+                                                    client_id: val,
+                                                    items: [],
+                                                    total,
+                                                    due
+                                                }));
+                                            } else {
+                                                // If switching between consumers, keep items
+                                                setData('client_id', val);
+                                            }
                                         }
                                     }}
                                     placeholder="Select Client"
