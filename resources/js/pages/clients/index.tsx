@@ -1,9 +1,10 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from "react";
-import { Search, Plus, Trash2, Edit3, X, Settings2, PackagePlus } from "lucide-react";
+import { Search, Plus, Trash2, Edit3, X, Settings2, PackagePlus, Eye } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { type BreadcrumbItem, Client, Product } from '@/types';
+import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 
 interface ClientsProps {
     clients: Client[];
@@ -23,6 +24,8 @@ export default function Clients({ clients, products }: ClientsProps) {
     const [search, setSearch] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [editingClient, setEditingClient] = useState<Client | null>(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -71,8 +74,15 @@ export default function Clients({ clients, products }: ClientsProps) {
     };
 
     const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this client?')) {
-            destroy(route('clients.destroy', id));
+        setDeleteId(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = () => {
+        if (deleteId) {
+            destroy(route('clients.destroy', deleteId), {
+                onSuccess: () => setShowDeleteModal(false),
+            });
         }
     };
 
@@ -108,6 +118,8 @@ export default function Clients({ clients, products }: ClientsProps) {
                     {filtered.map((c) => (
                         <div key={c.id} className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 hover:shadow-lg transition-shadow duration-300 relative group">
                             <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Link href={route('clients.show', c.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600"><Eye className="w-3.5 h-3.5" /></Link>
+
                                 <button onClick={() => openEditModal(c)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600"><Edit3 className="w-3.5 h-3.5" /></button>
                                 <button onClick={() => handleDelete(c.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
                             </div>
@@ -145,10 +157,19 @@ export default function Clients({ clients, products }: ClientsProps) {
                 </div>
             </div>
 
+            <DeleteConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+                title="Delete Client"
+                description="Are you sure you want to delete this client? This action cannot be undone."
+                isProcessing={processing}
+            />
+
             {/* Client Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-lg w-full p-6">
+                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{editingClient ? 'Edit Client' : 'New Client'}</h3>
                             <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"><X className="w-5 h-5 text-neutral-400" /></button>
@@ -232,7 +253,7 @@ export default function Clients({ clients, products }: ClientsProps) {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                                    <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
                                         {data.custom_prices.map((cp, idx) => (
                                             <div key={idx} className="flex gap-2 items-center bg-white dark:bg-neutral-900 p-2 rounded-xl border border-neutral-100 dark:border-neutral-800">
                                                 <div className="flex-1 text-xs font-medium text-neutral-700 dark:text-neutral-300">

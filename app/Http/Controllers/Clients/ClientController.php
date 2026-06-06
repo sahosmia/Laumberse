@@ -39,6 +39,13 @@ class ClientController extends Controller
         return redirect()->back()->with('success', 'Client created successfully.');
     }
 
+    public function show(Client $client)
+    {
+        return Inertia::render('clients/show', [
+            'client' => $client->load(['invoices.items.product', 'customPrices.product']),
+        ]);
+    }
+
     public function update(UpdateClientRequest $request, Client $client)
     {
         DB::transaction(function () use ($request, $client) {

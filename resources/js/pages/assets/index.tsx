@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Search, Plus, Trash2, Edit3, X, Wallet, ShieldCheck, AlertCircle, Clock } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, Asset } from '@/types';
+import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 
 interface AssetsProps {
     assets: Asset[];
@@ -21,6 +22,8 @@ export default function Assets({ assets }: AssetsProps) {
     const [search, setSearch] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -73,8 +76,15 @@ export default function Assets({ assets }: AssetsProps) {
     };
 
     const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this asset?')) {
-            destroy(route('assets.destroy', id));
+        setDeleteId(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = () => {
+        if (deleteId) {
+            destroy(route('assets.destroy', deleteId), {
+                onSuccess: () => setShowDeleteModal(false),
+            });
         }
     };
 
@@ -167,6 +177,15 @@ export default function Assets({ assets }: AssetsProps) {
                     )}
                 </div>
             </div>
+
+            <DeleteConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+                title="Delete Asset"
+                description="Are you sure you want to delete this asset? This action cannot be undone."
+                isProcessing={processing}
+            />
 
             {/* Asset Modal */}
             {showModal && (

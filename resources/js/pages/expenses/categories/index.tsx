@@ -6,6 +6,7 @@ import { type BreadcrumbItem, ExpenseCategory } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 
 interface ExpenseCategoriesProps {
     categories: ExpenseCategory[];
@@ -26,6 +27,8 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
     const [search, setSearch] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState<ExpenseCategory | null>(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -34,7 +37,7 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
 
     const filtered = categories.filter((c) =>
         c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.description?.toLowerCase().includes(search.toLowerCase())
+        (c.description && c.description.toLowerCase().includes(search.toLowerCase()))
     );
 
     const openCreateModal = () => {
@@ -72,8 +75,15 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
     };
 
     const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this category?')) {
-            destroy(route('expense-categories.destroy', id));
+        setDeleteId(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = () => {
+        if (deleteId) {
+            destroy(route('expense-categories.destroy', deleteId), {
+                onSuccess: () => setShowDeleteModal(false),
+            });
         }
     };
 
@@ -147,6 +157,15 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
                     </div>
                 </div>
             </div>
+
+            <DeleteConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+                title="Delete Category"
+                description="Are you sure you want to delete this expense category? This action cannot be undone."
+                isProcessing={processing}
+            />
 
             {/* Category Modal */}
             {showModal && (

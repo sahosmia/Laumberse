@@ -22,6 +22,19 @@ class InvoiceService
                     'type' => $data['new_client_type'] ?? 'Consumer',
                 ]);
                 $clientId = $client->id;
+
+                // If it's a corporate client, save the items as their custom prices
+                if ($client->type === 'Corporate') {
+                    foreach ($data['items'] as $item) {
+                        DB::table('customer_product_prices')->insert([
+                            'customer_id' => $client->id,
+                            'product_id' => $item['productId'],
+                            'custom_price' => $item['price'],
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
             }
 
             $invoice = Invoice::create([

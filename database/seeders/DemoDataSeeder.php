@@ -71,6 +71,29 @@ class DemoDataSeeder extends Seeder
             $clientModels[] = Client::create($c);
         }
 
+         // Add a Corporate Client with pre-configured products and custom prices
+        $corporateClient = Client::create([
+            'name' => 'Global Logistics Corp',
+            'phone' => '01555666777',
+            'address' => 'Gulshan 2, Dhaka',
+            'type' => 'Corporate'
+        ]);
+
+        // Pre-configure some products for the corporate client
+        $corpProducts = $productModels->take(2);
+        foreach ($corpProducts as $product) {
+            DB::table('customer_product_prices')->insert([
+                'customer_id' => $corporateClient->id,
+                'product_id' => $product->id,
+                'custom_price' => $product->price * 0.8, // 20% discount for corporate
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $clientModels[] = $corporateClient;
+
+
         // Generate realistic transaction/invoice data
         foreach ($clientModels as $client) {
             $numInvoices = rand(2, 5);
