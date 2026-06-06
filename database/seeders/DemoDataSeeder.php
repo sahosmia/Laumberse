@@ -15,26 +15,30 @@ class DemoDataSeeder extends Seeder
 {
     public function run(): void
     {
+        // Get or create an outlet to map invoices to
         $outlet = Outlet::first() ?? Outlet::create(['name' => 'Main Outlet', 'location' => 'Dhaka']);
 
-        $productModels = Product::all()->toArray();
-        if (empty($productModels)) {
-             $categories = ['Gents', 'Ladies', 'Kids', 'Household', 'Others'];
+        // Check if products exist; if not, create a baseline matching your main list
+        if (Product::count() === 0) {
+            $categories = ['Gents Item', 'Ladies Item', 'Kids Item', 'Household Item', 'Others Item'];
             $categoryModels = [];
+
             foreach ($categories as $cat) {
                 $categoryModels[$cat] = Category::firstOrCreate([
                     'name' => $cat,
                 ], [
-                    'slug' => strtolower($cat),
+                    'slug' => strtolower(str_replace(' ', '-', $cat)),
                     'description' => $cat . ' category',
                 ]);
             }
 
             $productsData = [
-                ['name' => 'Cotton Shirt', 'category' => 'Gents', 'price' => 25],
-                ['name' => 'Jeans Pant', 'category' => 'Gents', 'price' => 35],
-                ['name' => 'Silk Panjabi', 'category' => 'Gents', 'price' => 50],
-                ['name' => 'Salwar Kameez', 'category' => 'Ladies', 'price' => 45],
+                ['name' => 'Shirt (শার্ট)', 'category' => 'Gents Item', 'price' => 15],
+                ['name' => 'Jeans Pant (জিন্স প্যান্ট)', 'category' => 'Gents Item', 'price' => 25],
+                ['name' => 'Panjabi Silk (পাঞ্জাবি সিল্ক)', 'category' => 'Gents Item', 'price' => 40],
+                ['name' => 'Kameez / Kurti (কামিজ / কুর্তি)', 'category' => 'Ladies Item', 'price' => 30],
+                ['name' => '3 Piece Normal (৩ পিস সাধারণ)', 'category' => 'Ladies Item', 'price' => 60],
+                ['name' => 'Blanket Large (কম্বল বড়)', 'category' => 'Household Item', 'price' => 150],
             ];
 
             foreach ($productsData as $p) {
@@ -44,11 +48,17 @@ class DemoDataSeeder extends Seeder
                     'price' => $p['price'],
                 ]);
             }
-            $productModels = Product::all();
-        } else {
-            $productModels = Product::all();
         }
 
+        // Fetch all current products
+        $productModels = Product::all();
+
+        // Safe guard if no products exist anywhere to prevent random() from crashing
+        if ($productModels->isEmpty()) {
+            return;
+        }
+
+        // Generate Demo Clients
         $clientsData = [
             ['name' => 'Ahmed Khan', 'phone' => '01711223344', 'address' => 'Banani, Dhaka'],
             ['name' => 'Sultana Razia', 'phone' => '01822334455', 'address' => 'Dhanmondi, Dhaka'],
@@ -61,9 +71,10 @@ class DemoDataSeeder extends Seeder
             $clientModels[] = Client::create($c);
         }
 
-        // Generate some realistic invoices
+        // Generate realistic transaction/invoice data
         foreach ($clientModels as $client) {
             $numInvoices = rand(2, 5);
+
             for ($i = 0; $i < $numInvoices; $i++) {
                 $total = 0;
                 $items = [];
@@ -71,13 +82,14 @@ class DemoDataSeeder extends Seeder
 
                 $invoiceId = 'INV-' . date('Ymd') . rand(1000, 9999);
 
-                // Select random products for the invoice
+                // Select random products for this specific invoice
                 $selectedProducts = $productModels->random($numItems);
 
                 foreach ($selectedProducts as $prod) {
                     $qty = rand(1, 3);
                     $price = $prod->price;
                     $total += $qty * $price;
+
                     $items[] = [
                         'product_id' => $prod->id,
                         'qty' => $qty,
@@ -85,7 +97,8 @@ class DemoDataSeeder extends Seeder
                     ];
                 }
 
-                $paid = (rand(0, 10) > 7) ? rand($total * 0.5, $total) : $total;
+                // Determine dynamic split parameters for partial vs full payments
+                $paid = (rand(0, 10) > 7) ? rand(floor($total * 0.5), $total) : $total;
                 $due = $total - $paid;
 
                 $invoice = Invoice::create([
@@ -105,7 +118,7 @@ class DemoDataSeeder extends Seeder
                     InvoiceItem::create($item);
                 }
 
-                // Update client stats
+                // Smooth execution of mass increment statements per client file
                 $client->increment('total_orders');
                 $client->increment('total_paid', $paid);
                 $client->increment('total_due', $due);

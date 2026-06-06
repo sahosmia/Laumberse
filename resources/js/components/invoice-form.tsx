@@ -65,6 +65,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
         create_new_client: false,
         new_client_name: '',
         new_client_phone: '',
+        new_client_type: 'Consumer',
         new_client_address: '',
         total: invoice?.total || 0,
         paid: invoice?.paid || 0 as string | number,
@@ -234,7 +235,10 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
     const outletOptions = outlets.map(o => ({ label: o.name, value: o.id }));
 
     const selectedClient = clients.find(c => c.id == data.client_id);
-    const isCorporate = selectedClient?.type === 'Corporate';
+    // const isCorporate = selectedClient?.type === 'Corporate';
+    const isCorporate = data.create_new_client
+    ? data.new_client_type === 'Corporate'
+    : selectedClient?.type === 'Corporate';
 
     return (
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
@@ -257,7 +261,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div className="lg:col-span-2 space-y-4">
 
-                     <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 space-y-4">
+                    <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 space-y-4">
                         <div className="flex items-center justify-between">
                             <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-2">
                                 <Users className="w-4 h-4" /> Client
@@ -282,22 +286,40 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                     onChange={(val) => {
                                         const newClient = clients.find(c => c.id == val);
                                         if (newClient?.type === 'Corporate') {
-                                            const updatedItems = data.items.map(item => {
-                                                const product = products.find(p => p.id === item.productId);
-                                                const customPrice = newClient.custom_prices?.find(cp => cp.product_id === item.productId)?.custom_price;
-                                                return { ...item, price: customPrice !== undefined ? Number(customPrice) : (product ? Number(product.price) : item.price) };
-                                            });
-                                            const { total, due } = calculateTotals(updatedItems, data.paid, data.discount_type, data.discount_amount);
+                                            // Automatically populate items with custom prices for Corporate clients
+                                            const corporateItems = (newClient.custom_prices || []).map(cp => {
+                                                const product = products.find(p => p.id === cp.product_id);
+                                                if (!product) return null;
+                                                return {
+                                                    productId: product.id,
+                                                    name: product.name,
+                                                    price: Number(cp.custom_price),
+                                                    qty: 1,
+                                                    imageUrl: product.image_url
+                                                };
+                                            }).filter(Boolean) as InvoiceItem[];
+
+                                            const { total, due } = calculateTotals(corporateItems, data.paid, data.discount_type, data.discount_amount);
                                             setData(d => ({
                                                 ...d,
                                                 client_id: val,
-                                                items: updatedItems,
+                                                items: corporateItems,
                                                 total,
                                                 due,
                                                 outlet_id: null // Corporate clients don't use outlets
                                             }));
                                         } else {
-                                            setData('client_id', val);
+                                            // For regular clients, clear items if it was previously corporate populated or keep it
+                                            // The user specifically asked: "if i select any corporate client that time show his all selected product or items but after select any corporate client if i select any consumer client so selected box so old corporate client products list"
+                                            // This suggests we should clear the list when switching to a consumer client.
+                                            const { total, due } = calculateTotals([], data.paid, data.discount_type, data.discount_amount);
+                                            setData(d => ({
+                                                ...d,
+                                                client_id: val,
+                                                items: [],
+                                                total,
+                                                due
+                                            }));
                                         }
                                     }}
                                     placeholder="Select Client"
@@ -320,16 +342,31 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                     />
                                     {errors.new_client_name && <p className="text-[10px] text-red-500">{errors.new_client_name}</p>}
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="new_client_phone" className="text-[10px] uppercase tracking-wider text-neutral-500">Phone</Label>
-                                    <Input
-                                        id="new_client_phone"
-                                        value={data.new_client_phone}
-                                        onChange={e => setData('new_client_phone', e.target.value)}
-                                        placeholder="Phone Number"
-                                        className="h-9 text-xs"
-                                    />
-                                    {errors.new_client_phone && <p className="text-[10px] text-red-500">{errors.new_client_phone}</p>}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="new_client_phone" className="text-[10px] uppercase tracking-wider text-neutral-500">Phone</Label>
+                                        <Input
+                                            id="new_client_phone"
+                                            value={data.new_client_phone}
+                                            onChange={e => setData('new_client_phone', e.target.value)}
+                                            placeholder="Phone Number"
+                                            className="h-9 text-xs"
+                                        />
+                                        {errors.new_client_phone && <p className="text-[10px] text-red-500">{errors.new_client_phone}</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="new_client_type" className="text-[10px] uppercase tracking-wider text-neutral-500">Type</Label>
+                                        <select
+                                            id="new_client_type"
+                                            value={data.new_client_type}
+                                            onChange={e => setData('new_client_type', e.target.value)}
+                                            className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-9 text-xs bg-transparent dark:text-neutral-100"
+                                        >
+                                            <option value="Consumer">Consumer</option>
+                                            <option value="Corporate">Corporate</option>
+                                        </select>
+                                        {errors.new_client_type && <p className="text-[10px] text-red-500">{errors.new_client_type}</p>}
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="new_client_address" className="text-[10px] uppercase tracking-wider text-neutral-500">Address (Optional)</Label>
@@ -344,7 +381,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                             </div>
                         )}
                     </div>
-                    
+
                     <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5">
                         <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3 flex items-center gap-2">
                             <Search className="w-4 h-4" /> Add Service / Product
@@ -486,44 +523,44 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                     </div>
                 </div>
 
+                {isCorporate}
                 <div className="space-y-4">
-                    {!isCorporate && (
-                    <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 space-y-3">
-                        <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-2"><Package className="w-4 h-4" /> Outlet</h3>
-                        <select
-                            value={data.outlet_id}
-                            onChange={e => {
-                                const newOutletId = e.target.value;
-                                setData('outlet_id', newOutletId);
+{(!isCorporate || (data.create_new_client && data.new_client_type === 'Consumer')) && (                        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 space-y-3">
+                            <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-2"><Package className="w-4 h-4" /> Outlet</h3>
+                            <select
+                                value={data.outlet_id}
+                                onChange={e => {
+                                    const newOutletId = e.target.value;
+                                    setData('outlet_id', newOutletId);
 
-                                // Optionally update prices of existing items when outlet changes
-                                const updatedItems = data.items.map((item: InvoiceItem) => {
-                                    const product = products.find(p => p.id === item.productId);
-                                    if (product) {
-                                        const outletPrice = product.outlet_prices?.find(op => op.outlet_id === Number(newOutletId))?.price;
-                                        return { ...item, price: outletPrice !== undefined ? Number(outletPrice) : Number(product.price) };
-                                    }
-                                    return item;
-                                });
-                                const newTotal = updatedItems.reduce((s: number, i: InvoiceItem) => s + i.price * i.qty, 0);
-                                setData(d => ({
-                                    ...d,
-                                    outlet_id: newOutletId,
-                                    items: updatedItems,
-                                    total: newTotal,
-                                    due: newTotal - (Number(d.paid) || 0)
-                                }));
-                            }}
-                            className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm bg-transparent dark:text-neutral-100"
-                            required
-                        >
-                            <option value="" disabled>Select Outlet</option>
-                            {outlets.map(o => (
-                                <option key={o.id} value={o.id}>{o.name}</option>
-                            ))}
-                        </select>
-                        {errors.outlet_id && <p className="text-xs text-red-500">{errors.outlet_id}</p>}
-                    </div>
+                                    // Optionally update prices of existing items when outlet changes
+                                    const updatedItems = data.items.map((item: InvoiceItem) => {
+                                        const product = products.find(p => p.id === item.productId);
+                                        if (product) {
+                                            const outletPrice = product.outlet_prices?.find(op => op.outlet_id === Number(newOutletId))?.price;
+                                            return { ...item, price: outletPrice !== undefined ? Number(outletPrice) : Number(product.price) };
+                                        }
+                                        return item;
+                                    });
+                                    const newTotal = updatedItems.reduce((s: number, i: InvoiceItem) => s + i.price * i.qty, 0);
+                                    setData(d => ({
+                                        ...d,
+                                        outlet_id: newOutletId,
+                                        items: updatedItems,
+                                        total: newTotal,
+                                        due: newTotal - (Number(d.paid) || 0)
+                                    }));
+                                }}
+                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm bg-transparent dark:text-neutral-100"
+                                required
+                            >
+                                <option value="" disabled>Select Outlet</option>
+                                {outlets.map(o => (
+                                    <option key={o.id} value={o.id}>{o.name}</option>
+                                ))}
+                            </select>
+                            {errors.outlet_id && <p className="text-xs text-red-500">{errors.outlet_id}</p>}
+                        </div>
                     )}
 
 

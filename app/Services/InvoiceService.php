@@ -19,6 +19,7 @@ class InvoiceService
                     'name' => $data['new_client_name'],
                     'phone' => $data['new_client_phone'],
                     'address' => $data['new_client_address'] ?? null,
+                    'type' => $data['new_client_type'] ?? 'Consumer',
                 ]);
                 $clientId = $client->id;
             }

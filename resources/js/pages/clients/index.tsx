@@ -148,7 +148,7 @@ export default function Clients({ clients, products }: ClientsProps) {
             {/* Client Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-6">
+                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-lg w-full p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{editingClient ? 'Edit Client' : 'New Client'}</h3>
                             <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"><X className="w-5 h-5 text-neutral-400" /></button>
@@ -232,7 +232,7 @@ export default function Clients({ clients, products }: ClientsProps) {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                                    <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
                                         {data.custom_prices.map((cp, idx) => (
                                             <div key={idx} className="flex gap-2 items-center bg-white dark:bg-neutral-900 p-2 rounded-xl border border-neutral-100 dark:border-neutral-800">
                                                 <div className="flex-1 text-xs font-medium text-neutral-700 dark:text-neutral-300">

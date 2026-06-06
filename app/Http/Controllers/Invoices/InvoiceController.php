@@ -9,11 +9,8 @@ use App\Models\Invoice;
 use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\Client;
-use App\Models\CustomerProductPrice;
 use App\Services\InvoiceService;
 use Barryvdh\DomPDF\Facade\Pdf;
-
-use Illuminate\Http\Client\Request;
 use Inertia\Inertia;
 
 class InvoiceController extends Controller
