@@ -9,9 +9,11 @@ use App\Models\Invoice;
 use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\Client;
+use App\Models\CustomerProductPrice;
 use App\Services\InvoiceService;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+use Illuminate\Http\Client\Request;
 use Inertia\Inertia;
 
 class InvoiceController extends Controller
@@ -30,13 +32,14 @@ class InvoiceController extends Controller
         ]);
     }
 
-    public function create()
+    public function create( )
     {
         return Inertia::render('invoices/create', [
             'products' => Product::with(['category', 'unit', 'outletPrices'])->get(),
-            'clients' => Client::all(),
+            'clients' => Client::with('customPrices')->get(),
             'categories' => \App\Models\Category::all(),
             'outlets' => Outlet::all(),
+            // 'invoice' => CustomerProductPrice::where('customer_id', $request()->query('client_id'))->get(),
         ]);
     }
 
@@ -51,7 +54,7 @@ class InvoiceController extends Controller
         return Inertia::render('invoices/edit', [
             'invoice' => $invoice->load(['items.product']),
             'products' => Product::with(['category', 'unit', 'outletPrices'])->get(),
-            'clients' => Client::all(),
+            'clients' => Client::with('customPrices')->get(),
             'categories' => \App\Models\Category::all(),
             'outlets' => Outlet::all(),
         ]);

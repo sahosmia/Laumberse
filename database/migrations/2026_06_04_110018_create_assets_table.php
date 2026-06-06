@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('clients', function (Blueprint $table) {
+        Schema::create('assets', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('phone');
-             $table->string('type')->default('Consumer');
-            $table->string('address')->nullable();
-            $table->integer('total_orders')->default(0);
-            $table->decimal('total_due', 10, 2)->default(0);
-            $table->decimal('total_paid', 10, 2)->default(0);
+            $table->string('code')->unique();
+            $table->date('purchase_date');
+            $table->decimal('cost', 15, 2);
+            $table->decimal('current_value', 15, 2);
+            $table->decimal('depreciation_rate', 5, 2)->nullable();
+            $table->string('status');
             $table->timestamps();
         });
     }
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('clients');
+        Schema::dropIfExists('assets');
     }
 };

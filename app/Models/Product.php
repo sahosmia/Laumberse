@@ -26,6 +26,11 @@ class Product extends Model
         return $this->hasMany(OutletProductPrice::class);
     }
 
+    public function customPrices()
+    {
+        return $this->hasMany(CustomerProductPrice::class);
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class);

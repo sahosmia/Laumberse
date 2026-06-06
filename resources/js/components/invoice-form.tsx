@@ -108,8 +108,21 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
     const addItem = (product: Product) => {
         const existingIdx = data.items.findIndex((i) => i.productId === product.id);
         let newItems = [...data.items];
-        const outletPrice = product.outlet_prices?.find(op => op.outlet_id === Number(data.outlet_id))?.price;
-        const price = outletPrice !== undefined ? Number(outletPrice) : Number(product.price);
+
+        const selectedClient = clients.find(c => c.id == data.client_id);
+        let price = Number(product.price);
+
+        if (selectedClient?.type === 'Corporate') {
+            const customPrice = selectedClient.custom_prices?.find(cp => cp.product_id === product.id)?.custom_price;
+            if (customPrice !== undefined) {
+                price = Number(customPrice);
+            }
+        } else {
+            const outletPrice = product.outlet_prices?.find(op => op.outlet_id === Number(data.outlet_id))?.price;
+            if (outletPrice !== undefined) {
+                price = Number(outletPrice);
+            }
+        }
 
         if (existingIdx > -1) {
             newItems[existingIdx].qty += 1;
@@ -220,6 +233,9 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
     const clientOptions = clients.map(c => ({ label: `${c.name} (${c.phone})`, value: c.id }));
     const outletOptions = outlets.map(o => ({ label: o.name, value: o.id }));
 
+    const selectedClient = clients.find(c => c.id == data.client_id);
+    const isCorporate = selectedClient?.type === 'Corporate';
+
     return (
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
             <div className="flex items-center justify-between">
@@ -240,6 +256,95 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div className="lg:col-span-2 space-y-4">
+
+                     <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-2">
+                                <Users className="w-4 h-4" /> Client
+                            </h3>
+                            {!isEdit && (
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="create_new_client"
+                                        checked={data.create_new_client}
+                                        onCheckedChange={(checked) => setData('create_new_client', !!checked)}
+                                    />
+                                    <Label htmlFor="create_new_client" className="text-xs font-medium cursor-pointer">New Client</Label>
+                                </div>
+                            )}
+                        </div>
+
+                        {!data.create_new_client ? (
+                            <div>
+                                <SearchableSelect
+                                    options={clientOptions}
+                                    value={data.client_id}
+                                    onChange={(val) => {
+                                        const newClient = clients.find(c => c.id == val);
+                                        if (newClient?.type === 'Corporate') {
+                                            const updatedItems = data.items.map(item => {
+                                                const product = products.find(p => p.id === item.productId);
+                                                const customPrice = newClient.custom_prices?.find(cp => cp.product_id === item.productId)?.custom_price;
+                                                return { ...item, price: customPrice !== undefined ? Number(customPrice) : (product ? Number(product.price) : item.price) };
+                                            });
+                                            const { total, due } = calculateTotals(updatedItems, data.paid, data.discount_type, data.discount_amount);
+                                            setData(d => ({
+                                                ...d,
+                                                client_id: val,
+                                                items: updatedItems,
+                                                total,
+                                                due,
+                                                outlet_id: null // Corporate clients don't use outlets
+                                            }));
+                                        } else {
+                                            setData('client_id', val);
+                                        }
+                                    }}
+                                    placeholder="Select Client"
+                                    error={errors.client_id}
+                                />
+                            </div>
+                        ) : (
+                            <div className="space-y-3 p-3 rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800/20">
+                                <div className="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 mb-1">
+                                    <UserPlus className="w-3 h-3" /> Inline Client Creation
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="new_client_name" className="text-[10px] uppercase tracking-wider text-neutral-500">Name</Label>
+                                    <Input
+                                        id="new_client_name"
+                                        value={data.new_client_name}
+                                        onChange={e => setData('new_client_name', e.target.value)}
+                                        placeholder="Client Name"
+                                        className="h-9 text-xs"
+                                    />
+                                    {errors.new_client_name && <p className="text-[10px] text-red-500">{errors.new_client_name}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="new_client_phone" className="text-[10px] uppercase tracking-wider text-neutral-500">Phone</Label>
+                                    <Input
+                                        id="new_client_phone"
+                                        value={data.new_client_phone}
+                                        onChange={e => setData('new_client_phone', e.target.value)}
+                                        placeholder="Phone Number"
+                                        className="h-9 text-xs"
+                                    />
+                                    {errors.new_client_phone && <p className="text-[10px] text-red-500">{errors.new_client_phone}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="new_client_address" className="text-[10px] uppercase tracking-wider text-neutral-500">Address (Optional)</Label>
+                                    <Input
+                                        id="new_client_address"
+                                        value={data.new_client_address}
+                                        onChange={e => setData('new_client_address', e.target.value)}
+                                        placeholder="Address"
+                                        className="h-9 text-xs"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    
                     <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5">
                         <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3 flex items-center gap-2">
                             <Search className="w-4 h-4" /> Add Service / Product
@@ -293,7 +398,13 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-sm font-bold text-blue-600">
-                                                        {formatCurrency(Number(p.outlet_prices?.find(op => op.outlet_id === Number(data.outlet_id))?.price ?? p.price))}
+                                                        {(() => {
+                                                            if (isCorporate) {
+                                                                const cp = selectedClient?.custom_prices?.find(cp => cp.product_id === p.id);
+                                                                return formatCurrency(cp ? Number(cp.custom_price) : Number(p.price));
+                                                            }
+                                                            return formatCurrency(Number(p.outlet_prices?.find(op => op.outlet_id === Number(data.outlet_id))?.price ?? p.price));
+                                                        })()}
                                                     </span>
                                                 </div>
                                             </button>
@@ -376,6 +487,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                 </div>
 
                 <div className="space-y-4">
+                    {!isCorporate && (
                     <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 space-y-3">
                         <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-2"><Package className="w-4 h-4" /> Outlet</h3>
                         <select
@@ -412,74 +524,9 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                         </select>
                         {errors.outlet_id && <p className="text-xs text-red-500">{errors.outlet_id}</p>}
                     </div>
+                    )}
 
-                    <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-2">
-                                <Users className="w-4 h-4" /> Client
-                            </h3>
-                            {!isEdit && (
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="create_new_client"
-                                        checked={data.create_new_client}
-                                        onCheckedChange={(checked) => setData('create_new_client', !!checked)}
-                                    />
-                                    <Label htmlFor="create_new_client" className="text-xs font-medium cursor-pointer">New Client</Label>
-                                </div>
-                            )}
-                        </div>
 
-                        {!data.create_new_client ? (
-                            <div>
-                                <SearchableSelect
-                                    options={clientOptions}
-                                    value={data.client_id}
-                                    onChange={(val) => setData('client_id', val)}
-                                    placeholder="Select Client"
-                                    error={errors.client_id}
-                                />
-                            </div>
-                        ) : (
-                            <div className="space-y-3 p-3 rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800/20">
-                                <div className="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 mb-1">
-                                    <UserPlus className="w-3 h-3" /> Inline Client Creation
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="new_client_name" className="text-[10px] uppercase tracking-wider text-neutral-500">Name</Label>
-                                    <Input
-                                        id="new_client_name"
-                                        value={data.new_client_name}
-                                        onChange={e => setData('new_client_name', e.target.value)}
-                                        placeholder="Client Name"
-                                        className="h-9 text-xs"
-                                    />
-                                    {errors.new_client_name && <p className="text-[10px] text-red-500">{errors.new_client_name}</p>}
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="new_client_phone" className="text-[10px] uppercase tracking-wider text-neutral-500">Phone</Label>
-                                    <Input
-                                        id="new_client_phone"
-                                        value={data.new_client_phone}
-                                        onChange={e => setData('new_client_phone', e.target.value)}
-                                        placeholder="Phone Number"
-                                        className="h-9 text-xs"
-                                    />
-                                    {errors.new_client_phone && <p className="text-[10px] text-red-500">{errors.new_client_phone}</p>}
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="new_client_address" className="text-[10px] uppercase tracking-wider text-neutral-500">Address (Optional)</Label>
-                                    <Input
-                                        id="new_client_address"
-                                        value={data.new_client_address}
-                                        onChange={e => setData('new_client_address', e.target.value)}
-                                        placeholder="Address"
-                                        className="h-9 text-xs"
-                                    />
-                                </div>
-                            </div>
-                        )}
-                    </div>
 
                     <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 space-y-3">
                         <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-2"><Calendar className="w-4 h-4" /> Order Details</h3>

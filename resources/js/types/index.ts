@@ -82,14 +82,23 @@ export interface Product {
     outlet_prices?: OutletProductPrice[];
 }
 
+export interface CustomerProductPrice {
+    id: number;
+    customer_id: number;
+    product_id: number;
+    custom_price: number;
+}
+
 export interface Client {
     id: number;
     name: string;
     phone: string;
+    type: 'Consumer' | 'Corporate';
     address?: string;
     total_orders?: number;
     total_due?: number;
     total_paid?: number;
+    custom_prices?: CustomerProductPrice[];
 }
 
 export interface InvoiceItem {
@@ -117,4 +126,33 @@ export interface Invoice {
     due: number;
     status: 'Pending' | 'Processing' | 'In House' | 'Delivered' | 'Cancelled';
     items?: InvoiceItem[];
+}
+
+export interface ExpenseCategory {
+    id: number;
+    name: string;
+    description?: string;
+}
+
+export interface Expense {
+    id: number;
+    expense_category_id: number;
+    category?: ExpenseCategory;
+    amount: number;
+    payment_method: string;
+    date: string;
+    description?: string;
+    outlet_id?: number;
+    outlet?: Outlet;
+}
+
+export interface Asset {
+    id: number;
+    name: string;
+    code: string;
+    purchase_date: string;
+    cost: number;
+    current_value: number;
+    depreciation_rate?: number;
+    status: string;
 }

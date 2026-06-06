@@ -17,7 +17,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function CreateInvoice({ products, clients, categories, outlets }: CreateInvoiceProps) {
+export default function CreateInvoice({ products, clients, categories, outlets, invoice }: CreateInvoiceProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Create Invoice" />
@@ -26,6 +26,7 @@ export default function CreateInvoice({ products, clients, categories, outlets }
                 clients={clients}
                 categories={categories}
                 outlets={outlets}
+                invoice={invoice}
             />
         </AppLayout>
     );
