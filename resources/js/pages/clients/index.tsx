@@ -32,7 +32,7 @@ export default function Clients({ clients, products }: ClientsProps) {
         phone: '',
         type: 'Consumer',
         address: '',
-        custom_prices: [] as { product_id: number; custom_price: number }[],
+        custom_prices: [] as { product_id: number; custom_price: string | number }[],
     });
 
     const filtered = clients.filter((c) =>
@@ -169,7 +169,7 @@ export default function Clients({ clients, products }: ClientsProps) {
             {/* Client Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-6">
+                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{editingClient ? 'Edit Client' : 'New Client'}</h3>
                             <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"><X className="w-5 h-5 text-neutral-400" /></button>
@@ -245,7 +245,8 @@ export default function Clients({ clients, products }: ClientsProps) {
                                                     onChange={(val) => {
                                                         if (data.custom_prices.some(cp => cp.product_id == val)) return;
                                                         const product = products.find(p => p.id == val);
-                                                        setData('custom_prices', [...data.custom_prices, { product_id: Number(val), custom_price: product?.price || 0 }]);
+                                                        setData('custom_prices', [...data.custom_prices, { product_id: Number(val), custom_price: product?.price || "" }]);
+
                                                     }}
                                                     placeholder="Search product to add..."
                                                 />
@@ -254,31 +255,45 @@ export default function Clients({ clients, products }: ClientsProps) {
                                     </div>
 
                                     <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-                                        {data.custom_prices.map((cp, idx) => (
-                                            <div key={idx} className="flex gap-2 items-center bg-white dark:bg-neutral-900 p-2 rounded-xl border border-neutral-100 dark:border-neutral-800">
-                                                <div className="flex-1 text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                                                    {products.find(p => p.id == cp.product_id)?.name}
+                                        {data.custom_prices.map((cp, idx) => {
+                                            // প্রোডাক্টের রেগুলার প্রাইসটি খুঁজে বের করে প্লেসহোল্ডার বা ডিফল্ট হিসেবে ব্যবহারের জন্য
+                                            const currentProduct = products.find(p => p.id == cp.product_id);
+
+                                            return (
+                                                <div key={idx} className="space-y-1">
+                                                    <div className="flex gap-2 items-center bg-white dark:bg-neutral-900 p-2 rounded-xl border border-neutral-100 dark:border-neutral-800">
+                                                        <div className="flex-1 text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                                                            {currentProduct?.name}
+                                                        </div>
+                                                        <input
+                                                            type="number"
+                                                            value={cp.custom_price}
+                                                            onChange={e => {
+                                                                const value = e.target.value;
+                                                                const newPrices = [...data.custom_prices];
+                                                                newPrices[idx].custom_price = value === "" ? "" : Number(value);
+                                                                setData('custom_prices', newPrices);
+                                                            }}
+                                                            placeholder="Custom Price"
+                                                            className="w-32 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-xs bg-transparent dark:text-neutral-100"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setData('custom_prices', data.custom_prices.filter((_, i) => i !== idx))}
+                                                            className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+
+                                                    {errors[`custom_prices.${idx}.custom_price` as keyof typeof errors] && (
+                                                        <p className="text-xs text-red-500 pl-1">
+                                                            {errors[`custom_prices.${idx}.custom_price` as keyof typeof errors]}
+                                                        </p>
+                                                    )}
                                                 </div>
-                                                <input
-                                                    type="number"
-                                                    value={cp.custom_price}
-                                                    onChange={e => {
-                                                        const newPrices = [...data.custom_prices];
-                                                        newPrices[idx].custom_price = Number(e.target.value);
-                                                        setData('custom_prices', newPrices);
-                                                    }}
-                                                    placeholder="Price"
-                                                    className="w-24 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-xs bg-transparent dark:text-neutral-100"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setData('custom_prices', data.custom_prices.filter((_, i) => i !== idx))}
-                                                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                         {data.custom_prices.length === 0 && (
                                             <p className="text-center py-4 text-xs text-neutral-400 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-xl">
                                                 No custom prices set.

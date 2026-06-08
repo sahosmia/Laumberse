@@ -165,7 +165,8 @@ export default function Products({ products, categories, filter, units, outlets 
                 </div>
 
                 <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
-                    <div className="overflow-x-auto">
+                    {/* Desktop Table */}
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 text-xs uppercase tracking-wider">
@@ -227,6 +228,51 @@ export default function Products({ products, categories, filter, units, outlets 
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Mobile Card Layout */}
+                    <div className="md:hidden divide-y divide-neutral-100 dark:divide-neutral-800">
+                        {filtered.map((p) => (
+                            <div key={p.id} className={`p-4 space-y-3 bg-white dark:bg-neutral-900 ${selectedIds.includes(p.id) ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedIds.includes(p.id)}
+                                            onChange={() => toggleSelect(p.id)}
+                                            className="rounded border-neutral-300 dark:border-neutral-700 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <span className="font-mono text-[10px] text-neutral-500">#{p.id}</span>
+                                    </div>
+                                    <span className="px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-[10px] font-semibold text-neutral-600 dark:text-neutral-400">
+                                        {p.category?.name}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex-shrink-0 overflow-hidden border border-neutral-200 dark:border-neutral-800">
+                                        {p.image_url ? (
+                                            <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-neutral-400 font-bold text-sm uppercase">
+                                                {p.name.charAt(0)}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-bold text-neutral-900 dark:text-neutral-100 truncate">{p.name}</p>
+                                        <p className="text-sm font-bold text-blue-600">{formatCurrency(Number(p.price))}</p>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <button onClick={() => openEditModal(p)} className="p-2 bg-neutral-50 dark:bg-neutral-800 text-neutral-400 hover:text-blue-600 rounded-lg border border-neutral-100 dark:border-neutral-700/50">
+                                            <Edit3 className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={() => handleDelete(p.id)} className="p-2 bg-red-50 dark:bg-red-900/10 text-red-400 hover:text-red-600 rounded-lg border border-red-100 dark:border-red-800/50">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -253,7 +299,7 @@ export default function Products({ products, categories, filter, units, outlets 
             {/* Product Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-6">
+                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{editingProduct ? 'Edit Product' : 'New Product'}</h3>
                             <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"><X className="w-5 h-5 text-gray-400" /></button>

@@ -338,7 +338,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                         value={data.new_client_name}
                                         onChange={e => setData('new_client_name', e.target.value)}
                                         placeholder="Client Name"
-                                        className="h-9 text-xs"
+                                        className="h-12 md:h-9 text-sm md:text-xs"
                                     />
                                     {errors.new_client_name && <p className="text-[10px] text-red-500">{errors.new_client_name}</p>}
                                 </div>
@@ -350,7 +350,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                             value={data.new_client_phone}
                                             onChange={e => setData('new_client_phone', e.target.value)}
                                             placeholder="Phone Number"
-                                            className="h-9 text-xs"
+                                            className="h-12 md:h-9 text-sm md:text-xs"
                                         />
                                         {errors.new_client_phone && <p className="text-[10px] text-red-500">{errors.new_client_phone}</p>}
                                     </div>
@@ -360,7 +360,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                             id="new_client_type"
                                             value={data.new_client_type}
                                             onChange={e => setData('new_client_type', e.target.value)}
-                                            className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-9 text-xs bg-transparent dark:text-neutral-100"
+                                            className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-9 text-sm md:text-xs bg-transparent dark:text-neutral-100"
                                         >
                                             <option value="Consumer">Consumer</option>
                                             <option value="Corporate">Corporate</option>
@@ -375,7 +375,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                         value={data.new_client_address}
                                         onChange={e => setData('new_client_address', e.target.value)}
                                         placeholder="Address"
-                                        className="h-9 text-xs"
+                                        className="h-12 md:h-9 text-sm md:text-xs"
                                     />
                                 </div>
                             </div>
@@ -463,62 +463,117 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                 <p className="text-sm text-neutral-400">No items added yet.</p>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 text-xs uppercase tracking-wider">
-                                            <th className="text-left px-5 py-2.5 font-semibold">#</th>
-                                            <th className="text-left px-3 py-2.5 font-semibold">Service</th>
-                                            <th className="text-center px-3 py-2.5 font-semibold w-24">Qty</th>
-                                            <th className="text-right px-3 py-2.5 font-semibold w-28">Price</th>
-                                            <th className="text-right px-3 py-2.5 font-semibold w-28">Total</th>
-                                            <th className="text-center px-3 py-2.5 font-semibold w-12"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {data.items.map((item, idx: number) => (
-                                            <tr key={idx} className="border-b border-neutral-50 dark:border-neutral-800 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30 transition-colors">
-                                                <td className="px-5 py-3 text-neutral-400 font-mono text-xs">{idx + 1}</td>
-                                                <td className="px-3 py-3">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex-shrink-0 overflow-hidden border border-neutral-200 dark:border-neutral-800">
-                                                            {item.imageUrl ? (
-                                                                <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                <div className="w-full h-full flex items-center justify-center text-neutral-400 font-bold text-xs uppercase">
-                                                                    {item.name.charAt(0)}
-                                                                </div>
-                                                            )}
+                            <>
+                                {/* Desktop Table View */}
+                                <div className="hidden lg:block overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 text-xs uppercase tracking-wider">
+                                                <th className="text-left px-5 py-2.5 font-semibold">#</th>
+                                                <th className="text-left px-3 py-2.5 font-semibold">Service</th>
+                                                <th className="text-center px-3 py-2.5 font-semibold w-24">Qty</th>
+                                                <th className="text-right px-3 py-2.5 font-semibold w-28">Price</th>
+                                                <th className="text-right px-3 py-2.5 font-semibold w-28">Total</th>
+                                                <th className="text-center px-3 py-2.5 font-semibold w-12"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {data.items.map((item, idx: number) => (
+                                                <tr key={idx} className="border-b border-neutral-50 dark:border-neutral-800 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30 transition-colors">
+                                                    <td className="px-5 py-3 text-neutral-400 font-mono text-xs">{idx + 1}</td>
+                                                    <td className="px-3 py-3">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex-shrink-0 overflow-hidden border border-neutral-200 dark:border-neutral-800">
+                                                                {item.imageUrl ? (
+                                                                    <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <div className="w-full h-full flex items-center justify-center text-neutral-400 font-bold text-xs uppercase">
+                                                                        {item.name.charAt(0)}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="font-medium text-neutral-800 dark:text-neutral-200">{item.name}</div>
                                                         </div>
-                                                        <div className="font-medium text-neutral-800 dark:text-neutral-200">{item.name}</div>
+                                                    </td>
+                                                    <td className="px-3 py-3 text-center">
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            <button type="button" onClick={() => updateQty(idx, item.qty - 1)} className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">−</button>
+                                                            <span className="w-8 font-semibold text-neutral-800 dark:text-neutral-200">{item.qty}</span>
+                                                            <button type="button" onClick={() => updateQty(idx, item.qty + 1)} className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">+</button>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-3 py-3 text-right font-medium">
+                                                        <Input
+                                                            type="number"
+                                                            value={item.price}
+                                                            onChange={e => updatePrice(idx, Number(e.target.value))}
+                                                            className="h-8 w-24 text-right text-xs"
+                                                        />
+                                                    </td>
+                                                    <td className="px-3 py-3 text-right font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(item.price * item.qty)}</td>
+                                                    <td className="px-3 py-3 text-center">
+                                                        <button type="button" onClick={() => removeItem(idx)} className="p-1.5 text-red-400 hover:text-red-600">
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Mobile List View */}
+                                <div className="lg:hidden divide-y divide-neutral-100 dark:divide-neutral-800">
+                                    {data.items.map((item, idx: number) => (
+                                        <div key={idx} className="p-4 space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-12 h-12 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex-shrink-0 overflow-hidden border border-neutral-200 dark:border-neutral-800">
+                                                        {item.imageUrl ? (
+                                                            <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-neutral-400 font-bold text-sm uppercase">
+                                                                {item.name.charAt(0)}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                </td>
-                                                <td className="px-3 py-3 text-center">
-                                                    <div className="flex items-center justify-center gap-1">
-                                                        <button type="button" onClick={() => updateQty(idx, item.qty - 1)} className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">−</button>
-                                                        <span className="w-8 font-semibold text-neutral-800 dark:text-neutral-200">{item.qty}</span>
-                                                        <button type="button" onClick={() => updateQty(idx, item.qty + 1)} className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">+</button>
+                                                    <div>
+                                                        <p className="font-bold text-neutral-900 dark:text-neutral-100">{item.name}</p>
+                                                        <p className="text-xs text-neutral-500 font-mono">Item #{idx + 1}</p>
                                                     </div>
-                                                </td>
-                                                <td className="px-3 py-3 text-right font-medium">
+                                                </div>
+                                                <button type="button" onClick={() => removeItem(idx)} className="p-2 text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4 pt-2">
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Quantity</label>
+                                                    <div className="flex items-center gap-3 bg-neutral-50 dark:bg-neutral-800/50 p-1.5 rounded-xl w-fit">
+                                                        <button type="button" onClick={() => updateQty(idx, item.qty - 1)} className="w-12 h-12 rounded-lg bg-white dark:bg-neutral-800 shadow-sm border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 flex items-center justify-center">−</button>
+                                                        <span className="w-8 text-center font-bold text-neutral-900 dark:text-neutral-100">{item.qty}</span>
+                                                        <button type="button" onClick={() => updateQty(idx, item.qty + 1)} className="w-12 h-12 rounded-lg bg-white dark:bg-neutral-800 shadow-sm border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 flex items-center justify-center">+</button>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-1 text-right">
+                                                    <label className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Unit Price</label>
                                                     <Input
                                                         type="number"
                                                         value={item.price}
                                                         onChange={e => updatePrice(idx, Number(e.target.value))}
-                                                        className="h-8 w-24 text-right text-xs"
+                                                        className="h-12 text-right font-bold text-blue-600 bg-transparent"
                                                     />
-                                                </td>
-                                                <td className="px-3 py-3 text-right font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(item.price * item.qty)}</td>
-                                                <td className="px-3 py-3 text-center">
-                                                    <button type="button" onClick={() => removeItem(idx)} className="p-1.5 text-red-400 hover:text-red-600">
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-center pt-2 border-t border-neutral-50 dark:border-neutral-800/50">
+                                                <span className="text-sm font-medium text-neutral-500">Subtotal</span>
+                                                <span className="text-lg font-black text-neutral-900 dark:text-neutral-100">{formatCurrency(item.price * item.qty)}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
                         )}
                     </div>
                 </div>
@@ -606,7 +661,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                 placeholder="Discount Amount"
                                 value={data.discount_amount}
                                 onChange={e => handleDiscountAmountChange(e.target.value)}
-                                className="h-9 text-xs"
+                                className="h-12 md:h-9 text-sm md:text-xs"
                             />
                         </div>
 
@@ -628,7 +683,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                 placeholder="Paid Amount"
                                 value={data.paid}
                                 onChange={e => handlePaidChange(e.target.value)}
-                                className="h-9 text-xs"
+                                className="h-12 md:h-9 text-sm md:text-xs"
                             />
                         </div>
                     </div>
