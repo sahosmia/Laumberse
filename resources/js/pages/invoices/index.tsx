@@ -176,7 +176,8 @@ export default function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
                 </div>
 
                 <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
-                    <div className="overflow-x-auto">
+                    {/* Desktop Table */}
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 text-xs uppercase tracking-wider">
@@ -233,6 +234,56 @@ export default function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Mobile Card Layout */}
+                    <div className="md:hidden divide-y divide-neutral-100 dark:divide-neutral-800">
+                        {filtered.map((inv) => (
+                            <div key={inv.id} className={`p-4 space-y-3 bg-white dark:bg-neutral-900 ${selectedIds.includes(inv.id) ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedIds.includes(inv.id)}
+                                            onChange={() => toggleSelect(inv.id)}
+                                            className="rounded border-neutral-300 dark:border-neutral-700 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <span className="font-mono text-xs font-semibold text-blue-600">{inv.invoice_uuid}</span>
+                                    </div>
+                                    <StatusSelect invoice={inv} />
+                                </div>
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="font-medium text-neutral-900 dark:text-neutral-100">{inv.client.name}</p>
+                                        <p className="text-xs text-neutral-500 dark:text-neutral-400">{inv.date}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(Number(inv.total))}</p>
+                                        <p className="text-[10px] text-red-500 font-medium">Due: {formatCurrency(Number(inv.due))}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-50 dark:border-neutral-800/50">
+                                    <Link href={route('invoices.show', inv.id)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 rounded-lg">
+                                        <Eye className="w-3.5 h-3.5" /> View
+                                    </Link>
+                                    <Link href={route('invoices.edit', inv.id)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-lg">
+                                        <Edit className="w-3.5 h-3.5" /> Edit
+                                    </Link>
+                                    <button
+                                        onClick={() => handlePrint(inv)}
+                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-lg"
+                                    >
+                                        <Printer className="w-3.5 h-3.5" /> Print
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(inv.id)}
+                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>

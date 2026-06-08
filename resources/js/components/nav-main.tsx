@@ -1,4 +1,4 @@
-import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem } from '@/components/ui/sidebar';
+import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
@@ -6,6 +6,14 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 
 export function NavMain({ items = [] }: { items: NavItem[] }) {
     const page = usePage();
+    const { setOpenMobile, isMobile } = useSidebar();
+
+    const handleLinkClick = () => {
+        if (isMobile) {
+            setOpenMobile(false);
+        }
+    };
+
     return (
         <SidebarGroup className="px-2 py-0">
             <SidebarGroupLabel>Platform</SidebarGroupLabel>
@@ -30,7 +38,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                                             {item.items?.map((subItem) => (
                                                 <SidebarMenuSubItem key={subItem.title}>
                                                     <SidebarMenuSubButton asChild isActive={subItem.url === page.url}>
-                                                        <Link href={subItem.url}>
+                                                        <Link href={subItem.url} onClick={handleLinkClick}>
                                                             <span>{subItem.title}</span>
                                                         </Link>
                                                     </SidebarMenuSubButton>
@@ -46,7 +54,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                     return (
                         <SidebarMenuItem key={item.title}>
                             <SidebarMenuButton asChild isActive={item.url === page.url}>
-                                <Link href={item.url} prefetch>
+                                <Link href={item.url} prefetch onClick={handleLinkClick}>
                                     {item.icon && <item.icon />}
                                     <span>{item.title}</span>
                                 </Link>
