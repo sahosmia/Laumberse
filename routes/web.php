@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AssetController;
+use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\Employees\EmployeeController;
 use App\Http\Controllers\Clients\ClientController;
 use App\Http\Controllers\DashboardController;
@@ -35,8 +36,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::resource('expenses', ExpenseController::class);
     Route::resource('expense-categories', ExpenseCategoryController::class);
+    Route::resource('payrolls', PayrollController::class)->only(['index']);
     Route::get('/employees/payroll-eligible', [EmployeeController::class, 'getEligibleForPayroll'])->name('employees.payroll-eligible');
-    Route::resource('assets', AssetController::class);
+    Route::resource('manage-assets', AssetController::class)->names('manage-assets');
 
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('history');
     Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('create-invoice');

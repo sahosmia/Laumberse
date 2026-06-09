@@ -1490,3 +1490,48 @@
 [Tue Jun  9 09:54:47 2026] 127.0.0.1:47332 Accepted
 [Tue Jun  9 09:54:47 2026] 127.0.0.1:47332 [200]: GET /logo4.jpeg
 [Tue Jun  9 09:54:47 2026] 127.0.0.1:47332 Closing
+[Tue Jun  9 11:20:10 2026] 127.0.0.1:37204 Accepted
+[Tue Jun  9 11:20:10 2026] 127.0.0.1:37204 [200]: GET /login
+[Tue Jun  9 11:20:10 2026] 127.0.0.1:37204 Closing
+[Tue Jun  9 11:20:12 2026] 127.0.0.1:39298 Accepted
+[Tue Jun  9 11:20:12 2026] 127.0.0.1:39298 [200]: GET /logo3.jpeg
+[Tue Jun  9 11:20:12 2026] 127.0.0.1:39298 Closing
+[Tue Jun  9 11:20:13 2026] 127.0.0.1:39312 Accepted
+[Tue Jun  9 11:20:13 2026] 127.0.0.1:39312 [302]: POST /login
+[Tue Jun  9 11:20:13 2026] 127.0.0.1:39312 Closing
+[Tue Jun  9 11:20:13 2026] 127.0.0.1:39328 Accepted
+[Tue Jun  9 11:20:13 2026] 127.0.0.1:39328 [200]: GET /dashboard
+[Tue Jun  9 11:20:13 2026] 127.0.0.1:39328 Closing
+[Tue Jun  9 11:20:14 2026] 127.0.0.1:39330 Accepted
+[Tue Jun  9 11:20:14 2026] 127.0.0.1:39330 [200]: GET /logo4.jpeg
+[Tue Jun  9 11:20:14 2026] 127.0.0.1:39330 Closing
+[Tue Jun  9 11:20:16 2026] 127.0.0.1:39334 Accepted
+[Tue Jun  9 11:20:16 2026] 127.0.0.1:39334 [200]: GET /payrolls
+[Tue Jun  9 11:20:16 2026] 127.0.0.1:39334 Closing
+[Tue Jun  9 11:20:16 2026] 127.0.0.1:39340 Accepted
+[Tue Jun  9 11:20:16 2026] 127.0.0.1:39340 [200]: GET /payrolls
+[Tue Jun  9 11:20:16 2026] 127.0.0.1:39340 Closing
+[Tue Jun  9 11:20:17 2026] 127.0.0.1:39352 Accepted
+[Tue Jun  9 11:20:17 2026] 127.0.0.1:39352 [200]: GET /employees
+[Tue Jun  9 11:20:17 2026] 127.0.0.1:39352 Closing
+[Tue Jun  9 11:20:17 2026] 127.0.0.1:39356 Accepted
+[Tue Jun  9 11:20:17 2026] 127.0.0.1:39356 [200]: GET /employees
+[Tue Jun  9 11:20:17 2026] 127.0.0.1:39356 Closing
+[Tue Jun  9 11:25:47 2026] 127.0.0.1:39646 Accepted
+[Tue Jun  9 11:25:47 2026] 127.0.0.1:39646 [200]: GET /login
+[Tue Jun  9 11:25:47 2026] 127.0.0.1:39646 Closing
+[Tue Jun  9 11:25:47 2026] 127.0.0.1:39658 Accepted
+[Tue Jun  9 11:25:47 2026] 127.0.0.1:39658 [200]: GET /logo3.jpeg
+[Tue Jun  9 11:25:47 2026] 127.0.0.1:39658 Closing
+[Tue Jun  9 11:25:48 2026] 127.0.0.1:39664 Accepted
+[Tue Jun  9 11:25:48 2026] 127.0.0.1:39664 [302]: POST /login
+[Tue Jun  9 11:25:48 2026] 127.0.0.1:39664 Closing
+[Tue Jun  9 11:25:48 2026] 127.0.0.1:39676 Accepted
+[Tue Jun  9 11:25:48 2026] 127.0.0.1:39676 [200]: GET /dashboard
+[Tue Jun  9 11:25:48 2026] 127.0.0.1:39676 Closing
+[Tue Jun  9 11:25:49 2026] 127.0.0.1:39682 Accepted
+[Tue Jun  9 11:25:49 2026] 127.0.0.1:39682 [200]: GET /logo4.jpeg
+[Tue Jun  9 11:25:49 2026] 127.0.0.1:39682 Closing
+[Tue Jun  9 11:25:49 2026] 127.0.0.1:39698 Accepted
+[Tue Jun  9 11:25:49 2026] 127.0.0.1:39698 [200]: GET /settings/global
+[Tue Jun  9 11:25:49 2026] 127.0.0.1:39698 Closing

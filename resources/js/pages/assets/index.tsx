@@ -12,7 +12,7 @@ interface AssetsProps {
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Assets',
-        href: '/assets',
+        href: '/manage-assets',
     },
 ];
 
@@ -62,11 +62,11 @@ export default function Assets({ assets }: AssetsProps) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingAsset) {
-            put(route('assets.update', editingAsset.id), {
+            put(route('manage-assets.update', editingAsset.id), {
                 onSuccess: () => setShowModal(false),
             });
         } else {
-            post(route('assets.store'), {
+            post(route('manage-assets.store'), {
                 onSuccess: () => {
                     setShowModal(false);
                     reset();
@@ -82,7 +82,7 @@ export default function Assets({ assets }: AssetsProps) {
 
     const confirmDelete = () => {
         if (deleteId) {
-            destroy(route('assets.destroy', deleteId), {
+            destroy(route('manage-assets.destroy', deleteId), {
                 onSuccess: () => setShowDeleteModal(false),
             });
         }
