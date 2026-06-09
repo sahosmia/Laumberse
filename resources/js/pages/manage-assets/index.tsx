@@ -2,26 +2,26 @@ import { Head, useForm } from '@inertiajs/react';
 import { useState } from "react";
 import { Search, Plus, Trash2, Edit3, X, Wallet, ShieldCheck, AlertCircle, Clock } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, Asset } from '@/types';
+import { type BreadcrumbItem, ManageAsset } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 
-interface AssetsProps {
-    assets: Asset[];
+interface ManageAssetsProps {
+    manageAssets: ManageAsset[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Assets',
-        href: '/assets',
+        title: 'Manage Assets',
+        href: '/manage-assets',
     },
 ];
 
 const formatCurrency = (n: number) => `৳${n.toLocaleString("en-BD")}`;
 
-export default function Assets({ assets }: AssetsProps) {
+export default function ManageAssets({ manageAssets }: ManageAssetsProps) {
     const [search, setSearch] = useState("");
     const [showModal, setShowModal] = useState(false);
-    const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+    const [editingAsset, setEditingAsset] = useState<ManageAsset | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
 
@@ -35,7 +35,7 @@ export default function Assets({ assets }: AssetsProps) {
         status: 'Active',
     });
 
-    const filtered = assets.filter((a) =>
+    const filtered = manageAssets.filter((a) =>
         a.name.toLowerCase().includes(search.toLowerCase()) || a.code.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -45,16 +45,16 @@ export default function Assets({ assets }: AssetsProps) {
         setShowModal(true);
     };
 
-    const openEditModal = (asset: Asset) => {
-        setEditingAsset(asset);
+    const openEditModal = (manageAsset: ManageAsset) => {
+        setEditingAsset(manageAsset);
         setData({
-            name: asset.name,
-            code: asset.code,
-            purchase_date: asset.purchase_date,
-            cost: asset.cost,
-            current_value: asset.current_value,
-            depreciation_rate: asset.depreciation_rate || '',
-            status: asset.status,
+            name: manageAsset.name,
+            code: manageAsset.code,
+            purchase_date: manageAsset.purchase_date,
+            cost: manageAsset.cost,
+            current_value: manageAsset.current_value,
+            depreciation_rate: manageAsset.depreciation_rate || '',
+            status: manageAsset.status,
         });
         setShowModal(true);
     };
@@ -62,11 +62,11 @@ export default function Assets({ assets }: AssetsProps) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingAsset) {
-            put(route('assets.update', editingAsset.id), {
+            put(route('manage-assets.update', editingAsset.id), {
                 onSuccess: () => setShowModal(false),
             });
         } else {
-            post(route('assets.store'), {
+            post(route('manage-assets.store'), {
                 onSuccess: () => {
                     setShowModal(false);
                     reset();
@@ -82,7 +82,7 @@ export default function Assets({ assets }: AssetsProps) {
 
     const confirmDelete = () => {
         if (deleteId) {
-            destroy(route('assets.destroy', deleteId), {
+            destroy(route('manage-assets.destroy', deleteId), {
                 onSuccess: () => setShowDeleteModal(false),
             });
         }
@@ -99,11 +99,11 @@ export default function Assets({ assets }: AssetsProps) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Assets" />
+            <Head title="Manage Assets" />
             <div className="p-4 space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Assets</h1>
+                        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Manage Assets</h1>
                         <p className="text-sm text-neutral-500 dark:text-neutral-400">Inventory of shop equipment & assets</p>
                     </div>
                     <button

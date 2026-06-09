@@ -11,15 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('assets', function (Blueprint $table) {
+        Schema::create('employees', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('code')->unique();
-            $table->date('purchase_date');
-            $table->decimal('cost', 15, 2);
-            $table->decimal('current_value', 15, 2);
-            $table->decimal('depreciation_rate', 5, 2)->nullable();
-            $table->string('status');
+            $table->string('phone')->nullable();
+            $table->string('email')->nullable();
+            $table->decimal('base_salary', 15, 2);
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }
@@ -29,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('assets');
+        Schema::dropIfExists('employees');
     }
 };

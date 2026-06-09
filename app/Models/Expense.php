@@ -8,6 +8,7 @@ class Expense extends Model
 {
     protected $fillable = [
         'expense_category_id',
+        'payroll_id',
         'amount',
         'payment_method',
         'date',
@@ -23,5 +24,10 @@ class Expense extends Model
     public function outlet()
     {
         return $this->belongsTo(Outlet::class);
+    }
+
+    public function payroll()
+    {
+        return $this->belongsTo(Payroll::class);
     }
 }

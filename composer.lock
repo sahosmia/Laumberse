@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "77555e720044fab70de5eef472408aa9",
+    "content-hash": "ac66100f9cb313900a21b89a0337cfdd",
     "packages": [
         {
             "name": "barryvdh/laravel-dompdf",
@@ -2391,6 +2391,62 @@
                 "source": "https://github.com/Masterminds/html5-php/tree/2.10.0"
             },
             "time": "2025-07-25T09:04:22+00:00"
+        },
+        {
+            "name": "mirazmac/bangla-string",
+            "version": "1.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/MirazMac/BanglaString.git",
+                "reference": "1fef3895620f6908e6379d85af74976bafcd78f0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/MirazMac/BanglaString/zipball/1fef3895620f6908e6379d85af74976bafcd78f0",
+                "reference": "1fef3895620f6908e6379d85af74976bafcd78f0",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "4.8.36"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "MirazMac\\BanglaString\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Miraz Mac",
+                    "email": "mirazmac@gmail.com",
+                    "homepage": "https://mirazmac.info",
+                    "role": "Original Author"
+                }
+            ],
+            "description": "A wannabe all-in-all Bangla String Manupulation Library!",
+            "homepage": "https://github.com/mirazmac/BanglaString",
+            "keywords": [
+                "Bangla",
+                "avro",
+                "avro to bijoy",
+                "bijoy",
+                "bijoy to avro",
+                "phonetic",
+                "string",
+                "unicode"
+            ],
+            "support": {
+                "issues": "https://github.com/MirazMac/BanglaString/issues",
+                "source": "https://github.com/MirazMac/BanglaString/tree/1.1.1"
+            },
+            "time": "2021-10-19T07:26:20+00:00"
         },
         {
             "name": "monolog/monolog",

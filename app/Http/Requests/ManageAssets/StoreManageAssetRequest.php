@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Assets;
+namespace App\Http\Requests\ManageAssets;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreAssetRequest extends FormRequest
+class StoreManageAssetRequest extends FormRequest
 {
     public function authorize(): bool { return true; }
     public function rules(): array

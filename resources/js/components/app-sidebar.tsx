@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, Home, FilePlus, Clock, Users, BarChart3, Package, Tag, MapPin, Receipt, Wallet } from 'lucide-react';
+import { BookOpen, Folder, Home, FilePlus, Clock, Users, BarChart3, Package, Tag, MapPin, Receipt, Wallet, Settings } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -29,11 +29,21 @@ const mainNavItems: NavItem[] = [
         icon: MapPin,
     },
     {
+        title: 'Employees',
+        url: route('employees.index'),
+        icon: Users,
+    },
+    {
+        title: 'Payroll Ledger',
+        url: route('payrolls.index'),
+        icon: BookOpen,
+    },
+    {
         title: 'Clients',
         url: route('clients.index'),
         icon: Users,
     },
-  
+
      {
         title: 'Expenses',
         url: '#',
@@ -50,8 +60,8 @@ const mainNavItems: NavItem[] = [
         ],
     },
     {
-        title: 'Assets',
-        url: route('assets.index'),
+        title: 'Manage Assets',
+        url: route('manage-assets.index'),
         icon: Wallet,
     },
     {
@@ -78,6 +88,7 @@ const mainNavItems: NavItem[] = [
         url: route('reports'),
         icon: BarChart3,
     },
+    
 ];
 
 

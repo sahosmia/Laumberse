@@ -1,6 +1,9 @@
 <?php
 
-use App\Http\Controllers\AssetController;
+use App\Http\Controllers\ManageAssetController;
+use App\Http\Controllers\Employees\EmployeeController;
+use App\Http\Controllers\PayrollController;
+
 use App\Http\Controllers\Clients\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Expenses\ExpenseCategoryController;
@@ -24,6 +27,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('clients', ClientController::class);
+    Route::resource('employees', EmployeeController::class);
     Route::delete('/products/bulk-destroy', [ProductController::class, 'bulkDestroy'])->name('products.bulk-destroy');
     Route::resource('products', ProductController::class);
     Route::resource('categories', CategoryController::class);
@@ -33,7 +37,11 @@ Route::middleware(['auth'])->group(function () {
 
     Route::resource('expenses', ExpenseController::class);
     Route::resource('expense-categories', ExpenseCategoryController::class);
-    Route::resource('assets', AssetController::class);
+    Route::get('/employees/payroll-eligible', [EmployeeController::class, 'getEligibleForPayroll'])->name('employees.payroll-eligible');
+     Route::resource('payrolls', PayrollController::class)->only(['index']);
+    Route::get('/employees/payroll-eligible', [EmployeeController::class, 'getEligibleForPayroll'])->name('employees.payroll-eligible');
+
+    Route::resource('manage-assets', ManageAssetController::class);
 
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('history');
     Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('create-invoice');

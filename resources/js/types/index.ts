@@ -146,7 +146,7 @@ export interface Expense {
     outlet?: Outlet;
 }
 
-export interface Asset {
+export interface ManageAsset {
     id: number;
     name: string;
     code: string;

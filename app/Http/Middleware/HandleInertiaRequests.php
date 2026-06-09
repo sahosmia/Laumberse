@@ -49,6 +49,9 @@ class HandleInertiaRequests extends Middleware
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
             ],
+            'settings' => [
+                'salary_category_id' => \App\Models\GlobalSetting::get('salary_category_id'),
+            ],
         ]);
     }
 }

@@ -2,22 +2,11 @@
 <html>
 
 <head>
-    <!-- Dompdf এর জন্য প্রপার মেটা ট্যাগ -->
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta charset="utf-8">
     <title>Invoice - {{ $invoice->invoice_uuid }}</title>
     <style>
-        /* ১. বাংলা ফন্টটি পিডিএফে রেজিস্টার করা */
-        @font-face {
-    font-family: 'SolaimanLipi';
-    /* নিশ্চিত করুন public/assets/fonts/ ফোল্ডারে ঠিক এই বানানে ফাইলটি আছে */
-    src: url('{{ public_path("assets/fonts/SolaimanLipi-Normal.ttf") }}') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
         body {
-            /* ২. ডিফল্ট ফন্ট হিসেবে বাংলা ফন্ট সেট করা এবং ফলব্যাক হিসেবে Helvetica রাখা */
-            font-family: 'SolaimanLipi', 'Helvetica', sans-serif;
+            font-family: 'Helvetica', sans-serif;
             color: #333;
             line-height: 1.5;
             font-size: 14px;
@@ -222,6 +211,7 @@
         <div class="summary-wrapper">
             <table class="summary-table">
                 @if ($invoice->discount_amount != 0)
+
                     <tr>
                         <td style="color: #666;">Subtotal</td>
                         <td class="text-right">{{ number_format($subtotal, 2) }}</td>
