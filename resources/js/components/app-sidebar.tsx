@@ -29,6 +29,11 @@ const mainNavItems: NavItem[] = [
         icon: MapPin,
     },
     {
+        title: 'Employees',
+        url: route('employees.index'),
+        icon: Users,
+    },
+    {
         title: 'Clients',
         url: route('clients.index'),
         icon: Users,

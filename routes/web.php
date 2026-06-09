@@ -25,6 +25,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('clients', ClientController::class);
+    Route::resource('employees', EmployeeController::class);
     Route::delete('/products/bulk-destroy', [ProductController::class, 'bulkDestroy'])->name('products.bulk-destroy');
     Route::resource('products', ProductController::class);
     Route::resource('categories', CategoryController::class);

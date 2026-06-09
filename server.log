@@ -1217,3 +1217,276 @@
 [Tue Jun  9 09:31:31 2026] 127.0.0.1:60702 [200]: GET /logo4.jpeg
 [Tue Jun  9 09:31:31 2026] 127.0.0.1:60702 Closing
 [Tue Jun  9 09:31:31 2026] 127.0.0.1:60692 Closing
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34268 Accepted
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34268 [200]: GET /login
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34268 Closing
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34282 Accepted
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34282 [200]: GET /build/assets/app-BWbgVZMV.css
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34282 Closing
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34284 Accepted
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34286 Accepted
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34290 Accepted
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34306 Accepted
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34320 Accepted
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34334 Accepted
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34284 [200]: GET /build/assets/app-CX30s__y.js
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34286 [200]: GET /build/assets/login-DDNf3C4a.js
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34290 [200]: GET /build/assets/input-error-CQhQXzG_.js
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34306 [200]: GET /build/assets/text-link-B3GSCQTD.js
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34286 Closing
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34290 Closing
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34320 [200]: GET /build/assets/app-logo-icon-BVV0563G.js
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34284 Closing
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34306 Closing
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34320 Closing
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34334 [200]: GET /build/assets/checkbox-GVVluGZz.js
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34334 Closing
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34336 Accepted
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34338 Accepted
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34348 Accepted
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34360 Accepted
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34336 [200]: GET /build/assets/index-DTIhWEza.js
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34338 [200]: GET /build/assets/label-wHifm7Yn.js
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34348 [200]: GET /build/assets/auth-layout-DgZlODNe.js
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34360 [200]: GET /build/assets/index-BDxbL-zE.js
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34336 Closing
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34338 Closing
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34348 Closing
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34360 Closing
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34372 Accepted
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34372 [200]: GET /build/assets/app-BWbgVZMV.css
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34372 Closing
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34378 Accepted
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34378 [200]: GET /logo3.jpeg
+[Tue Jun  9 09:53:38 2026] 127.0.0.1:34378 Closing
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:34388 Accepted
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:34388 [302]: POST /login
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:34388 Closing
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57226 Accepted
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57226 [200]: GET /dashboard
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57226 Closing
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57238 Accepted
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57240 Accepted
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57256 Accepted
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57262 Accepted
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57270 Accepted
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57238 [200]: GET /build/assets/dashboard-mlAT7xdf.js
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57240 [200]: GET /build/assets/app-layout-Cgq5AOqj.js
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57238 Closing
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57256 [200]: GET /build/assets/PieChart-C2GpPVxq.js
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57240 Closing
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57256 Closing
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57262 [200]: GET /build/assets/with-selector-DzcXmDLs.js
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57262 Closing
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57270 [200]: GET /build/assets/circle-alert-JDlqffGb.js
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57270 Closing
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57278 Accepted
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57278 [200]: GET /employees
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57278 Closing
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57286 Accepted
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57286 [200]: GET /logo4.jpeg
+[Tue Jun  9 09:53:39 2026] 127.0.0.1:57286 Closing
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57298 Accepted
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57308 Accepted
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57320 Accepted
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57328 Accepted
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57336 Accepted
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57342 Accepted
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57298 [200]: GET /build/assets/app-BWbgVZMV.css
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57298 Closing
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57354 Accepted
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57308 [200]: GET /build/assets/index-BzgKns-7.js
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57320 [200]: GET /build/assets/delete-confirmation-modal-C6P0MVgW.js
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57308 Closing
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57328 [200]: GET /build/assets/search-DbhECu0H.js
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57320 Closing
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57328 Closing
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57336 [200]: GET /build/assets/user-wjVtE2NN.js
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57336 Closing
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57342 [200]: GET /build/assets/pen-line-MVFI-LrD.js
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57342 Closing
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57358 Accepted
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57370 Accepted
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57354 [200]: GET /build/assets/trash-2-DKvSUjBd.js
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57354 Closing
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57378 Accepted
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57390 Accepted
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57394 Accepted
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57408 Accepted
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57358 [200]: GET /build/assets/app-CX30s__y.js
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57370 [200]: GET /build/assets/dialog-nRbs3xS6.js
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57378 [200]: GET /build/assets/app-layout-Cgq5AOqj.js
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57370 Closing
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57358 Closing
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57378 Closing
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57390 [200]: GET /build/assets/app-logo-icon-BVV0563G.js
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57390 Closing
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57394 [200]: GET /build/assets/index-DTIhWEza.js
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57408 [200]: GET /build/assets/index-BDxbL-zE.js
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57394 Closing
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57408 Closing
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57416 Accepted
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57416 [200]: GET /build/assets/app-BWbgVZMV.css
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57416 Closing
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57432 Accepted
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57432 [200]: GET /logo3.jpeg
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57432 Closing
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57436 Accepted
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57436 [200]: GET /logo4.jpeg
+[Tue Jun  9 09:53:40 2026] 127.0.0.1:57436 Closing
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57438 Accepted
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57438 [200]: GET /settings/global
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57438 Closing
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57446 Accepted
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57446 [200]: GET /build/assets/app-BWbgVZMV.css
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57446 Closing
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57450 Accepted
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57454 Accepted
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57464 Accepted
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57472 Accepted
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57486 Accepted
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57490 Accepted
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57450 [200]: GET /build/assets/global-BqsR74_3.js
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57454 [200]: GET /build/assets/layout-BnPwHLJo.js
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57464 [200]: GET /build/assets/transition-BPntTPsE.js
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57450 Closing
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57454 Closing
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57464 Closing
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57472 [200]: GET /build/assets/app-CX30s__y.js
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57486 [200]: GET /build/assets/input-error-CQhQXzG_.js
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57472 Closing
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57486 Closing
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57490 [200]: GET /build/assets/app-logo-icon-BVV0563G.js
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57490 Closing
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57496 Accepted
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57504 Accepted
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57514 Accepted
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57520 Accepted
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57496 [200]: GET /build/assets/label-wHifm7Yn.js
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57504 [200]: GET /build/assets/app-layout-Cgq5AOqj.js
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57496 Closing
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57504 Closing
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57514 [200]: GET /build/assets/index-DTIhWEza.js
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57520 [200]: GET /build/assets/index-BDxbL-zE.js
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57514 Closing
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57520 Closing
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57530 Accepted
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57530 [200]: GET /build/assets/app-BWbgVZMV.css
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57530 Closing
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57532 Accepted
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57540 Accepted
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57532 [200]: GET /logo3.jpeg
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57540 [200]: GET /logo4.jpeg
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57540 Closing
+[Tue Jun  9 09:53:41 2026] 127.0.0.1:57532 Closing
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47010 Accepted
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47010 [200]: GET /login
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47010 Closing
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47024 Accepted
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47024 [200]: GET /build/assets/app-BWbgVZMV.css
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47024 Closing
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47036 Accepted
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47048 Accepted
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47052 Accepted
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47068 Accepted
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47070 Accepted
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47086 Accepted
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47036 [200]: GET /build/assets/app-CX30s__y.js
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47048 [200]: GET /build/assets/login-DDNf3C4a.js
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47052 [200]: GET /build/assets/input-error-CQhQXzG_.js
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47068 [200]: GET /build/assets/text-link-B3GSCQTD.js
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47070 [200]: GET /build/assets/app-logo-icon-BVV0563G.js
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47086 [200]: GET /build/assets/checkbox-GVVluGZz.js
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47048 Closing
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47052 Closing
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47068 Closing
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47070 Closing
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47086 Closing
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47036 Closing
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47102 Accepted
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47106 Accepted
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47112 Accepted
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47120 Accepted
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47102 [200]: GET /build/assets/index-DTIhWEza.js
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47106 [200]: GET /build/assets/label-wHifm7Yn.js
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47112 [200]: GET /build/assets/auth-layout-DgZlODNe.js
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47120 [200]: GET /build/assets/index-BDxbL-zE.js
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47102 Closing
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47106 Closing
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47112 Closing
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47120 Closing
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47132 Accepted
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47132 [200]: GET /build/assets/app-BWbgVZMV.css
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47132 Closing
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47136 Accepted
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47136 [200]: GET /logo3.jpeg
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47136 Closing
+[Tue Jun  9 09:54:46 2026] 127.0.0.1:47148 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47148 [302]: POST /login
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47148 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47160 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47160 [200]: GET /dashboard
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47160 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47174 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47176 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47190 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47202 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47204 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47174 [200]: GET /build/assets/dashboard-mlAT7xdf.js
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47176 [200]: GET /build/assets/app-layout-Cgq5AOqj.js
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47174 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47176 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47190 [200]: GET /build/assets/PieChart-C2GpPVxq.js
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47190 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47202 [200]: GET /build/assets/with-selector-DzcXmDLs.js
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47202 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47204 [200]: GET /build/assets/circle-alert-JDlqffGb.js
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47204 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47208 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47208 [200]: GET /settings/global
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47208 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47218 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47218 [200]: GET /logo4.jpeg
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47218 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47228 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47228 [200]: GET /build/assets/app-BWbgVZMV.css
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47228 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47242 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47246 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47262 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47274 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47282 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47290 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47242 [200]: GET /build/assets/global-BqsR74_3.js
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47246 [200]: GET /build/assets/layout-BnPwHLJo.js
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47262 [200]: GET /build/assets/transition-BPntTPsE.js
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47274 [200]: GET /build/assets/app-CX30s__y.js
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47282 [200]: GET /build/assets/input-error-CQhQXzG_.js
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47290 [200]: GET /build/assets/app-logo-icon-BVV0563G.js
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47242 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47246 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47262 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47282 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47290 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47274 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47292 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47294 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47302 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47292 [200]: GET /build/assets/label-wHifm7Yn.js
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47294 [200]: GET /build/assets/app-layout-Cgq5AOqj.js
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47310 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47302 [200]: GET /build/assets/index-DTIhWEza.js
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47310 [200]: GET /build/assets/index-BDxbL-zE.js
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47292 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47294 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47302 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47310 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47318 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47318 [200]: GET /build/assets/app-BWbgVZMV.css
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47318 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47324 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47324 [200]: GET /logo3.jpeg
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47324 Closing
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47332 Accepted
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47332 [200]: GET /logo4.jpeg
+[Tue Jun  9 09:54:47 2026] 127.0.0.1:47332 Closing
