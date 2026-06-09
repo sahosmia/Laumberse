@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Expenses;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Expenses\StoreExpenseRequest;
+use App\Http\Requests\Expenses\StorePayrollExpenseRequest as StoreExpenseRequest;
 use App\Http\Requests\Expenses\UpdateExpenseRequest;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
+use App\Models\GlobalSetting;
 use App\Models\Outlet;
+use App\Services\PayrollService;
 use Inertia\Inertia;
 
 class ExpenseController extends Controller
@@ -18,12 +20,13 @@ class ExpenseController extends Controller
             'expenses' => Expense::with(['category', 'outlet'])->orderBy('date', 'desc')->get(),
             'categories' => ExpenseCategory::all(),
             'outlets' => Outlet::all(),
+            'salary_category_id' => GlobalSetting::get('salary_category_id'),
         ]);
     }
 
-    public function store(StoreExpenseRequest $request)
+    public function store(StoreExpenseRequest $request, PayrollService $payrollService)
     {
-        Expense::create($request->validated());
+        $payrollService->storePayrollExpense($request->validated());
         return redirect()->back()->with('success', 'Expense created successfully.');
     }
 
