@@ -27,6 +27,8 @@ class DatabaseSeeder extends Seeder
 
             CategorySeeder::class,
             ProductSeeder::class,
+            AssetCategorySeeder::class,
+            ManageAssetSeeder::class,
             DemoDataSeeder::class,
         ]);
     }
