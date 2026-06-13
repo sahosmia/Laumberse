@@ -146,13 +146,19 @@ export interface Expense {
     outlet?: Outlet;
 }
 
+export interface AssetCategory {
+    id: number;
+    name: string;
+    description?: string;
+}
+
 export interface ManageAsset {
     id: number;
     name: string;
-    code: string;
+    description?: string;
     purchase_date: string;
     cost: number;
-    current_value: number;
-    depreciation_rate?: number;
     status: string;
+    asset_category_id: number;
+    category?: AssetCategory;
 }

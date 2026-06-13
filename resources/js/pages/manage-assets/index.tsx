@@ -1,12 +1,13 @@
 import { Head, useForm } from '@inertiajs/react';
 import { useState } from "react";
-import { Search, Plus, Trash2, Edit3, X, Wallet, ShieldCheck, AlertCircle, Clock } from "lucide-react";
+import { Search, Plus, Trash2, Edit3, X, Wallet, AlertCircle, Clock, Tag, FileText } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, ManageAsset } from '@/types';
+import { type BreadcrumbItem, ManageAsset, AssetCategory } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 
 interface ManageAssetsProps {
     manageAssets: ManageAsset[];
+    categories: AssetCategory[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -18,7 +19,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const formatCurrency = (n: number) => `৳${n.toLocaleString("en-BD")}`;
 
-export default function ManageAssets({ manageAssets }: ManageAssetsProps) {
+export default function ManageAssets({ manageAssets, categories }: ManageAssetsProps) {
     const [search, setSearch] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [editingAsset, setEditingAsset] = useState<ManageAsset | null>(null);
@@ -27,16 +28,17 @@ export default function ManageAssets({ manageAssets }: ManageAssetsProps) {
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
-        code: '',
+        description: '',
         purchase_date: new Date().toISOString().split('T')[0],
         cost: '' as string | number,
-        current_value: '' as string | number,
-        depreciation_rate: '' as string | number,
         status: 'Active',
+        asset_category_id: '' as string | number,
     });
 
     const filtered = manageAssets.filter((a) =>
-        a.name.toLowerCase().includes(search.toLowerCase()) || a.code.toLowerCase().includes(search.toLowerCase())
+        a.name.toLowerCase().includes(search.toLowerCase()) ||
+        (a.description?.toLowerCase() || "").includes(search.toLowerCase()) ||
+        (a.category?.name.toLowerCase() || "").includes(search.toLowerCase())
     );
 
     const openCreateModal = () => {
@@ -49,12 +51,11 @@ export default function ManageAssets({ manageAssets }: ManageAssetsProps) {
         setEditingAsset(manageAsset);
         setData({
             name: manageAsset.name,
-            code: manageAsset.code,
+            description: manageAsset.description || '',
             purchase_date: manageAsset.purchase_date,
             cost: manageAsset.cost,
-            current_value: manageAsset.current_value,
-            depreciation_rate: manageAsset.depreciation_rate || '',
             status: manageAsset.status,
+            asset_category_id: manageAsset.asset_category_id,
         });
         setShowModal(true);
     };
@@ -138,11 +139,19 @@ export default function ManageAssets({ manageAssets }: ManageAssetsProps) {
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-neutral-900 dark:text-neutral-100">{a.name}</h4>
-                                    <p className="text-xs font-mono text-neutral-400">{a.code}</p>
+                                    <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-0.5">
+                                        <Tag className="w-3 h-3" /> {a.category?.name || 'No Category'}
+                                    </p>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3 mb-4">
+                            {a.description && (
+                                <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4 line-clamp-2 italic">
+                                    {a.description}
+                                </p>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-3 mb-4 border-t border-neutral-100 dark:border-neutral-800 pt-4">
                                 <div className="space-y-0.5">
                                     <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold">Purchase Date</p>
                                     <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
@@ -157,15 +166,9 @@ export default function ManageAssets({ manageAssets }: ManageAssetsProps) {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2 p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl">
-                                <div>
-                                    <p className="text-[10px] text-neutral-500 font-medium">Cost</p>
-                                    <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(Number(a.cost))}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[10px] text-neutral-500 font-medium">Value</p>
-                                    <p className="text-sm font-bold text-blue-600 dark:text-blue-400">{formatCurrency(Number(a.current_value))}</p>
-                                </div>
+                            <div className="p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl">
+                                <p className="text-[10px] text-neutral-500 font-medium">Cost</p>
+                                <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(Number(a.cost))}</p>
                             </div>
                         </div>
                     ))}
@@ -198,32 +201,53 @@ export default function ManageAssets({ manageAssets }: ManageAssetsProps) {
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Asset Name</label>
+                                    <label htmlFor="name" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Asset Name</label>
                                     <input
+                                        id="name"
                                         type="text"
                                         value={data.name}
                                         onChange={e => setData('name', e.target.value)}
                                         className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
                                         required
+                                        placeholder="e.g. Washing Machine"
                                     />
                                     {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Code/Serial</label>
-                                    <input
-                                        type="text"
-                                        value={data.code}
-                                        onChange={e => setData('code', e.target.value)}
+                                    <label htmlFor="asset_category_id" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Category</label>
+                                    <select
+                                        id="asset_category_id"
+                                        value={data.asset_category_id}
+                                        onChange={e => setData('asset_category_id', e.target.value)}
                                         className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
                                         required
-                                    />
-                                    {errors.code && <p className="text-xs text-red-500">{errors.code}</p>}
+                                    >
+                                        <option value="">Select Category</option>
+                                        {categories.map(c => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                    {errors.asset_category_id && <p className="text-xs text-red-500">{errors.asset_category_id}</p>}
                                 </div>
                             </div>
+
+                            <div className="space-y-1">
+                                <label htmlFor="description" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Description</label>
+                                <textarea
+                                    id="description"
+                                    value={data.description}
+                                    onChange={e => setData('description', e.target.value)}
+                                    className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100 min-h-[80px]"
+                                    placeholder="Brief details about the asset"
+                                />
+                                {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
+                            </div>
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Purchase Date</label>
+                                    <label htmlFor="purchase_date" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Purchase Date</label>
                                     <input
+                                        id="purchase_date"
                                         type="date"
                                         value={data.purchase_date}
                                         onChange={e => setData('purchase_date', e.target.value)}
@@ -233,8 +257,9 @@ export default function ManageAssets({ manageAssets }: ManageAssetsProps) {
                                     {errors.purchase_date && <p className="text-xs text-red-500">{errors.purchase_date}</p>}
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Status</label>
+                                    <label htmlFor="status" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Status</label>
                                     <select
+                                        id="status"
                                         value={data.status}
                                         onChange={e => setData('status', e.target.value)}
                                         className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
@@ -245,39 +270,20 @@ export default function ManageAssets({ manageAssets }: ManageAssetsProps) {
                                     </select>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-3 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Cost</label>
-                                    <input
-                                        type="number"
-                                        value={data.cost}
-                                        onChange={e => setData('cost', e.target.value)}
-                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                        required
-                                    />
-                                    {errors.cost && <p className="text-xs text-red-500">{errors.cost}</p>}
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Current Value</label>
-                                    <input
-                                        type="number"
-                                        value={data.current_value}
-                                        onChange={e => setData('current_value', e.target.value)}
-                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                        required
-                                    />
-                                    {errors.current_value && <p className="text-xs text-red-500">{errors.current_value}</p>}
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Dep. Rate (%)</label>
-                                    <input
-                                        type="number"
-                                        value={data.depreciation_rate}
-                                        onChange={e => setData('depreciation_rate', e.target.value)}
-                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                    />
-                                </div>
+                            <div className="space-y-1">
+                                <label htmlFor="cost" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Cost</label>
+                                <input
+                                    id="cost"
+                                    type="number"
+                                    value={data.cost}
+                                    onChange={e => setData('cost', e.target.value)}
+                                    className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
+                                    required
+                                    placeholder="0.00"
+                                />
+                                {errors.cost && <p className="text-xs text-red-500">{errors.cost}</p>}
                             </div>
+
                             <div className="flex gap-2 pt-2">
                                 <button
                                     type="submit"

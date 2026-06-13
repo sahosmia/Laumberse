@@ -61,8 +61,18 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Manage Assets',
-        url: route('manage-assets.index'),
+        url: '#',
         icon: Wallet,
+        items: [
+            {
+                title: 'All Assets',
+                url: route('manage-assets.index'),
+            },
+            {
+                title: 'Categories',
+                url: route('asset-categories.index'),
+            },
+        ],
     },
     {
         title: 'Products',

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ManageAssets\StoreManageAssetRequest;
 use App\Http\Requests\ManageAssets\UpdateManageAssetRequest;
+use App\Models\AssetCategory;
 use App\Models\ManageAsset;
 use Inertia\Inertia;
 
@@ -12,7 +13,8 @@ class ManageAssetController extends Controller
     public function index()
     {
         return Inertia::render('manage-assets/index', [
-            'manageAssets' => ManageAsset::orderBy('purchase_date', 'desc')->get(),
+            'manageAssets' => ManageAsset::with('category')->orderBy('purchase_date', 'desc')->get(),
+            'categories' => AssetCategory::orderBy('name')->get(),
         ]);
     }
 
