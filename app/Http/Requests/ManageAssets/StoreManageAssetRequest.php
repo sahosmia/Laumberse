@@ -16,6 +16,8 @@ class StoreManageAssetRequest extends FormRequest
             'cost' => 'required|numeric|min:0',
             'status' => 'required|string|max:100',
             'asset_category_id' => 'required|exists:asset_categories,id',
+            'is_new_purchase' => 'nullable|boolean',
+            'payment_method' => 'required_if:is_new_purchase,true|string|max:100',
         ];
     }
 }

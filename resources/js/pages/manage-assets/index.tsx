@@ -1,6 +1,6 @@
 import { Head, useForm } from '@inertiajs/react';
 import { useState } from "react";
-import { Search, Plus, Trash2, Edit3, X, Wallet, AlertCircle, Clock, Tag, FileText } from "lucide-react";
+import { Search, Plus, Trash2, Edit3, X, Wallet, AlertCircle, Clock, Tag, CreditCard } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, ManageAsset, AssetCategory } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
@@ -33,6 +33,8 @@ export default function ManageAssets({ manageAssets, categories }: ManageAssetsP
         cost: '' as string | number,
         status: 'Active',
         asset_category_id: '' as string | number,
+        is_new_purchase: false,
+        payment_method: 'Cash',
     });
 
     const filtered = manageAssets.filter((a) =>
@@ -56,6 +58,8 @@ export default function ManageAssets({ manageAssets, categories }: ManageAssetsP
             cost: manageAsset.cost,
             status: manageAsset.status,
             asset_category_id: manageAsset.asset_category_id,
+            is_new_purchase: false, // Default to false on edit as expense is already handled
+            payment_method: 'Cash',
         });
         setShowModal(true);
     };
@@ -270,19 +274,61 @@ export default function ManageAssets({ manageAssets, categories }: ManageAssetsP
                                     </select>
                                 </div>
                             </div>
-                            <div className="space-y-1">
-                                <label htmlFor="cost" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Cost</label>
-                                <input
-                                    id="cost"
-                                    type="number"
-                                    value={data.cost}
-                                    onChange={e => setData('cost', e.target.value)}
-                                    className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                    required
-                                    placeholder="0.00"
-                                />
-                                {errors.cost && <p className="text-xs text-red-500">{errors.cost}</p>}
+
+                            <div className="grid grid-cols-1 gap-4">
+                                <div className="space-y-1">
+                                    <label htmlFor="cost" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Cost</label>
+                                    <input
+                                        id="cost"
+                                        type="number"
+                                        value={data.cost}
+                                        onChange={e => setData('cost', e.target.value)}
+                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
+                                        required
+                                        placeholder="0.00"
+                                    />
+                                    {errors.cost && <p className="text-xs text-red-500">{errors.cost}</p>}
+                                </div>
                             </div>
+
+                            {!editingAsset && (
+                                <div className="p-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl border border-neutral-200 dark:border-neutral-800 space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                                                <CreditCard className="w-4 h-4" />
+                                            </div>
+                                            <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Create Expense Entry</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setData('is_new_purchase', !data.is_new_purchase)}
+                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${data.is_new_purchase ? 'bg-blue-600' : 'bg-neutral-200 dark:bg-neutral-700'}`}
+                                        >
+                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${data.is_new_purchase ? 'translate-x-6' : 'translate-x-1'}`} />
+                                        </button>
+                                    </div>
+
+                                    {data.is_new_purchase && (
+                                        <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <label htmlFor="payment_method" className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Payment Method</label>
+                                            <select
+                                                id="payment_method"
+                                                value={data.payment_method}
+                                                onChange={e => setData('payment_method', e.target.value)}
+                                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-white dark:bg-neutral-900 dark:text-neutral-100"
+                                                required
+                                            >
+                                                <option value="Cash">Cash</option>
+                                                <option value="Bank Transfer">Bank Transfer</option>
+                                                <option value="Mobile Banking">Mobile Banking</option>
+                                                <option value="Card">Card</option>
+                                            </select>
+                                            {errors.payment_method && <p className="text-xs text-red-500">{errors.payment_method}</p>}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             <div className="flex gap-2 pt-2">
                                 <button
