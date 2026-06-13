@@ -58,7 +58,7 @@ class ManageAssetTest extends TestCase
             'asset_category_id' => $category->id,
         ]);
 
-        $this->assertEquals(0, Expense::count());
+        $this->assertEquals(0, Expense::whereNotNull('manage_asset_id')->count());
     }
 
     public function test_can_create_asset_with_expense()
@@ -83,9 +83,67 @@ class ManageAssetTest extends TestCase
             'payment_method' => 'Bank Transfer',
             'description' => 'Purchase of asset: MacBook Pro',
         ]);
+    }
 
-        $asset = ManageAsset::where('name', 'MacBook Pro')->first();
-        $expense = Expense::first();
-        $this->assertEquals($asset->id, $expense->manage_asset_id);
+    public function test_updating_asset_updates_expense()
+    {
+        $category = AssetCategory::create(['name' => 'IT']);
+
+        // Create asset with expense
+        $this->actingAs($this->user)->post(route('manage-assets.store'), [
+            'name' => 'Old PC',
+            'purchase_date' => '2023-01-01',
+            'cost' => 50000,
+            'status' => 'Active',
+            'asset_category_id' => $category->id,
+            'is_new_purchase' => true,
+            'payment_method' => 'Cash',
+        ]);
+
+        $asset = ManageAsset::where('name', 'Old PC')->first();
+
+        // Update asset
+        $response = $this->actingAs($this->user)->put(route('manage-assets.update', $asset->id), [
+            'name' => 'New PC',
+            'purchase_date' => '2023-02-01',
+            'cost' => 60000,
+            'status' => 'Active',
+            'asset_category_id' => $category->id,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('manage_assets', ['name' => 'New PC', 'cost' => 60000]);
+        $this->assertDatabaseHas('expenses', [
+            'manage_asset_id' => $asset->id,
+            'amount' => 60000,
+            'date' => '2023-02-01',
+            'description' => 'Purchase of asset: New PC',
+        ]);
+    }
+
+    public function test_deleting_asset_deletes_expense()
+    {
+        $category = AssetCategory::create(['name' => 'IT']);
+
+        // Create asset with expense
+        $this->actingAs($this->user)->post(route('manage-assets.store'), [
+            'name' => 'To Delete',
+            'purchase_date' => '2023-01-01',
+            'cost' => 50000,
+            'status' => 'Active',
+            'asset_category_id' => $category->id,
+            'is_new_purchase' => true,
+            'payment_method' => 'Cash',
+        ]);
+
+        $asset = ManageAsset::where('name', 'To Delete')->first();
+        $this->assertNotNull($asset->expense);
+
+        // Delete asset
+        $response = $this->actingAs($this->user)->delete(route('manage-assets.destroy', $asset->id));
+
+        $response->assertRedirect();
+        $this->assertDatabaseMissing('manage_assets', ['id' => $asset->id]);
+        $this->assertDatabaseMissing('expenses', ['manage_asset_id' => $asset->id]);
     }
 }

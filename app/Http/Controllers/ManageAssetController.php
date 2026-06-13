@@ -48,13 +48,30 @@ class ManageAssetController extends Controller
 
     public function update(UpdateManageAssetRequest $request, ManageAsset $manage_asset)
     {
-        $manage_asset->update($request->validated());
+        DB::transaction(function () use ($request, $manage_asset) {
+            $manage_asset->update($request->validated());
+
+            if ($manage_asset->expense) {
+                $manage_asset->expense->update([
+                    'amount' => $manage_asset->cost,
+                    'date' => $manage_asset->purchase_date,
+                    'description' => "Purchase of asset: {$manage_asset->name}",
+                ]);
+            }
+        });
+
         return redirect()->back()->with('success', 'ManageAsset updated successfully.');
     }
 
     public function destroy(ManageAsset $manage_asset)
     {
-        $manage_asset->delete();
+        DB::transaction(function () use ($manage_asset) {
+            if ($manage_asset->expense) {
+                $manage_asset->expense->delete();
+            }
+            $manage_asset->delete();
+        });
+
         return redirect()->back()->with('success', 'ManageAsset deleted successfully.');
     }
 }
