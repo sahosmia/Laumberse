@@ -45,12 +45,14 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
-             'flash' => [
+            'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
             ],
             'settings' => [
                 'salary_category_id' => \App\Models\GlobalSetting::get('salary_category_id'),
+                'material_expense_category_id' => \App\Models\GlobalSetting::get('material_expense_category_id'),
+
             ],
         ]);
     }

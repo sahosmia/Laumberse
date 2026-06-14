@@ -44,7 +44,7 @@ const mainNavItems: NavItem[] = [
         icon: Users,
     },
 
-     {
+    {
         title: 'Expenses',
         url: '#',
         icon: Receipt,
@@ -56,13 +56,30 @@ const mainNavItems: NavItem[] = [
             {
                 title: 'Categories',
                 url: route('expense-categories.index'),
+            },
+
+
+            {
+                title: 'Materials List',
+                url: route('materials.index'),
             }
         ],
     },
+
     {
         title: 'Manage Assets',
-        url: route('manage-assets.index'),
+        url: '#',
         icon: Wallet,
+        items: [
+            {
+                title: 'All Assets',
+                url: route('manage-assets.index'),
+            },
+            {
+                title: 'Categories',
+                url: route('asset-categories.index'),
+            },
+        ],
     },
     {
         title: 'Products',
@@ -88,7 +105,7 @@ const mainNavItems: NavItem[] = [
         url: route('reports'),
         icon: BarChart3,
     },
-    
+
 ];
 
 

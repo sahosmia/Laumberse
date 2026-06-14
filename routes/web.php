@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AssetCategoryController;
 use App\Http\Controllers\ManageAssetController;
 use App\Http\Controllers\Employees\EmployeeController;
 use App\Http\Controllers\PayrollController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Invoices\InvoiceController;
 use App\Http\Controllers\Products\ProductController;
 use App\Http\Controllers\Reports\ReportController;
 use App\Http\Controllers\Categories\CategoryController;
+use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\Outlets\OutletController;
 use App\Http\Controllers\UnitController;
 use Illuminate\Support\Facades\Artisan;
@@ -32,16 +34,20 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('products', ProductController::class);
     Route::resource('categories', CategoryController::class);
     Route::resource('units', UnitController::class);
+    Route::resource('materials', MaterialController::class);
+
     Route::delete('/outlets/bulk-destroy', [OutletController::class, 'bulkDestroy'])->name('outlets.bulk-destroy');
     Route::resource('outlets', OutletController::class);
 
     Route::resource('expenses', ExpenseController::class);
     Route::resource('expense-categories', ExpenseCategoryController::class);
     Route::get('/employees/payroll-eligible', [EmployeeController::class, 'getEligibleForPayroll'])->name('employees.payroll-eligible');
-     Route::resource('payrolls', PayrollController::class)->only(['index']);
+    Route::resource('payrolls', PayrollController::class)->only(['index']);
     Route::get('/employees/payroll-eligible', [EmployeeController::class, 'getEligibleForPayroll'])->name('employees.payroll-eligible');
 
     Route::resource('manage-assets', ManageAssetController::class);
+    Route::resource('asset-categories', AssetCategoryController::class);
+
 
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('history');
     Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('create-invoice');

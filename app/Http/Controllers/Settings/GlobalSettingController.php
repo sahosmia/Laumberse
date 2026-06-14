@@ -15,6 +15,8 @@ class GlobalSettingController extends Controller
         return Inertia::render('settings/global', [
             'settings' => [
                 'salary_category_id' => GlobalSetting::get('salary_category_id'),
+                'material_expense_category_id' => GlobalSetting::get('material_expense_category_id'),
+
             ],
             'expense_categories' => ExpenseCategory::all(),
         ]);
@@ -24,11 +26,17 @@ class GlobalSettingController extends Controller
     {
         $validated = $request->validate([
             'salary_category_id' => 'required|exists:expense_categories,id',
+            'material_expense_category_id' => 'required|exists:expense_categories,id',
+
         ]);
 
         GlobalSetting::updateOrCreate(
             ['key' => 'salary_category_id'],
             ['value' => $validated['salary_category_id']]
+        );
+        GlobalSetting::updateOrCreate(
+            ['key' => 'material_expense_category_id'],
+            ['value' => $validated['material_expense_category_id']]
         );
 
         return redirect()->back()->with('success', 'Settings updated successfully');
