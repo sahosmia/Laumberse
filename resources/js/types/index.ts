@@ -134,6 +134,22 @@ export interface ExpenseCategory {
     description?: string;
 }
 
+export interface Material {
+    id: number;
+    name: string;
+    market_price: number;
+}
+
+export interface ExpenseMaterial {
+    id: number;
+    expense_id: number;
+    material_id: number;
+    material?: Material;
+    quantity: number;
+    unit_price: number;
+    amount: number;
+}
+
 export interface Expense {
     id: number;
     expense_category_id: number;
@@ -144,6 +160,15 @@ export interface Expense {
     description?: string;
     outlet_id?: number;
     outlet?: Outlet;
+    payroll?: {
+        employee_id: number;
+        month: number;
+        year: number;
+        bonus: number;
+        deduction: number;
+        deduction_note: string;
+    };
+    materials?: ExpenseMaterial[];
 }
 
 export interface ManageAsset {

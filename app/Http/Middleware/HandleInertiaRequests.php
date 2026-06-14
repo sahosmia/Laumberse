@@ -51,6 +51,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'settings' => [
                 'salary_category_id' => \App\Models\GlobalSetting::get('salary_category_id'),
+                'material_expense_category_id' => \App\Models\GlobalSetting::get('material_expense_category_id'),
             ],
         ]);
     }

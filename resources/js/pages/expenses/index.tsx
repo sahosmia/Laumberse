@@ -2,7 +2,7 @@ import { Head, useForm, Link, usePage } from '@inertiajs/react';
 import { useState, useEffect } from "react";
 import { Search, Plus, Trash2, Edit3, X, Tag } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, Expense, ExpenseCategory, Outlet, SharedData } from '@/types';
+import { type BreadcrumbItem, Expense, ExpenseCategory, Outlet, SharedData, Material } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import axios from 'axios';
@@ -11,6 +11,7 @@ interface ExpensesProps {
     expenses: Expense[];
     categories: ExpenseCategory[];
     outlets: Outlet[];
+    materials: Material[];
 }
 
 interface EligibleEmployee {
@@ -33,7 +34,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const formatCurrency = (n: number | string) => `৳${Number(n).toLocaleString("en-BD")}`;
 
-export default function Expenses({ expenses, categories, outlets }: ExpensesProps) {
+export default function Expenses({ expenses, categories, outlets, materials }: ExpensesProps) {
     const [search, setSearch] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -42,6 +43,7 @@ export default function Expenses({ expenses, categories, outlets }: ExpensesProp
 
     const { settings } = usePage<SharedData>().props;
     const salaryCategoryId = settings.salary_category_id;
+    const materialExpenseCategoryId = settings.material_expense_category_id;
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         expense_category_id: '' as string | number,
@@ -57,12 +59,15 @@ export default function Expenses({ expenses, categories, outlets }: ExpensesProp
         bonus: 0,
         deduction: 0,
         deduction_note: '',
+        // Material fields
+        items: [] as { material_id: string | number; quantity: number; unit_price: number }[],
     });
 
     const [eligibleEmployees, setEligibleEmployees] = useState<EligibleEmployee[]>([]);
     const [selectedEmployee, setSelectedEmployee] = useState<EligibleEmployee | null>(null);
 
     const isPayroll = data.expense_category_id == salaryCategoryId;
+    const isMaterial = data.expense_category_id == materialExpenseCategoryId;
 
     useEffect(() => {
         if (isPayroll && data.month && data.year) {
@@ -86,6 +91,15 @@ export default function Expenses({ expenses, categories, outlets }: ExpensesProp
             setSelectedEmployee(null);
         }
     }, [data.employee_id, eligibleEmployees]);
+
+    useEffect(() => {
+        if (isMaterial) {
+            const total = data.items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.unit_price)), 0);
+            if (total > 0) {
+                setData('amount', total);
+            }
+        }
+    }, [data.items, isMaterial]);
 
     const netSalary = selectedEmployee 
         ? (Number(selectedEmployee.base_salary) + Number(data.bonus) - Number(data.deduction))
@@ -117,6 +131,11 @@ export default function Expenses({ expenses, categories, outlets }: ExpensesProp
             bonus: expense.payroll?.bonus || 0,
             deduction: expense.payroll?.deduction || 0,
             deduction_note: expense.payroll?.deduction_note || '',
+            items: expense.materials?.map(m => ({
+                material_id: m.material_id,
+                quantity: m.quantity,
+                unit_price: m.unit_price
+            })) || [],
         });
         setShowModal(true);
     };
@@ -278,13 +297,93 @@ export default function Expenses({ expenses, categories, outlets }: ExpensesProp
                                         type="number"
                                         value={data.amount}
                                         onChange={e => setData('amount', e.target.value)}
-                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
+                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100 disabled:opacity-50 disabled:bg-neutral-50 dark:disabled:bg-neutral-800/50"
                                         required
                                         placeholder="0.00"
+                                        readOnly={isMaterial}
                                     />
                                     {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
                                 </div>
                             </div>
+
+                            {isMaterial && (
+                                <div className="space-y-3 bg-neutral-50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                                    <div className="flex justify-between items-center">
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-500">Materials</h4>
+                                        <button
+                                            type="button"
+                                            onClick={() => setData('items', [...data.items, { material_id: '', quantity: 1, unit_price: 0 }])}
+                                            className="text-xs text-blue-600 font-semibold flex items-center gap-1"
+                                        >
+                                            <Plus className="w-3 h-3" /> Add Item
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {data.items.map((item, index) => (
+                                            <div key={index} className="grid grid-cols-12 gap-2 items-start bg-white dark:bg-neutral-900 p-2 rounded-lg border border-neutral-100 dark:border-neutral-800 shadow-sm relative pr-8">
+                                                <div className="col-span-6 space-y-1">
+                                                    <label className="text-[10px] font-bold text-neutral-400 uppercase">Material</label>
+                                                    <SearchableSelect
+                                                        options={materials.map(m => ({ label: m.name, value: m.id }))}
+                                                        value={item.material_id}
+                                                        onChange={(val) => {
+                                                            const selectedMat = materials.find(m => m.id == val);
+                                                            const newItems = [...data.items];
+                                                            newItems[index] = {
+                                                                ...newItems[index],
+                                                                material_id: val as number,
+                                                                unit_price: selectedMat ? selectedMat.market_price : 0
+                                                            };
+                                                            setData('items', newItems);
+                                                        }}
+                                                        placeholder="Select"
+                                                    />
+                                                </div>
+                                                <div className="col-span-3 space-y-1">
+                                                    <label className="text-[10px] font-bold text-neutral-400 uppercase">Qty</label>
+                                                    <input
+                                                        type="number"
+                                                        value={item.quantity}
+                                                        onChange={(e) => {
+                                                            const newItems = [...data.items];
+                                                            newItems[index].quantity = parseFloat(e.target.value) || 0;
+                                                            setData('items', newItems);
+                                                        }}
+                                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 py-1.5 text-xs bg-transparent dark:text-neutral-100"
+                                                        step="0.01"
+                                                    />
+                                                </div>
+                                                <div className="col-span-3 space-y-1">
+                                                    <label className="text-[10px] font-bold text-neutral-400 uppercase">Price</label>
+                                                    <input
+                                                        type="number"
+                                                        value={item.unit_price}
+                                                        onChange={(e) => {
+                                                            const newItems = [...data.items];
+                                                            newItems[index].unit_price = parseFloat(e.target.value) || 0;
+                                                            setData('items', newItems);
+                                                        }}
+                                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 py-1.5 text-xs bg-transparent dark:text-neutral-100"
+                                                        step="0.01"
+                                                    />
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setData('items', data.items.filter((_, i) => i !== index))}
+                                                    className="absolute top-1/2 -translate-y-1/2 right-1 p-1 text-neutral-400 hover:text-red-500 transition-colors"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {data.items.length === 0 && (
+                                            <p className="text-[10px] text-center text-neutral-400 italic py-2">No items added</p>
+                                        )}
+                                        {errors.items && <p className="text-xs text-red-500">{errors.items}</p>}
+                                    </div>
+                                </div>
+                            )}
 
                             {isPayroll && (
                                 <>

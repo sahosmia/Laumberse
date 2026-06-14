@@ -15,7 +15,10 @@ class StorePayrollExpenseRequest extends FormRequest
     public function rules(): array
     {
         $salaryCategoryId = GlobalSetting::get('salary_category_id');
+        $materialCategoryId = GlobalSetting::get('material_expense_category_id');
+
         $isPayroll = $this->input('expense_category_id') == $salaryCategoryId;
+        $isMaterial = $this->input('expense_category_id') == $materialCategoryId;
 
         return [
             'expense_category_id' => 'required|exists:expense_categories,id',
@@ -25,6 +28,12 @@ class StorePayrollExpenseRequest extends FormRequest
             'description' => 'nullable|string',
             'outlet_id' => 'nullable|exists:outlets,id',
             
+            // Material specific fields
+            'items' => $isMaterial ? 'required|array|min:1' : 'nullable|array',
+            'items.*.material_id' => $isMaterial ? 'required|exists:materials,id' : 'nullable',
+            'items.*.quantity' => $isMaterial ? 'required|numeric|min:0.01' : 'nullable',
+            'items.*.unit_price' => $isMaterial ? 'required|numeric|min:0' : 'nullable',
+
             // Payroll specific fields
             'employee_id' => $isPayroll ? 'required|exists:employees,id' : 'nullable',
             'month' => $isPayroll ? 'required|integer|between:1,12' : 'nullable',

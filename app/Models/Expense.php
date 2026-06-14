@@ -30,4 +30,9 @@ class Expense extends Model
     {
         return $this->belongsTo(Payroll::class);
     }
+
+    public function materials()
+    {
+        return $this->hasMany(ExpenseMaterial::class);
+    }
 }

@@ -17,9 +17,10 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Global({ settings, expense_categories }: { settings: { salary_category_id: string | number }, expense_categories: ExpenseCategory[] }) {
+export default function Global({ settings, expense_categories }: { settings: { salary_category_id: string | number, material_expense_category_id: string | number }, expense_categories: ExpenseCategory[] }) {
     const { data, setData, patch, errors, processing, recentlySuccessful } = useForm({
         salary_category_id: settings.salary_category_id || '',
+        material_expense_category_id: settings.material_expense_category_id || '',
     });
 
     const submit: FormEventHandler = (e) => {
@@ -55,6 +56,27 @@ export default function Global({ settings, expense_categories }: { settings: { s
                             <p className="text-xs text-neutral-500">Expenses in this category will trigger the payroll workflow.</p>
 
                             <InputError className="mt-2" message={errors.salary_category_id} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="material_expense_category_id">Material Expense Category</Label>
+
+                            <select
+                                id="material_expense_category_id"
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                value={data.material_expense_category_id}
+                                onChange={(e) => setData('material_expense_category_id', e.target.value)}
+                                required
+                            >
+                                <option value="">Select Category</option>
+                                {expense_categories.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                            </select>
+
+                            <p className="text-xs text-neutral-500">Expenses in this category will trigger the material tracking workflow.</p>
+
+                            <InputError className="mt-2" message={errors.material_expense_category_id} />
                         </div>
 
                         <div className="flex items-center gap-4">
