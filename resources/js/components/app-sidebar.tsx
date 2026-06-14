@@ -56,6 +56,10 @@ const mainNavItems: NavItem[] = [
             {
                 title: 'Categories',
                 url: route('expense-categories.index'),
+            },
+            {
+                title: 'Materials List',
+                url: route('materials.index'),
             }
         ],
     },

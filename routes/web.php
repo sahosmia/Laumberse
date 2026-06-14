@@ -32,6 +32,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('products', ProductController::class);
     Route::resource('categories', CategoryController::class);
     Route::resource('units', UnitController::class);
+    Route::resource('materials', \App\Http\Controllers\MaterialController::class);
     Route::delete('/outlets/bulk-destroy', [OutletController::class, 'bulkDestroy'])->name('outlets.bulk-destroy');
     Route::resource('outlets', OutletController::class);
 

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Expenses;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Expenses\StorePayrollExpenseRequest as StoreExpenseRequest;
+use App\Http\Requests\Expenses\StoreExpenseRequest;
 use App\Http\Requests\Expenses\UpdateExpenseRequest;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
