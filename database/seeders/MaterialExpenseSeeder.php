@@ -19,15 +19,15 @@ class MaterialExpenseSeeder extends Seeder
 
         // 3. Seed some dummy materials
         $materials = [
-            ['name' => 'Fabric A', 'market_price' => 150.00],
-            ['name' => 'Thread Roll', 'market_price' => 25.50],
-            ['name' => 'Buttons (Gross)', 'market_price' => 45.00],
-            ['name' => 'Elastic Band', 'market_price' => 12.75],
-            ['name' => 'Zippers', 'market_price' => 8.50],
+            ['name' => 'Fabric A', 'unit_price' => 150.00],
+            ['name' => 'Thread Roll', 'unit_price' => 25.50],
+            ['name' => 'Buttons (Gross)', 'unit_price' => 45.00],
+            ['name' => 'Elastic Band', 'unit_price' => 12.75],
+            ['name' => 'Zippers', 'unit_price' => 8.50],
         ];
 
         foreach ($materials as $material) {
-            Material::firstOrCreate(['name' => $material['name']], ['market_price' => $material['market_price']]);
+            Material::firstOrCreate(['name' => $material['name']], ['unit_price' => $material['unit_price']]);
         }
     }
 }

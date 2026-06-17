@@ -33,6 +33,7 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
         description: '',
+        type: 'general' as 'general' | 'material' | 'asset' | 'salary',
     });
 
     const filtered = categories.filter((c) =>
@@ -51,6 +52,7 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
         setData({
             name: category.name,
             description: category.description || '',
+            type: category.type,
         });
         setShowModal(true);
     };
@@ -118,6 +120,7 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
                             <thead>
                                 <tr className="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 text-xs uppercase tracking-wider">
                                     <th className="text-left px-5 py-3 font-semibold">Name</th>
+                                    <th className="text-left px-5 py-3 font-semibold">Type</th>
                                     <th className="text-left px-5 py-3 font-semibold">Description</th>
                                     <th className="text-right px-5 py-3 font-semibold">Actions</th>
                                 </tr>
@@ -135,6 +138,11 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
                                         <tr key={category.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30 transition-colors">
                                             <td className="px-5 py-4">
                                                 <div className="font-medium text-neutral-900 dark:text-neutral-100">{category.name}</div>
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                <span className="px-2 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase">
+                                                    {category.type}
+                                                </span>
                                             </td>
                                             <td className="px-5 py-4 text-neutral-500 dark:text-neutral-400 max-w-xs truncate">
                                                 {category.description || '-'}
@@ -190,6 +198,22 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
                                     required
                                 />
                                 {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="type">Category Type</Label>
+                                <select
+                                    id="type"
+                                    value={data.type}
+                                    onChange={e => setData('type', e.target.value as any)}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    required
+                                >
+                                    <option value="general">General</option>
+                                    <option value="material">Material</option>
+                                    <option value="asset">Asset</option>
+                                    <option value="salary">Salary</option>
+                                </select>
+                                {errors.type && <p className="text-xs text-red-500">{errors.type}</p>}
                             </div>
                             <div className="space-y-1">
                                 <Label htmlFor="description">Description</Label>

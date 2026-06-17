@@ -56,10 +56,10 @@ class ManageAssetSeeder extends Seeder
         Expense::create([
             'expense_category_id' => $assetPurchaseCategory->id,
             'manage_asset_id' => $laptop->id,
-            'amount' => $laptop->cost,
+            'total_amount' => $laptop->cost,
             'payment_method' => 'Bank Transfer',
             'date' => $laptop->purchase_date,
-            'description' => "Purchase of asset: {$laptop->name}",
+            'note' => "Purchase of asset: {$laptop->name}",
         ]);
 
         ManageAsset::create([

@@ -27,7 +27,7 @@ export default function Materials({ materials }: MaterialsProps) {
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
-        market_price: '' as string | number,
+        unit_price: '' as string | number,
     });
 
     const filtered = materials.filter((m) =>
@@ -44,7 +44,7 @@ export default function Materials({ materials }: MaterialsProps) {
         setEditingMaterial(material);
         setData({
             name: material.name,
-            market_price: material.market_price,
+            unit_price: material.unit_price,
         });
         setShowModal(true);
     };
@@ -112,7 +112,7 @@ export default function Materials({ materials }: MaterialsProps) {
                             <thead>
                                 <tr className="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 text-xs uppercase tracking-wider">
                                     <th className="text-left px-5 py-3 font-semibold">Name</th>
-                                    <th className="text-right px-5 py-3 font-semibold">Market Price</th>
+                                    <th className="text-right px-5 py-3 font-semibold">Unit Price</th>
                                     <th className="text-center px-5 py-3 font-semibold">Actions</th>
                                 </tr>
                             </thead>
@@ -120,7 +120,7 @@ export default function Materials({ materials }: MaterialsProps) {
                                 {filtered.map((m) => (
                                     <tr key={m.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors">
                                         <td className="px-5 py-4 font-medium text-neutral-900 dark:text-neutral-100">{m.name}</td>
-                                        <td className="px-5 py-4 text-right font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(m.market_price)}</td>
+                                        <td className="px-5 py-4 text-right font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(m.unit_price)}</td>
                                         <td className="px-5 py-4 text-center">
                                             <div className="flex items-center justify-center gap-2">
                                                 <button onClick={() => openEditModal(m)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600 transition-colors">
@@ -176,18 +176,18 @@ export default function Materials({ materials }: MaterialsProps) {
                                 {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
                             </div>
                             <div className="space-y-1">
-                                <label htmlFor="market_price" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Market Price (Base)</label>
+                                <label htmlFor="unit_price" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Unit Price (Base)</label>
                                 <input
-                                    id="market_price"
+                                    id="unit_price"
                                     type="number"
                                     step="0.01"
-                                    value={data.market_price}
-                                    onChange={e => setData('market_price', e.target.value)}
+                                    value={data.unit_price}
+                                    onChange={e => setData('unit_price', e.target.value)}
                                     className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
                                     required
                                     placeholder="0.00"
                                 />
-                                {errors.market_price && <p className="text-xs text-red-500">{errors.market_price}</p>}
+                                {errors.unit_price && <p className="text-xs text-red-500">{errors.unit_price}</p>}
                             </div>
 
                             <div className="flex gap-2 pt-2">

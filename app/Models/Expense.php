@@ -9,12 +9,11 @@ class Expense extends Model
     protected $fillable = [
         'expense_category_id',
         'payroll_id',
-                'manage_asset_id',
-
-        'amount',
+        'manage_asset_id',
+        'total_amount',
         'payment_method',
         'date',
-        'description',
+        'note',
         'outlet_id',
     ];
 
@@ -37,7 +36,17 @@ class Expense extends Model
         return $this->belongsTo(ManageAsset::class, 'manage_asset_id');
     }
 
-      public function materials()
+    public function expenseSalary()
+    {
+        return $this->hasOne(ExpenseSalary::class);
+    }
+
+    public function expenseAsset()
+    {
+        return $this->hasOne(ExpenseAsset::class);
+    }
+
+    public function materials()
     {
         return $this->hasMany(ExpenseMaterial::class);
     }

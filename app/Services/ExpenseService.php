@@ -14,22 +14,24 @@ class ExpenseService
     public function storeExpense(array $data)
     {
         return DB::transaction(function () use ($data) {
-            $salaryCategoryId = GlobalSetting::get('salary_category_id');
-            $materialCategoryId = GlobalSetting::get('material_expense_category_id');
+            $category = \App\Models\ExpenseCategory::findOrFail($data['expense_category_id']);
 
-            $expense = new Expense($data);
+            $expense = Expense::create($data);
 
-            if ($data['expense_category_id'] == $salaryCategoryId) {
-                $payroll = $this->getUpdatedPayroll($data);
-                $expense->payroll_id = $payroll->id;
-                $expense->save();
-                $payroll->update(['expense_id' => $expense->id]);
-            } else {
-                $expense->save();
-            }
+            switch ($category->type) {
+                case \App\Models\ExpenseCategory::TYPE_SALARY:
+                    \App\Models\ExpenseSalary::create(array_merge($data, ['expense_id' => $expense->id]));
+                    // Legacy payroll integration support if needed, but the prompt asks for a modular pattern
+                    // For now, I'll stick to the auxiliary tables as requested in the "Database Schema Requirements"
+                    break;
 
-            if ($data['expense_category_id'] == $materialCategoryId && !empty($data['items'])) {
-                $this->attachMaterialsToExpense($expense, $data['items']);
+                case \App\Models\ExpenseCategory::TYPE_MATERIAL:
+                    $this->attachMaterialsToExpense($expense, $data['items']);
+                    break;
+
+                case \App\Models\ExpenseCategory::TYPE_ASSET:
+                    \App\Models\ExpenseAsset::create(array_merge($data, ['expense_id' => $expense->id]));
+                    break;
             }
 
             return $expense;

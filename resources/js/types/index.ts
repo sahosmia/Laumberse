@@ -132,12 +132,13 @@ export interface ExpenseCategory {
     id: number;
     name: string;
     description?: string;
+    type: 'general' | 'material' | 'asset' | 'salary';
 }
 
 export interface Material {
     id: number;
     name: string;
-    market_price: number;
+    unit_price: number;
 }
 
 export interface ExpenseMaterial {
@@ -150,24 +151,37 @@ export interface ExpenseMaterial {
     amount: number;
 }
 
+export interface ExpenseSalary {
+    id: number;
+    expense_id: number;
+    employee_id: number;
+    employee?: { id: number; name: string };
+    month: number;
+    year: number;
+    bonus: number;
+    deduction: number;
+    deduction_note: string;
+}
+
+export interface ExpenseAsset {
+    id: number;
+    expense_id: number;
+    serial_number: string;
+    depreciation: number;
+}
+
 export interface Expense {
     id: number;
     expense_category_id: number;
     category?: ExpenseCategory;
-    amount: number;
+    total_amount: number;
     payment_method: string;
     date: string;
-    description?: string;
+    note?: string;
     outlet_id?: number;
     outlet?: Outlet;
-    payroll?: {
-        employee_id: number;
-        month: number;
-        year: number;
-        bonus: number;
-        deduction: number;
-        deduction_note: string;
-    };
+    expense_salary?: ExpenseSalary;
+    expense_asset?: ExpenseAsset;
     materials?: ExpenseMaterial[];
 }
 

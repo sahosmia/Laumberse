@@ -47,12 +47,12 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         expense_category_id: '' as string | number,
-        amount: '' as string | number,
+        total_amount: '' as string | number,
         payment_method: 'Cash',
         date: new Date().toISOString().split('T')[0],
-        description: '',
+        note: '',
         outlet_id: '' as string | number,
-        // Payroll fields
+        // Salary fields
         employee_id: '' as string | number,
         month: new Date().getMonth() + 1,
         year: new Date().getFullYear(),
@@ -61,20 +61,23 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
         deduction_note: '',
         // Material fields
         items: [] as { material_id: string | number; quantity: number; unit_price: number }[],
+        // Asset fields
+        serial_number: '',
+        depreciation: 0,
     });
+
+    const selectedCategory = categories.find(c => c.id == data.expense_category_id);
+    const categoryType = selectedCategory?.type || 'general';
 
     const [eligibleEmployees, setEligibleEmployees] = useState<EligibleEmployee[]>([]);
     const [selectedEmployee, setSelectedEmployee] = useState<EligibleEmployee | null>(null);
 
-    const isPayroll = data.expense_category_id == salaryCategoryId;
-    const isMaterial = data.expense_category_id == materialExpenseCategoryId;
-
     useEffect(() => {
-        if (isPayroll && data.month && data.year) {
+        if (categoryType === 'salary' && data.month && data.year) {
             axios.get(route('employees.payroll-eligible', { month: data.month, year: data.year }))
                 .then(res => setEligibleEmployees(res.data));
         }
-    }, [isPayroll, data.month, data.year]);
+    }, [categoryType, data.month, data.year]);
 
     useEffect(() => {
         if (data.employee_id) {
@@ -93,20 +96,18 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
     }, [data.employee_id, eligibleEmployees]);
 
     useEffect(() => {
-        if (isMaterial) {
+        if (categoryType === 'material') {
             const total = data.items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.unit_price)), 0);
-            if (total > 0) {
-                setData('amount', total);
-            }
+            setData('total_amount', total);
         }
-    }, [data.items, isMaterial]);
+    }, [data.items, categoryType]);
 
     const netSalary = selectedEmployee
         ? (Number(selectedEmployee.base_salary) + Number(data.bonus) - Number(data.deduction))
         : 0;
 
     const filtered = expenses.filter((e) =>
-        e.description?.toLowerCase().includes(search.toLowerCase()) ||
+        e.note?.toLowerCase().includes(search.toLowerCase()) ||
         e.category?.name.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -120,22 +121,24 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
         setEditingExpense(expense);
         setData({
             expense_category_id: expense.expense_category_id,
-            amount: expense.amount,
+            total_amount: expense.total_amount,
             payment_method: expense.payment_method,
             date: expense.date,
-            description: expense.description || '',
+            note: expense.note || '',
             outlet_id: expense.outlet_id || '',
-            employee_id: expense.payroll?.employee_id || '',
-            month: expense.payroll?.month || new Date().getMonth() + 1,
-            year: expense.payroll?.year || new Date().getFullYear(),
-            bonus: expense.payroll?.bonus || 0,
-            deduction: expense.payroll?.deduction || 0,
-            deduction_note: expense.payroll?.deduction_note || '',
+            employee_id: expense.expense_salary?.employee_id || '',
+            month: expense.expense_salary?.month || new Date().getMonth() + 1,
+            year: expense.expense_salary?.year || new Date().getFullYear(),
+            bonus: expense.expense_salary?.bonus || 0,
+            deduction: expense.expense_salary?.deduction || 0,
+            deduction_note: expense.expense_salary?.deduction_note || '',
             items: expense.materials?.map(m => ({
                 material_id: m.material_id,
                 quantity: m.quantity,
                 unit_price: m.unit_price
             })) || [],
+            serial_number: expense.expense_asset?.serial_number || '',
+            depreciation: expense.expense_asset?.depreciation || 0,
         });
         setShowModal(true);
     };
@@ -212,10 +215,10 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                 <tr className="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 text-xs uppercase tracking-wider">
                                     <th className="text-left px-5 py-3 font-semibold">Date</th>
                                     <th className="text-left px-5 py-3 font-semibold">Category</th>
-                                    <th className="text-left px-5 py-3 font-semibold">Description</th>
+                                    <th className="text-left px-5 py-3 font-semibold">Note</th>
                                     <th className="text-left px-5 py-3 font-semibold">Method</th>
                                     <th className="text-left px-5 py-3 font-semibold">Outlet</th>
-                                    <th className="text-right px-5 py-3 font-semibold">Amount</th>
+                                    <th className="text-right px-5 py-3 font-semibold">Total</th>
                                     <th className="text-center px-5 py-3 font-semibold">Actions</th>
                                 </tr>
                             </thead>
@@ -228,10 +231,10 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                                 {e.category?.name}
                                             </span>
                                         </td>
-                                        <td className="px-5 py-4 text-neutral-900 dark:text-neutral-100">{e.description || '-'}</td>
+                                        <td className="px-5 py-4 text-neutral-900 dark:text-neutral-100">{e.note || '-'}</td>
                                         <td className="px-5 py-4 text-neutral-600 dark:text-neutral-400">{e.payment_method}</td>
                                         <td className="px-5 py-4 text-neutral-600 dark:text-neutral-400">{e.outlet?.name || 'Main Shop'}</td>
-                                        <td className="px-5 py-4 text-right font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(Number(e.amount))}</td>
+                                        <td className="px-5 py-4 text-right font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(Number(e.total_amount))}</td>
                                         <td className="px-5 py-4 text-center">
                                             <div className="flex items-center justify-center gap-2">
                                                 <button onClick={() => openEditModal(e)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600 transition-colors">
@@ -291,22 +294,22 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                     {errors.expense_category_id && <p className="text-xs text-red-500">{errors.expense_category_id}</p>}
                                 </div>
                                 <div className="space-y-1">
-                                    <label htmlFor="amount" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Amount</label>
+                                    <label htmlFor="total_amount" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Total Amount</label>
                                     <input
-                                        id="amount"
+                                        id="total_amount"
                                         type="number"
-                                        value={data.amount}
-                                        onChange={e => setData('amount', e.target.value)}
+                                        value={data.total_amount}
+                                        onChange={e => setData('total_amount', e.target.value)}
                                         className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100 disabled:opacity-50 disabled:bg-neutral-50 dark:disabled:bg-neutral-800/50"
                                         required
                                         placeholder="0.00"
-                                        readOnly={isMaterial}
+                                        readOnly={categoryType === 'material'}
                                     />
-                                    {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
+                                    {errors.total_amount && <p className="text-xs text-red-500">{errors.total_amount}</p>}
                                 </div>
                             </div>
 
-                            {isMaterial && (
+                            {categoryType === 'material' && (
                                 <div className="space-y-3 bg-neutral-50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
                                     <div className="flex justify-between items-center">
                                         <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-500">Materials</h4>
@@ -333,7 +336,7 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                                             newItems[index] = {
                                                                 ...newItems[index],
                                                                 material_id: val as number,
-                                                                unit_price: selectedMat ? selectedMat.market_price : 0
+                                                                unit_price: selectedMat ? selectedMat.unit_price : 0
                                                             };
                                                             setData('items', newItems);
                                                         }}
@@ -385,7 +388,38 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                 </div>
                             )}
 
-                            {isPayroll && (
+                            {categoryType === 'asset' && (
+                                <div className="grid grid-cols-2 gap-4 bg-neutral-50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                                    <div className="space-y-1">
+                                        <label htmlFor="serial_number" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Serial Number</label>
+                                        <input
+                                            id="serial_number"
+                                            type="text"
+                                            value={data.serial_number}
+                                            onChange={e => setData('serial_number', e.target.value)}
+                                            className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
+                                            required
+                                            placeholder="SN123456"
+                                        />
+                                        {errors.serial_number && <p className="text-xs text-red-500">{errors.serial_number}</p>}
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label htmlFor="depreciation" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Depreciation (%)</label>
+                                        <input
+                                            id="depreciation"
+                                            type="number"
+                                            value={data.depreciation}
+                                            onChange={e => setData('depreciation', parseFloat(e.target.value) || 0)}
+                                            className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
+                                            required
+                                            placeholder="0.00"
+                                        />
+                                        {errors.depreciation && <p className="text-xs text-red-500">{errors.depreciation}</p>}
+                                    </div>
+                                </div>
+                            )}
+
+                            {categoryType === 'salary' && (
                                 <>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
@@ -523,14 +557,14 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                 </select>
                             </div>
                             <div className="space-y-1">
-                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Description</label>
+                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Note</label>
                                 <textarea
-                                    value={data.description}
-                                    onChange={e => setData('description', e.target.value)}
+                                    value={data.note}
+                                    onChange={e => setData('note', e.target.value)}
                                     className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
                                     rows={3}
                                 />
-                                {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
+                                {errors.note && <p className="text-xs text-red-500">{errors.note}</p>}
                             </div>
                             <div className="flex gap-2 pt-2">
                                 <button

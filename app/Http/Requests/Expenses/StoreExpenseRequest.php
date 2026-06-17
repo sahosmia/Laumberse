@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Expenses;
 
-use App\Models\GlobalSetting;
+use App\Models\ExpenseCategory;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreExpenseRequest extends FormRequest
@@ -14,33 +14,48 @@ class StoreExpenseRequest extends FormRequest
 
     public function rules(): array
     {
-        $salaryCategoryId = GlobalSetting::get('salary_category_id');
-        $materialCategoryId = GlobalSetting::get('material_expense_category_id');
-
-        $isPayroll = $this->input('expense_category_id') == $salaryCategoryId;
-        $isMaterial = $this->input('expense_category_id') == $materialCategoryId;
-
-        return [
+        $rules = [
             'expense_category_id' => 'required|exists:expense_categories,id',
-            'amount' => 'required|numeric|min:0',
-            'payment_method' => 'required|string|max:255',
+            'total_amount' => 'required|numeric|min:0',
+            'payment_method' => 'required|string',
             'date' => 'required|date',
-            'description' => 'nullable|string|max:500',
+            'note' => 'nullable|string',
             'outlet_id' => 'nullable|exists:outlets,id',
-
-            // Material specific fields
-            'items' => $isMaterial ? 'required|array|min:1' : 'nullable|array',
-            'items.*.material_id' => $isMaterial ? 'required|exists:materials,id' : 'nullable',
-            'items.*.quantity' => $isMaterial ? 'required|numeric|min:0.01' : 'nullable',
-            'items.*.unit_price' => $isMaterial ? 'required|numeric|min:0' : 'nullable',
-
-            // Payroll specific fields
-            'employee_id' => $isPayroll ? 'required|exists:employees,id' : 'nullable',
-            'month' => $isPayroll ? 'required|integer|between:1,12' : 'nullable',
-            'year' => $isPayroll ? 'required|integer' : 'nullable',
-            'bonus' => $isPayroll ? 'nullable|numeric|min:0' : 'nullable',
-            'deduction' => $isPayroll ? 'nullable|numeric|min:0' : 'nullable',
-            'deduction_note' => ($isPayroll && $this->input('deduction') > 0) ? 'required|string' : 'nullable|string',
         ];
+
+        $category = ExpenseCategory::find($this->expense_category_id);
+
+        if ($category) {
+            switch ($category->type) {
+                case ExpenseCategory::TYPE_SALARY:
+                    $rules = array_merge($rules, [
+                        'employee_id' => 'required|exists:employees,id',
+                        'month' => 'required|integer|between:1,12',
+                        'year' => 'required|integer',
+                        'bonus' => 'nullable|numeric|min:0',
+                        'deduction' => 'nullable|numeric|min:0',
+                        'deduction_note' => $this->deduction > 0 ? 'required|string' : 'nullable|string',
+                    ]);
+                    break;
+
+                case ExpenseCategory::TYPE_MATERIAL:
+                    $rules = array_merge($rules, [
+                        'items' => 'required|array|min:1',
+                        'items.*.material_id' => 'required|exists:materials,id',
+                        'items.*.quantity' => 'required|numeric|min:0.01',
+                        'items.*.unit_price' => 'required|numeric|min:0',
+                    ]);
+                    break;
+
+                case ExpenseCategory::TYPE_ASSET:
+                    $rules = array_merge($rules, [
+                        'serial_number' => 'required|string',
+                        'depreciation' => 'required|numeric|min:0|max:100',
+                    ]);
+                    break;
+            }
+        }
+
+        return $rules;
     }
 }

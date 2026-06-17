@@ -15,7 +15,7 @@ class StoreMaterialRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'market_price' => 'required|numeric|min:0',
+            'unit_price' => 'required|numeric|min:0',
         ];
     }
 }
