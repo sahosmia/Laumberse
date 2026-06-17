@@ -297,7 +297,7 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
             {/* Expense Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-xl w-full p-6 overflow-auto">
+                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] p-6 overflow-y-auto">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{editingExpense ? 'Edit Expense' : 'New Expense'}</h3>
                             <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"><X className="w-5 h-5 text-neutral-400" /></button>
