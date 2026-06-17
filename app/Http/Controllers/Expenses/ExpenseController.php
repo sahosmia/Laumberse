@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Expenses\StorePayrollExpenseRequest as StoreExpenseRequest;
 use App\Http\Requests\Expenses\UpdateExpenseRequest;
 use App\Models\Expense;
+use App\Models\Material;
 use App\Models\ExpenseCategory;
 use App\Models\GlobalSetting;
 use App\Models\Outlet;
@@ -21,6 +22,7 @@ class ExpenseController extends Controller
             'categories' => ExpenseCategory::all(),
             'outlets' => Outlet::all(),
             'salary_category_id' => GlobalSetting::get('salary_category_id'),
+            'materials' => Material::all()
         ]);
     }
 

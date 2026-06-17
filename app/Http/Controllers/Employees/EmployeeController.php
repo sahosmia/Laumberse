@@ -32,6 +32,10 @@ class EmployeeController extends Controller
         return redirect()->back()->with('success', 'Employee added successfully');
     }
 
+    public function show(Request $request, Employee $employee){
+        return $employee;
+    }
+
     public function update(Request $request, Employee $employee)
     {
         $validated = $request->validate([

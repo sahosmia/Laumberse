@@ -6,6 +6,8 @@ import { type BreadcrumbItem, Expense, ExpenseCategory, Outlet, SharedData, Mate
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import axios from 'axios';
+import { MaterialItemsForm } from './com/MaterialItemsForm';
+import { PayrollForm } from './com/PayrollForm';
 
 interface ExpensesProps {
     expenses: Expense[];
@@ -35,6 +37,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 const formatCurrency = (n: number | string) => `৳${Number(n).toLocaleString("en-BD")}`;
 
 export default function Expenses({ expenses, categories, outlets, materials }: ExpensesProps) {
+    console.log({ expenses: expenses });
+
     const [search, setSearch] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -60,15 +64,15 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
         deduction: 0,
         deduction_note: '',
         // Material fields
-        items: [] as { material_id: string | number; quantity: number; unit_price: number }[],
+        items: [] as { material_id: string | number; quantity: number | ''; unit_price: number }[],
     });
 
     const [eligibleEmployees, setEligibleEmployees] = useState<EligibleEmployee[]>([]);
     const [selectedEmployee, setSelectedEmployee] = useState<EligibleEmployee | null>(null);
+    console.log('materials', materials);
 
-    const isPayroll = data.expense_category_id == salaryCategoryId;
-    const isMaterial = data.expense_category_id == materialExpenseCategoryId;
-
+    const isPayroll = Number(data.expense_category_id) === Number(salaryCategoryId);
+    const isMaterial = Number(data.expense_category_id) === Number(materialExpenseCategoryId);
     useEffect(() => {
         if (isPayroll && data.month && data.year) {
             axios.get(route('employees.payroll-eligible', { month: data.month, year: data.year }))
@@ -92,12 +96,25 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
         }
     }, [data.employee_id, eligibleEmployees]);
 
+    // useEffect(() => {
+    //     if (isMaterial) {
+    //         const total = data.items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.unit_price)), 0);
+    //         if (total > 0) {
+    //             setData('amount', total);
+    //         }
+    //     }
+    // }, [data.items, isMaterial]);
+
     useEffect(() => {
-        if (isMaterial) {
-            const total = data.items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.unit_price)), 0);
-            if (total > 0) {
-                setData('amount', total);
-            }
+        if (!isMaterial) return;
+
+        const total = data.items.reduce(
+            (sum, item) => sum + (Number(item.quantity) * Number(item.unit_price)),
+            0
+        );
+
+        if (Number(data.amount) !== total) {
+            setData('amount', total);
         }
     }, [data.items, isMaterial]);
 
@@ -168,6 +185,14 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
             });
         }
     };
+
+
+    ;
+
+
+    console.log('expence category id' + data.expense_category_id);
+    console.log('materialExpenseCategoryId' + materialExpenseCategoryId);
+    console.log('isMaterial' + isMaterial);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -267,7 +292,7 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
             {/* Expense Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-6">
+                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-xl w-full p-6 overflow-auto">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{editingExpense ? 'Edit Expense' : 'New Expense'}</h3>
                             <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"><X className="w-5 h-5 text-neutral-400" /></button>
@@ -279,7 +304,9 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                     <select
                                         id="expense_category_id"
                                         value={data.expense_category_id}
-                                        onChange={e => setData('expense_category_id', e.target.value)}
+                                        onChange={e =>
+                                            setData('expense_category_id', Number(e.target.value))
+                                        }
                                         className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
                                         required
                                     >
@@ -307,181 +334,24 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                             </div>
 
                             {isMaterial && (
-                                <div className="space-y-3 bg-neutral-50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                                    <div className="flex justify-between items-center">
-                                        <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-500">Materials</h4>
-                                        <button
-                                            type="button"
-                                            onClick={() => setData('items', [...data.items, { material_id: '', quantity: 1, unit_price: 0 }])}
-                                            className="text-xs text-blue-600 font-semibold flex items-center gap-1"
-                                        >
-                                            <Plus className="w-3 h-3" /> Add Item
-                                        </button>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        {data.items.map((item, index) => (
-                                            <div key={index} className="grid grid-cols-12 gap-2 items-start bg-white dark:bg-neutral-900 p-2 rounded-lg border border-neutral-100 dark:border-neutral-800 shadow-sm relative pr-8">
-                                                <div className="col-span-6 space-y-1">
-                                                    <label className="text-[10px] font-bold text-neutral-400 uppercase">Material</label>
-                                                    <SearchableSelect
-                                                        options={materials.map(m => ({ label: m.name, value: m.id }))}
-                                                        value={item.material_id}
-                                                        onChange={(val) => {
-                                                            const selectedMat = materials.find(m => m.id == val);
-                                                            const newItems = [...data.items];
-                                                            newItems[index] = {
-                                                                ...newItems[index],
-                                                                material_id: val as number,
-                                                                unit_price: selectedMat ? selectedMat.market_price : 0
-                                                            };
-                                                            setData('items', newItems);
-                                                        }}
-                                                        placeholder="Select"
-                                                    />
-                                                </div>
-                                                <div className="col-span-3 space-y-1">
-                                                    <label className="text-[10px] font-bold text-neutral-400 uppercase">Qty</label>
-                                                    <input
-                                                        type="number"
-                                                        value={item.quantity}
-                                                        onChange={(e) => {
-                                                            const newItems = [...data.items];
-                                                            newItems[index].quantity = parseFloat(e.target.value) || 0;
-                                                            setData('items', newItems);
-                                                        }}
-                                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 py-1.5 text-xs bg-transparent dark:text-neutral-100"
-                                                        step="0.01"
-                                                    />
-                                                </div>
-                                                <div className="col-span-3 space-y-1">
-                                                    <label className="text-[10px] font-bold text-neutral-400 uppercase">Price</label>
-                                                    <input
-                                                        type="number"
-                                                        value={item.unit_price}
-                                                        onChange={(e) => {
-                                                            const newItems = [...data.items];
-                                                            newItems[index].unit_price = parseFloat(e.target.value) || 0;
-                                                            setData('items', newItems);
-                                                        }}
-                                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 py-1.5 text-xs bg-transparent dark:text-neutral-100"
-                                                        step="0.01"
-                                                    />
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setData('items', data.items.filter((_, i) => i !== index))}
-                                                    className="absolute top-1/2 -translate-y-1/2 right-1 p-1 text-neutral-400 hover:text-red-500 transition-colors"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        ))}
-                                        {data.items.length === 0 && (
-                                            <p className="text-[10px] text-center text-neutral-400 italic py-2">No items added</p>
-                                        )}
-                                        {errors.items && <p className="text-xs text-red-500">{errors.items}</p>}
-                                    </div>
-                                </div>
+                                <MaterialItemsForm
+                                    items={data.items}
+                                    materials={materials}
+                                    errors={errors}
+                                    onChange={(newItems) => setData('items', newItems)}
+                                />
                             )}
 
                             {isPayroll && (
-                                <>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1">
-                                            <label htmlFor="month" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Month</label>
-                                            <select
-                                                id="month"
-                                                value={data.month}
-                                                onChange={e => setData('month', parseInt(e.target.value))}
-                                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                                required
-                                            >
-                                                {Array.from({ length: 12 }, (_, i) => (
-                                                    <option key={i + 1} value={i + 1}>
-                                                        {new Date(0, i).toLocaleString('default', { month: 'long' })}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label htmlFor="year" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Year</label>
-                                            <input
-                                                id="year"
-                                                type="number"
-                                                value={data.year}
-                                                onChange={e => setData('year', parseInt(e.target.value))}
-                                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Employee</label>
-                                        <SearchableSelect
-                                            options={eligibleEmployees.map(e => ({ label: `${e.name} (Base: ${e.base_salary})`, value: e.id }))}
-                                            value={data.employee_id}
-                                            onChange={val => setData('employee_id', val)}
-                                            placeholder="Select Employee"
-                                            error={errors.employee_id}
-                                        />
-                                    </div>
-
-                                    {selectedEmployee && (
-                                        <div className="bg-neutral-50 dark:bg-neutral-800/50 p-4 rounded-xl space-y-3">
-                                            <div className="flex justify-between text-xs">
-                                                <span className="text-neutral-500">Base Salary:</span>
-                                                <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatCurrency(selectedEmployee.base_salary)}</span>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-1">
-                                                    <label htmlFor="bonus" className="text-xs font-medium text-neutral-700 dark:text-neutral-300">Bonus</label>
-                                                    <input
-                                                        id="bonus"
-                                                        type="number"
-                                                        value={data.bonus}
-                                                        onChange={e => setData('bonus', parseFloat(e.target.value) || 0)}
-                                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 py-1.5 text-xs bg-transparent dark:text-neutral-100"
-                                                    />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <label htmlFor="deduction" className="text-xs font-medium text-neutral-700 dark:text-neutral-300">Deduction</label>
-                                                    <input
-                                                        id="deduction"
-                                                        type="number"
-                                                        value={data.deduction}
-                                                        onChange={e => setData('deduction', parseFloat(e.target.value) || 0)}
-                                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 py-1.5 text-xs bg-transparent dark:text-neutral-100"
-                                                    />
-                                                </div>
-                                            </div>
-                                            {data.deduction > 0 && (
-                                                <div className="space-y-1">
-                                                    <label htmlFor="deduction_note" className="text-xs font-medium text-neutral-700 dark:text-neutral-300">Deduction Note</label>
-                                                    <input
-                                                        id="deduction_note"
-                                                        type="text"
-                                                        value={data.deduction_note}
-                                                        onChange={e => setData('deduction_note', e.target.value)}
-                                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 py-1.5 text-xs bg-transparent dark:text-neutral-100"
-                                                        required
-                                                        placeholder="Reason for deduction"
-                                                    />
-                                                    {errors.deduction_note && <p className="text-xs text-red-500">{errors.deduction_note}</p>}
-                                                </div>
-                                            )}
-                                            <div className="pt-2 border-t border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
-                                                <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300">Net Salary:</span>
-                                                <span className="text-sm font-bold text-blue-600">{formatCurrency(netSalary)}</span>
-                                            </div>
-                                            <div className="flex justify-between text-[10px] text-neutral-500 italic">
-                                                <span>Already Paid: {formatCurrency(selectedEmployee.already_paid)}</span>
-                                                <span>Remaining: {formatCurrency(netSalary - selectedEmployee.already_paid)}</span>
-                                            </div>
-                                        </div>
-                                    )}
-                                </>
+                                <PayrollForm
+                                    data={data}
+                                    setData={setData}
+                                    errors={errors}
+                                    eligibleEmployees={eligibleEmployees}
+                                    selectedEmployee={selectedEmployee}
+                                    netSalary={netSalary}
+                                    formatCurrency={formatCurrency}
+                                />
                             )}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
