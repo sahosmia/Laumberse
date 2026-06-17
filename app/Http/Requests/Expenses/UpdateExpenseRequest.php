@@ -9,7 +9,10 @@ class UpdateExpenseRequest extends FormRequest
     public function authorize(): bool { return true; }
     public function rules(): array
     {
+        $salaryCategoryId = \App\Models\GlobalSetting::get('salary_category_id');
         $materialCategoryId = \App\Models\GlobalSetting::get('material_expense_category_id');
+
+        $isPayroll = $this->input('expense_category_id') == $salaryCategoryId;
         $isMaterial = $this->input('expense_category_id') == $materialCategoryId;
 
         return [
@@ -21,10 +24,18 @@ class UpdateExpenseRequest extends FormRequest
             'outlet_id' => 'nullable|exists:outlets,id',
 
             // Material specific fields
-            'items' => $isMaterial ? 'nullable|array' : 'nullable',
+            'items' => $isMaterial ? 'required|array|min:1' : 'nullable|array',
             'items.*.material_id' => $isMaterial ? 'required|exists:materials,id' : 'nullable',
             'items.*.quantity' => $isMaterial ? 'required|numeric|min:0.01' : 'nullable',
             'items.*.unit_price' => $isMaterial ? 'required|numeric|min:0' : 'nullable',
+
+            // Payroll specific fields
+            'employee_id' => $isPayroll ? 'required|exists:employees,id' : 'nullable',
+            'month' => $isPayroll ? 'required|integer|between:1,12' : 'nullable',
+            'year' => $isPayroll ? 'required|integer' : 'nullable',
+            'bonus' => $isPayroll ? 'nullable|numeric|min:0' : 'nullable',
+            'deduction' => $isPayroll ? 'nullable|numeric|min:0' : 'nullable',
+            'deduction_note' => ($isPayroll && $this->input('deduction') > 0) ? 'required|string' : 'nullable|string',
         ];
     }
 }

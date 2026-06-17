@@ -1,0 +1,23 @@
+
+   WARN  Unable to respect the `PHP_CLI_SERVER_WORKERS` environment variable without the `--no-reload` flag. Only creating a single server.
+
+   INFO  Server running on [http://127.0.0.1:8000].
+
+  Press Ctrl+C to stop the server
+
+  2026-06-17 09:45:08 /login ..................................... ~ 501.70ms
+  2026-06-17 09:45:08 /build/assets/app-CB3lHLSW.css ............... ~ 0.05ms
+  2026-06-17 09:45:08 /build/assets/login-GKldjbZd.js .............. ~ 0.08ms
+  2026-06-17 09:45:08 /build/assets/input-error-9nctTS8_.js ........ ~ 0.28ms
+  2026-06-17 09:45:08 /build/assets/text-link-vYg7wcjg.js .......... ~ 0.40ms
+  2026-06-17 09:45:08 /build/assets/app-DBdN4qec.js ................ ~ 0.59ms
+  2026-06-17 09:45:08 /build/assets/app-logo-icon-DBmTQZ1o.js ...... ~ 0.71ms
+  2026-06-17 09:45:08 /build/assets/checkbox-Cc_upZpf.js ........... ~ 0.81ms
+  2026-06-17 09:45:08 /build/assets/index-xSSicSNu.js .............. ~ 0.08ms
+  2026-06-17 09:45:08 /build/assets/label-BAMqlgbC.js .............. ~ 0.27ms
+  2026-06-17 09:45:08 /build/assets/auth-layout-KMLwOa72.js ........ ~ 0.53ms
+  2026-06-17 09:45:08 /build/assets/utils-D_4GbrRi.js .............. ~ 0.65ms
+  2026-06-17 09:45:08 /build/assets/index-DU4f6mFd.js .............. ~ 0.80ms
+  2026-06-17 09:45:08 /build/assets/check-Bjs33-KV.js .............. ~ 0.03ms
+  2026-06-17 09:45:09 /build/assets/app-CB3lHLSW.css ............... ~ 0.03ms
+  2026-06-17 09:45:09 /logo3.jpeg .................................. ~ 0.03ms

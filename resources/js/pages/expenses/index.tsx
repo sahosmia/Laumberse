@@ -64,7 +64,7 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
         deduction: 0,
         deduction_note: '',
         // Material fields
-        items: [] as { material_id: string | number; quantity: number | ''; unit_price: number }[],
+        items: [] as { material_id: string | number; quantity: number | ''; unit_price: number | '' }[],
     });
 
     const [eligibleEmployees, setEligibleEmployees] = useState<EligibleEmployee[]>([]);
@@ -113,13 +113,15 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
             0
         );
 
-        if (Number(data.amount) !== total) {
-            setData('amount', total);
+        const roundedTotal = Math.round((total + Number.EPSILON) * 100) / 100;
+
+        if (Number(data.amount) !== roundedTotal) {
+            setData('amount', roundedTotal);
         }
     }, [data.items, isMaterial]);
 
     const netSalary = selectedEmployee
-        ? (Number(selectedEmployee.base_salary) + Number(data.bonus) - Number(data.deduction))
+        ? Math.round(((Number(selectedEmployee.base_salary) + Number(data.bonus) - Number(data.deduction)) + Number.EPSILON) * 100) / 100
         : 0;
 
     const filtered = expenses.filter((e) =>
@@ -259,6 +261,9 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                         <td className="px-5 py-4 text-right font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(Number(e.amount))}</td>
                                         <td className="px-5 py-4 text-center">
                                             <div className="flex items-center justify-center gap-2">
+                                                <Link href={route('expenses.show', e.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600 transition-colors">
+                                                    <Search className="w-4 h-4" />
+                                                </Link>
                                                 <button onClick={() => openEditModal(e)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600 transition-colors">
                                                     <Edit3 className="w-4 h-4" />
                                                 </button>
@@ -323,11 +328,12 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                         id="amount"
                                         type="number"
                                         value={data.amount}
-                                        onChange={e => setData('amount', e.target.value)}
+                                        onChange={e => setData('amount', e.target.value === '' ? '' : parseFloat(e.target.value))}
                                         className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100 disabled:opacity-50 disabled:bg-neutral-50 dark:disabled:bg-neutral-800/50"
                                         required
                                         placeholder="0.00"
                                         readOnly={isMaterial}
+                                        step="any"
                                     />
                                     {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
                                 </div>

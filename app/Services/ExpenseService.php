@@ -13,6 +13,10 @@ class ExpenseService
 {
     public function storeExpense(array $data)
     {
+        if (isset($data['amount'])) {
+            $data['amount'] = round($data['amount'], 2);
+        }
+
         return DB::transaction(function () use ($data) {
             $salaryCategoryId = GlobalSetting::get('salary_category_id');
             $materialCategoryId = GlobalSetting::get('material_expense_category_id');
@@ -38,6 +42,10 @@ class ExpenseService
 
     public function updateExpense(Expense $expense, array $data)
     {
+        if (isset($data['amount'])) {
+            $data['amount'] = round($data['amount'], 2);
+        }
+
         return DB::transaction(function () use ($expense, $data) {
             $salaryCategoryId = GlobalSetting::get('salary_category_id');
             $materialCategoryId = GlobalSetting::get('material_expense_category_id');
@@ -73,7 +81,9 @@ class ExpenseService
                     $this->attachMaterialsToExpense($expense, $data['items']);
                 }
             } else {
-                $expense->materials()->delete();
+                if ($expense->materials()->exists()) {
+                    $expense->materials()->delete();
+                }
             }
 
             return $expense;
@@ -90,13 +100,13 @@ class ExpenseService
             'year' => $data['year'],
         ]);
 
-        $payroll->base_salary = $employee->base_salary;
-        $payroll->bonus = $data['bonus'] ?? 0;
-        $payroll->deduction = $data['deduction'] ?? 0;
+        $payroll->base_salary = round($employee->base_salary, 2);
+        $payroll->bonus = round($data['bonus'] ?? 0, 2);
+        $payroll->deduction = round($data['deduction'] ?? 0, 2);
         $payroll->deduction_note = $data['deduction_note'] ?? null;
 
-        $payroll->net_salary = $payroll->base_salary + $payroll->bonus - $payroll->deduction;
-        $payroll->paid_amount += $data['amount'];
+        $payroll->net_salary = round($payroll->base_salary + $payroll->bonus - $payroll->deduction, 2);
+        $payroll->paid_amount = round($payroll->paid_amount + $data['amount'], 2);
         $this->updatePayrollStatus($payroll);
         $payroll->save();
 
@@ -105,15 +115,23 @@ class ExpenseService
 
     protected function attachMaterialsToExpense(Expense $expense, array $items)
     {
+        $totalAmount = 0;
         foreach ($items as $item) {
+            $quantity = round($item['quantity'], 2);
+            $unitPrice = round($item['unit_price'], 2);
+            $lineAmount = round($quantity * $unitPrice, 2);
+            $totalAmount += $lineAmount;
+
             ExpenseMaterial::create([
                 'expense_id' => $expense->id,
                 'material_id' => $item['material_id'],
-                'quantity' => $item['quantity'],
-                'unit_price' => $item['unit_price'],
-                'amount' => $item['quantity'] * $item['unit_price'],
+                'quantity' => $quantity,
+                'unit_price' => $unitPrice,
+                'amount' => $lineAmount,
             ]);
         }
+
+        $expense->update(['amount' => round($totalAmount, 2)]);
     }
 
     protected function updatePayrollStatus(Payroll $payroll)

@@ -105,8 +105,9 @@ export function PayrollForm({
                                 id="bonus"
                                 type="number"
                                 value={data.bonus}
-                                onChange={(e) => setData('bonus', parseFloat(e.target.value) || 0)}
+                                onChange={(e) => setData('bonus', e.target.value === '' ? '' : parseFloat(e.target.value))}
                                 className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 py-1.5 text-xs bg-transparent dark:text-neutral-100"
+                                step="any"
                             />
                         </div>
                         <div className="space-y-1">
@@ -117,8 +118,9 @@ export function PayrollForm({
                                 id="deduction"
                                 type="number"
                                 value={data.deduction}
-                                onChange={(e) => setData('deduction', parseFloat(e.target.value) || 0)}
+                                onChange={(e) => setData('deduction', e.target.value === '' ? '' : parseFloat(e.target.value))}
                                 className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 py-1.5 text-xs bg-transparent dark:text-neutral-100"
+                                step="any"
                             />
                         </div>
                     </div>
