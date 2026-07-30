@@ -105,7 +105,13 @@ export function PayrollForm({
                                 id="bonus"
                                 type="number"
                                 value={data.bonus}
-                                onChange={(e) => setData('bonus', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                onChange={(e) => {
+                                    let val = e.target.value;
+                                    if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
+                                        val = val.replace(/^0+/, '');
+                                    }
+                                    setData('bonus', val === '' ? '' : parseFloat(val));
+                                }}
                                 className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 py-1.5 text-xs bg-transparent dark:text-neutral-100"
                                 step="any"
                             />
@@ -118,7 +124,13 @@ export function PayrollForm({
                                 id="deduction"
                                 type="number"
                                 value={data.deduction}
-                                onChange={(e) => setData('deduction', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                onChange={(e) => {
+                                    let val = e.target.value;
+                                    if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
+                                        val = val.replace(/^0+/, '');
+                                    }
+                                    setData('deduction', val === '' ? '' : parseFloat(val));
+                                }}
                                 className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 py-1.5 text-xs bg-transparent dark:text-neutral-100"
                                 step="any"
                             />

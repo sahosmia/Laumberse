@@ -343,7 +343,13 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                         id="amount"
                                         type="number"
                                         value={data.amount}
-                                        onChange={e => setData('amount', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                        onChange={e => {
+                                            let val = e.target.value;
+                                            if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
+                                                val = val.replace(/^0+/, '');
+                                            }
+                                            setData('amount', val === '' ? '' : parseFloat(val));
+                                        }}
                                         className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100 disabled:opacity-50 disabled:bg-neutral-50 dark:disabled:bg-neutral-800/50"
                                         required
                                         placeholder="0.00"
