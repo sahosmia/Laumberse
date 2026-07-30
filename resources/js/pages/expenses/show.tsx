@@ -93,7 +93,9 @@ export default function ExpenseShow({ expense }: ExpenseShowProps) {
                                             {expense.materials?.map((item, idx) => (
                                                 <tr key={idx}>
                                                     <td className="px-4 py-3 font-medium">{item.material?.name}</td>
-                                                    <td className="px-4 py-3 text-center text-neutral-600 dark:text-neutral-400">{item.quantity}</td>
+                                                    <td className="px-4 py-3 text-center text-neutral-600 dark:text-neutral-400">
+                                                        {item.quantity} {item.material?.unit?.short_name && <span className="text-xs text-neutral-400">({item.material.unit.short_name})</span>}
+                                                    </td>
                                                     <td className="px-4 py-3 text-right text-neutral-600 dark:text-neutral-400">{formatCurrency(item.unit_price)}</td>
                                                     <td className="px-4 py-3 text-right font-semibold">{formatCurrency(item.amount)}</td>
                                                 </tr>

@@ -386,19 +386,6 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                         <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3 flex items-center gap-2">
                             <Search className="w-4 h-4" /> Add Service / Product
                         </h3>
-                        <div className="flex flex-wrap gap-1.5 mb-3">
-                            {categoryNames.map((c) => (
-                                <button
-                                    key={c}
-                                    type="button"
-                                    onClick={() => { setSelectedCategory(c); setShowDropdown(true); }}
-                                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${selectedCategory === c ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400"
-                                        }`}
-                                >
-                                    {c}
-                                </button>
-                            ))}
-                        </div>
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
                             <input

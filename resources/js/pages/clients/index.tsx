@@ -1,10 +1,11 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Plus, Trash2, Edit3, X, Settings2, PackagePlus, Eye } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { type BreadcrumbItem, Client, Product } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 
 interface ClientsProps {
     clients: Client[];
@@ -27,6 +28,18 @@ export default function Clients({ clients, products }: ClientsProps) {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+
+    useEffect(() => {
+        if (showModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [showModal]);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -61,20 +74,39 @@ export default function Clients({ clients, products }: ClientsProps) {
 const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const payload = {
-        ...data,
-        custom_prices: data.custom_prices.filter(
-            cp => cp.product_id && cp.custom_price !== ''
-        ),
-    };
-
     if (editingClient) {
-        put(route('clients.update', editingClient.id), {
-            data: payload,
-        });
+        setShowSaveConfirm(true);
     } else {
+        const payload = {
+            ...data,
+            custom_prices: data.custom_prices.filter(
+                cp => cp.product_id && cp.custom_price !== ''
+            ),
+        };
         post(route('clients.store'), {
             data: payload,
+            onSuccess: () => {
+                setShowModal(false);
+                reset();
+            },
+        });
+    }
+};
+
+const confirmSave = () => {
+    if (editingClient) {
+        const payload = {
+            ...data,
+            custom_prices: data.custom_prices.filter(
+                cp => cp.product_id && cp.custom_price !== ''
+            ),
+        };
+        put(route('clients.update', editingClient.id), {
+            data: payload,
+            onSuccess: () => {
+                setShowSaveConfirm(false);
+                setShowModal(false);
+            },
         });
     }
 };
@@ -123,7 +155,7 @@ const handleSubmit = (e: React.FormEvent) => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filtered.map((c) => (
                         <div key={c.id} className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 hover:shadow-lg transition-shadow duration-300 relative group">
-                            <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute top-4 right-4 flex gap-1">
                                 <Link href={route('clients.show', c.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600"><Eye className="w-3.5 h-3.5" /></Link>
 
                                 <button onClick={() => openEditModal(c)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600"><Edit3 className="w-3.5 h-3.5" /></button>
@@ -169,6 +201,15 @@ const handleSubmit = (e: React.FormEvent) => {
                 onConfirm={confirmDelete}
                 title="Delete Client"
                 description="Are you sure you want to delete this client? This action cannot be undone."
+                isProcessing={processing}
+            />
+
+            <SaveConfirmationModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={confirmSave}
+                title="Save Client Changes"
+                description="Are you sure you want to save these changes to the client?"
                 isProcessing={processing}
             />
 
@@ -304,7 +345,7 @@ const handleSubmit = (e: React.FormEvent) => {
             ...data.custom_prices,
             {
                 product_id: product.id,
-                custom_price: product.price ?? '',
+                custom_price: '',
             },
         ]);
 

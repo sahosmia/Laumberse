@@ -1,10 +1,11 @@
 import { Head, useForm, router } from '@inertiajs/react';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Plus, Trash2, Edit3, X } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, Category, Unit, Outlet, Product } from '@/types';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 
 interface ProductsProps {
     products: Product[];
@@ -31,6 +32,18 @@ export default function Products({ products, categories, filter, units, outlets 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+
+    useEffect(() => {
+        if (showModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [showModal]);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -72,14 +85,23 @@ export default function Products({ products, categories, filter, units, outlets 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingProduct) {
-            put(route('products.update', editingProduct.id), {
-                onSuccess: () => setShowModal(false),
-            });
+            setShowSaveConfirm(true);
         } else {
             post(route('products.store'), {
                 onSuccess: () => {
                     setShowModal(false);
                     reset();
+                },
+            });
+        }
+    };
+
+    const confirmSave = () => {
+        if (editingProduct) {
+            put(route('products.update', editingProduct.id), {
+                onSuccess: () => {
+                    setShowSaveConfirm(false);
+                    setShowModal(false);
                 },
             });
         }
@@ -293,6 +315,15 @@ export default function Products({ products, categories, filter, units, outlets 
                 description={selectedIds.length > 0
                     ? `Are you sure you want to delete ${selectedIds.length} selected products?`
                     : "Are you sure you want to delete ALL products? This will remove every product from the system."}
+                isProcessing={processing}
+            />
+
+            <SaveConfirmationModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={confirmSave}
+                title="Save Product Changes"
+                description="Are you sure you want to save these changes to the product?"
                 isProcessing={processing}
             />
 

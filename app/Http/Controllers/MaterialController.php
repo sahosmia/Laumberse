@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Materials\StoreMaterialRequest;
 use App\Http\Requests\Materials\UpdateMaterialRequest;
 use App\Models\Material;
+use App\Models\Unit;
 use Inertia\Inertia;
 
 class MaterialController extends Controller
@@ -12,7 +13,8 @@ class MaterialController extends Controller
     public function index()
     {
         return Inertia::render('materials/index', [
-            'materials' => Material::orderBy('name')->get(),
+            'materials' => Material::with('unit')->orderBy('name')->get(),
+            'units' => Unit::orderBy('name')->get(),
         ]);
     }
 

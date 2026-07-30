@@ -137,7 +137,8 @@ export interface ExpenseCategory {
 export interface Material {
     id: number;
     name: string;
-    market_price: number;
+    unit_id?: number;
+    unit?: Unit;
 }
 
 export interface ExpenseMaterial {

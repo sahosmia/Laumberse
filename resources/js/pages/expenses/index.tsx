@@ -4,6 +4,7 @@ import { Search, Plus, Trash2, Edit3, X, Tag } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, Expense, ExpenseCategory, Outlet, SharedData, Material } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import axios from 'axios';
 import { MaterialItemsForm } from './com/MaterialItemsForm';
@@ -43,6 +44,18 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
     const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+
+    useEffect(() => {
+        if (showModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [showModal]);
 
     const { settings } = usePage<SharedData>().props;
     const salaryCategoryId = settings.salary_category_id;
@@ -160,14 +173,23 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingExpense) {
-            put(route('expenses.update', editingExpense.id), {
-                onSuccess: () => setShowModal(false),
-            });
+            setShowSaveConfirm(true);
         } else {
             post(route('expenses.store'), {
                 onSuccess: () => {
                     setShowModal(false);
                     reset();
+                },
+            });
+        }
+    };
+
+    const confirmSave = () => {
+        if (editingExpense) {
+            put(route('expenses.update', editingExpense.id), {
+                onSuccess: () => {
+                    setShowSaveConfirm(false);
+                    setShowModal(false);
                 },
             });
         }
@@ -289,6 +311,15 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                 isProcessing={processing}
             />
 
+            <SaveConfirmationModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={confirmSave}
+                title="Save Expense Changes"
+                description="Are you sure you want to save these changes to the expense?"
+                isProcessing={processing}
+            />
+
             {/* Expense Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
@@ -323,7 +354,13 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                         id="amount"
                                         type="number"
                                         value={data.amount}
-                                        onChange={e => setData('amount', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                        onChange={e => {
+                                            let val = e.target.value;
+                                            if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
+                                                val = val.replace(/^0+/, '');
+                                            }
+                                            setData('amount', val === '' ? '' : parseFloat(val));
+                                        }}
                                         className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100 disabled:opacity-50 disabled:bg-neutral-50 dark:disabled:bg-neutral-800/50"
                                         required
                                         placeholder="0.00"
