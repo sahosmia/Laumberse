@@ -57,6 +57,12 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
         };
     }, [showModal]);
 
+    useEffect(() => {
+        if (isMaterial || isPayroll) {
+            setData('outlet_id', '');
+        }
+    }, [isMaterial, isPayroll]);
+
     const { settings } = usePage<SharedData>().props;
     const salaryCategoryId = settings.salary_category_id;
     const materialExpenseCategoryId = settings.material_expense_category_id;
@@ -417,19 +423,21 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                     </select>
                                 </div>
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Outlet (Optional)</label>
-                                <select
-                                    value={data.outlet_id}
-                                    onChange={e => setData('outlet_id', e.target.value)}
-                                    className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                >
-                                    <option value="">Main Shop</option>
-                                    {outlets.map(o => (
-                                        <option key={o.id} value={o.id}>{o.name}</option>
-                                    ))}
-                                </select>
-                            </div>
+                            {(!isMaterial && !isPayroll) && (
+                                <div className="space-y-1">
+                                    <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Outlet (Optional)</label>
+                                    <select
+                                        value={data.outlet_id}
+                                        onChange={e => setData('outlet_id', e.target.value)}
+                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
+                                    >
+                                        <option value="">Main Shop</option>
+                                        {outlets.map(o => (
+                                            <option key={o.id} value={o.id}>{o.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                             <div className="space-y-1">
                                 <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Description</label>
                                 <textarea
