@@ -5,6 +5,7 @@ import AppLayout from '@/layouts/app-layout';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { type BreadcrumbItem, Client, Product } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 
 interface ClientsProps {
     clients: Client[];
@@ -27,6 +28,7 @@ export default function Clients({ clients, products }: ClientsProps) {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -61,20 +63,39 @@ export default function Clients({ clients, products }: ClientsProps) {
 const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const payload = {
-        ...data,
-        custom_prices: data.custom_prices.filter(
-            cp => cp.product_id && cp.custom_price !== ''
-        ),
-    };
-
     if (editingClient) {
-        put(route('clients.update', editingClient.id), {
-            data: payload,
-        });
+        setShowSaveConfirm(true);
     } else {
+        const payload = {
+            ...data,
+            custom_prices: data.custom_prices.filter(
+                cp => cp.product_id && cp.custom_price !== ''
+            ),
+        };
         post(route('clients.store'), {
             data: payload,
+            onSuccess: () => {
+                setShowModal(false);
+                reset();
+            },
+        });
+    }
+};
+
+const confirmSave = () => {
+    if (editingClient) {
+        const payload = {
+            ...data,
+            custom_prices: data.custom_prices.filter(
+                cp => cp.product_id && cp.custom_price !== ''
+            ),
+        };
+        put(route('clients.update', editingClient.id), {
+            data: payload,
+            onSuccess: () => {
+                setShowSaveConfirm(false);
+                setShowModal(false);
+            },
         });
     }
 };
@@ -169,6 +190,15 @@ const handleSubmit = (e: React.FormEvent) => {
                 onConfirm={confirmDelete}
                 title="Delete Client"
                 description="Are you sure you want to delete this client? This action cannot be undone."
+                isProcessing={processing}
+            />
+
+            <SaveConfirmationModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={confirmSave}
+                title="Save Client Changes"
+                description="Are you sure you want to save these changes to the client?"
                 isProcessing={processing}
             />
 

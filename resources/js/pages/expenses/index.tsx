@@ -4,6 +4,7 @@ import { Search, Plus, Trash2, Edit3, X, Tag } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, Expense, ExpenseCategory, Outlet, SharedData, Material } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import axios from 'axios';
 import { MaterialItemsForm } from './com/MaterialItemsForm';
@@ -43,6 +44,7 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
     const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
     const { settings } = usePage<SharedData>().props;
     const salaryCategoryId = settings.salary_category_id;
@@ -160,14 +162,23 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingExpense) {
-            put(route('expenses.update', editingExpense.id), {
-                onSuccess: () => setShowModal(false),
-            });
+            setShowSaveConfirm(true);
         } else {
             post(route('expenses.store'), {
                 onSuccess: () => {
                     setShowModal(false);
                     reset();
+                },
+            });
+        }
+    };
+
+    const confirmSave = () => {
+        if (editingExpense) {
+            put(route('expenses.update', editingExpense.id), {
+                onSuccess: () => {
+                    setShowSaveConfirm(false);
+                    setShowModal(false);
                 },
             });
         }
@@ -286,6 +297,15 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                 onConfirm={confirmDelete}
                 title="Delete Expense"
                 description="Are you sure you want to delete this expense? This action cannot be undone."
+                isProcessing={processing}
+            />
+
+            <SaveConfirmationModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={confirmSave}
+                title="Save Expense Changes"
+                description="Are you sure you want to save these changes to the expense?"
                 isProcessing={processing}
             />
 

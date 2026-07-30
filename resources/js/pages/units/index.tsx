@@ -4,6 +4,7 @@ import { Search, Plus, Trash2, Edit3, X } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 
 interface Unit {
     id: number;
@@ -28,6 +29,7 @@ export default function Units({ units }: UnitsProps) {
     const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -56,14 +58,23 @@ export default function Units({ units }: UnitsProps) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingUnit) {
-            put(route('units.update', editingUnit.id), {
-                onSuccess: () => setShowModal(false),
-            });
+            setShowSaveConfirm(true);
         } else {
             post(route('units.store'), {
                 onSuccess: () => {
                     setShowModal(false);
                     reset();
+                },
+            });
+        }
+    };
+
+    const confirmSave = () => {
+        if (editingUnit) {
+            put(route('units.update', editingUnit.id), {
+                onSuccess: () => {
+                    setShowSaveConfirm(false);
+                    setShowModal(false);
                 },
             });
         }
@@ -145,6 +156,15 @@ export default function Units({ units }: UnitsProps) {
                 onConfirm={confirmDelete}
                 title="Delete Unit"
                 description="Are you sure you want to delete this unit? This action cannot be undone."
+                isProcessing={processing}
+            />
+
+            <SaveConfirmationModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={confirmSave}
+                title="Save Unit Changes"
+                description="Are you sure you want to save these changes to the unit?"
                 isProcessing={processing}
             />
 

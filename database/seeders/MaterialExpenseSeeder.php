@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\ExpenseCategory;
 use App\Models\GlobalSetting;
 use App\Models\Material;
+use App\Models\Unit;
 use Illuminate\Database\Seeder;
 
 class MaterialExpenseSeeder extends Seeder
@@ -17,17 +18,25 @@ class MaterialExpenseSeeder extends Seeder
         // 2. Set the config key-value pair in settings table
         GlobalSetting::set('material_expense_category_id', $category->id);
 
-        // 3. Seed some dummy materials
+        // 3. Get existing units to link with materials
+        $units = Unit::all();
+        $kgUnit = $units->where('short_name', 'kg')->first();
+        $pcsUnit = $units->where('short_name', 'pcs')->first();
+
+        // 4. Seed some dummy materials
         $materials = [
-            ['name' => 'Fabric A', 'market_price' => 150.00],
-            ['name' => 'Thread Roll', 'market_price' => 25.50],
-            ['name' => 'Buttons (Gross)', 'market_price' => 45.00],
-            ['name' => 'Elastic Band', 'market_price' => 12.75],
-            ['name' => 'Zippers', 'market_price' => 8.50],
+            ['name' => 'Fabric A', 'unit_id' => $kgUnit?->id],
+            ['name' => 'Thread Roll', 'unit_id' => $pcsUnit?->id],
+            ['name' => 'Buttons (Gross)', 'unit_id' => $pcsUnit?->id],
+            ['name' => 'Elastic Band', 'unit_id' => $kgUnit?->id],
+            ['name' => 'Zippers', 'unit_id' => $pcsUnit?->id],
         ];
 
         foreach ($materials as $material) {
-            Material::firstOrCreate(['name' => $material['name']], ['market_price' => $material['market_price']]);
+            Material::firstOrCreate(
+                ['name' => $material['name']],
+                ['unit_id' => $material['unit_id']]
+            );
         }
     }
 }

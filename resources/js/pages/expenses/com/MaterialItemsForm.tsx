@@ -19,7 +19,7 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
     const handleAddItem = () => {
         onChange([
             ...items,
-            { material_id: '', quantity: 1, unit_price: '' }
+            { material_id: '', quantity: 1, unit_price: 0 }
         ]);
     };
 
@@ -31,11 +31,10 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
         const newItems = [...items];
 
         if (field === 'material_id') {
-            const selectedMat = materials.find(m => m.id == value);
             newItems[index] = {
                 ...newItems[index],
                 material_id: value,
-                unit_price: selectedMat ? selectedMat.market_price : 0
+                unit_price: 0
             };
         } else {
             newItems[index] = {
@@ -66,7 +65,10 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
                         <div className="col-span-6 space-y-1">
                             <label className="text-[10px] font-bold text-neutral-400 uppercase">Material</label>
                             <SearchableSelect
-                                options={materials.map(m => ({ label: m.name, value: m.id }))}
+                                options={materials.map(m => ({
+                                    label: m.unit ? `${m.name} (${m.unit.short_name})` : m.name,
+                                    value: m.id
+                                }))}
                                 value={item.material_id}
                                 onChange={(val) => handleItemChange(index, 'material_id', val)}
                                 placeholder="Select"
