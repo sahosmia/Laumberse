@@ -46,6 +46,17 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
+    useEffect(() => {
+        if (showModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [showModal]);
+
     const { settings } = usePage<SharedData>().props;
     const salaryCategoryId = settings.salary_category_id;
     const materialExpenseCategoryId = settings.material_expense_category_id;
