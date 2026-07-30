@@ -37,7 +37,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 const formatCurrency = (n: number | string) => `৳${Number(n).toLocaleString("en-BD")}`;
 
 export default function Expenses({ expenses, categories, outlets, materials }: ExpensesProps) {
-    console.log({ expenses: expenses });
 
     const [search, setSearch] = useState("");
     const [showModal, setShowModal] = useState(false);
@@ -64,12 +63,11 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
         deduction: 0,
         deduction_note: '',
         // Material fields
-        items: [] as { material_id: string | number; quantity: number | ''; unit_price: number }[],
+        items: [] as { material_id: string | number; quantity: number | ''; unit_price: number | '' }[],
     });
 
     const [eligibleEmployees, setEligibleEmployees] = useState<EligibleEmployee[]>([]);
     const [selectedEmployee, setSelectedEmployee] = useState<EligibleEmployee | null>(null);
-    console.log('materials', materials);
 
     const isPayroll = Number(data.expense_category_id) === Number(salaryCategoryId);
     const isMaterial = Number(data.expense_category_id) === Number(materialExpenseCategoryId);
@@ -113,13 +111,15 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
             0
         );
 
-        if (Number(data.amount) !== total) {
-            setData('amount', total);
+        const roundedTotal = Math.round((total + Number.EPSILON) * 100) / 100;
+
+        if (Number(data.amount) !== roundedTotal) {
+            setData('amount', roundedTotal);
         }
     }, [data.items, isMaterial]);
 
     const netSalary = selectedEmployee
-        ? (Number(selectedEmployee.base_salary) + Number(data.bonus) - Number(data.deduction))
+        ? Math.round(((Number(selectedEmployee.base_salary) + Number(data.bonus) - Number(data.deduction)) + Number.EPSILON) * 100) / 100
         : 0;
 
     const filtered = expenses.filter((e) =>
@@ -190,9 +190,6 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
     ;
 
 
-    console.log('expence category id' + data.expense_category_id);
-    console.log('materialExpenseCategoryId' + materialExpenseCategoryId);
-    console.log('isMaterial' + isMaterial);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -259,6 +256,9 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                         <td className="px-5 py-4 text-right font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(Number(e.amount))}</td>
                                         <td className="px-5 py-4 text-center">
                                             <div className="flex items-center justify-center gap-2">
+                                                <Link href={route('expenses.show', e.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600 transition-colors">
+                                                    <Search className="w-4 h-4" />
+                                                </Link>
                                                 <button onClick={() => openEditModal(e)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600 transition-colors">
                                                     <Edit3 className="w-4 h-4" />
                                                 </button>
@@ -292,7 +292,7 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
             {/* Expense Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-xl w-full p-6 overflow-auto">
+                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] p-6 overflow-y-auto">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{editingExpense ? 'Edit Expense' : 'New Expense'}</h3>
                             <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"><X className="w-5 h-5 text-neutral-400" /></button>
@@ -323,11 +323,12 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                         id="amount"
                                         type="number"
                                         value={data.amount}
-                                        onChange={e => setData('amount', e.target.value)}
+                                        onChange={e => setData('amount', e.target.value === '' ? '' : parseFloat(e.target.value))}
                                         className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100 disabled:opacity-50 disabled:bg-neutral-50 dark:disabled:bg-neutral-800/50"
                                         required
                                         placeholder="0.00"
                                         readOnly={isMaterial}
+                                        step="any"
                                     />
                                     {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
                                 </div>

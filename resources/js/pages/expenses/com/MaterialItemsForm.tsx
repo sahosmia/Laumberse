@@ -5,7 +5,7 @@ import { Material } from '@/types';
 interface MaterialItem {
     material_id: string | number;
     quantity: number | '';
-    unit_price: number;
+    unit_price: number | '';
 }
 
 interface MaterialItemsFormProps {
@@ -19,7 +19,7 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
     const handleAddItem = () => {
         onChange([
             ...items,
-            { material_id: '', quantity: 1, unit_price: 0 }
+            { material_id: '', quantity: 1, unit_price: '' }
         ]);
     };
 
@@ -77,9 +77,9 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
                             <input
                                 type="number"
                                 value={item.quantity}
-                                onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value) || '')}
+                                onChange={(e) => handleItemChange(index, 'quantity', e.target.value === '' ? '' : parseFloat(e.target.value))}
                                 className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 py-1.5 text-xs bg-transparent dark:text-neutral-100"
-                                step="0.01"
+                                step="any"
                             />
                         </div>
                         <div className="col-span-3 space-y-1">
@@ -87,9 +87,9 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
                             <input
                                 type="number"
                                 value={item.unit_price}
-                                onChange={(e) => handleItemChange(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                                onChange={(e) => handleItemChange(index, 'unit_price', e.target.value === '' ? '' : parseFloat(e.target.value))}
                                 className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 py-1.5 text-xs bg-transparent dark:text-neutral-100"
-                                step="0.01"
+                                step="any"
                             />
                         </div>
                         <button

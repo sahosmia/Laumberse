@@ -8,11 +8,11 @@ use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\Clients\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Expenses\ExpenseCategoryController;
-use App\Http\Controllers\Expenses\ExpenseController;
 use App\Http\Controllers\Invoices\InvoiceController;
 use App\Http\Controllers\Products\ProductController;
 use App\Http\Controllers\Reports\ReportController;
 use App\Http\Controllers\Categories\CategoryController;
+use App\Http\Controllers\Expenses\ExpenseController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\Outlets\OutletController;
 use App\Http\Controllers\UnitController;
@@ -29,6 +29,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('clients', ClientController::class);
+    Route::get('/employees/payroll-eligible', [EmployeeController::class, 'getEligibleForPayroll'])->name('employees.payroll-eligible');
     Route::resource('employees', EmployeeController::class);
     Route::delete('/products/bulk-destroy', [ProductController::class, 'bulkDestroy'])->name('products.bulk-destroy');
     Route::resource('products', ProductController::class);
@@ -41,9 +42,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::resource('expenses', ExpenseController::class);
     Route::resource('expense-categories', ExpenseCategoryController::class);
-    Route::get('/employees/payroll-eligible', [EmployeeController::class, 'getEligibleForPayroll'])->name('employees.payroll-eligible');
     Route::resource('payrolls', PayrollController::class)->only(['index']);
-    Route::get('/employees/payroll-eligible', [EmployeeController::class, 'getEligibleForPayroll'])->name('employees.payroll-eligible');
 
     Route::resource('manage-assets', ManageAssetController::class);
     Route::resource('asset-categories', AssetCategoryController::class);
