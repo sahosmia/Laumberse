@@ -1,9 +1,10 @@
 import { Head, useForm, router } from '@inertiajs/react';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Plus, Trash2, Edit3, X, MapPin } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, Outlet } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 
 interface OutletsProps {
     outlets: Outlet[];
@@ -24,6 +25,18 @@ export default function Outlets({ outlets }: OutletsProps) {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+
+    useEffect(() => {
+        if (showModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [showModal]);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -52,14 +65,23 @@ export default function Outlets({ outlets }: OutletsProps) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingOutlet) {
-            put(route('outlets.update', editingOutlet.id), {
-                onSuccess: () => setShowModal(false),
-            });
+            setShowSaveConfirm(true);
         } else {
             post(route('outlets.store'), {
                 onSuccess: () => {
                     setShowModal(false);
                     reset();
+                },
+            });
+        }
+    };
+
+    const confirmSave = () => {
+        if (editingOutlet) {
+            put(route('outlets.update', editingOutlet.id), {
+                onSuccess: () => {
+                    setShowSaveConfirm(false);
+                    setShowModal(false);
                 },
             });
         }
@@ -127,6 +149,15 @@ export default function Outlets({ outlets }: OutletsProps) {
                     description={selectedIds.length > 0
                         ? `Are you sure you want to delete ${selectedIds.length} selected outlets?`
                         : "Are you sure you want to delete ALL outlets? This will remove every outlet from the system."}
+                    isProcessing={processing}
+                />
+
+                <SaveConfirmationModal
+                    isOpen={showSaveConfirm}
+                    onClose={() => setShowSaveConfirm(false)}
+                    onConfirm={confirmSave}
+                    title="Save Outlet Changes"
+                    description="Are you sure you want to save these changes to the outlet?"
                     isProcessing={processing}
                 />
                 <div className="flex items-center justify-between">
