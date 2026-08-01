@@ -399,6 +399,7 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                         {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
                                     </div>
                                 )}
+
                             </div>
 
                             {isMaterial && (
