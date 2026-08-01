@@ -1,0 +1,83 @@
+
+   WARN  Unable to respect the `PHP_CLI_SERVER_WORKERS` environment variable without the `--no-reload` flag. Only creating a single server.
+
+   INFO  Server running on [http://127.0.0.1:8000].
+
+  Press Ctrl+C to stop the server
+
+  2026-08-01 19:40:10 /login ..................................... ~ 500.43ms
+  2026-08-01 19:40:11 /build/assets/app-M9_kVF4O.css ............... ~ 0.04ms
+  2026-08-01 19:40:11 /build/assets/login-Cm26z-vZ.js .............. ~ 0.07ms
+  2026-08-01 19:40:11 /build/assets/input-error-BDsbu3Ch.js ........ ~ 0.21ms
+  2026-08-01 19:40:11 /build/assets/text-link-Cvd9SYEK.js .......... ~ 0.31ms
+  2026-08-01 19:40:11 /build/assets/app-logo-icon-BXOcUDHL.js ...... ~ 0.41ms
+  2026-08-01 19:40:11 /build/assets/app-F0kCo0zI.js ................ ~ 0.54ms
+  2026-08-01 19:40:11 /build/assets/checkbox-ByXwPNZk.js ........... ~ 0.72ms
+  2026-08-01 19:40:11 /build/assets/index-CsUcC8GY.js .............. ~ 0.07ms
+  2026-08-01 19:40:11 /build/assets/label-BKdF5U_9.js .............. ~ 0.26ms
+  2026-08-01 19:40:11 /build/assets/auth-layout-DWYwydgb.js ........ ~ 0.40ms
+  2026-08-01 19:40:11 /build/assets/loader-circle-BzvscT3J.js ...... ~ 0.54ms
+  2026-08-01 19:40:11 /build/assets/utils-95sC8h6V.js .............. ~ 0.62ms
+  2026-08-01 19:40:11 /build/assets/index-BTWRshjR.js .............. ~ 0.34ms
+  2026-08-01 19:40:11 /build/assets/check-IeoFKK6s.js .............. ~ 0.46ms
+  2026-08-01 19:40:11 /build/assets/app-M9_kVF4O.css ............... ~ 0.11ms
+  2026-08-01 19:40:12 /logo3.jpeg .................................. ~ 0.11ms
+  2026-08-01 19:40:13 /login ..................................... ~ 506.35ms
+  2026-08-01 19:40:14 /dashboard ................................... ~ 0.05ms
+  2026-08-01 19:40:14 /build/assets/dashboard-BX7AhopT.js .......... ~ 0.09ms
+  2026-08-01 19:40:14 /build/assets/floating-ui.react-dom-CV9XUwhf.js  ~ 0.19ms
+  2026-08-01 19:40:14 /build/assets/app-layout-D8BqIP8A.js ......... ~ 0.26ms
+  2026-08-01 19:40:14 /build/assets/with-selector-DFo2JMzE.js ...... ~ 0.34ms
+  2026-08-01 19:40:14 /build/assets/PieChart-BfQezkV0.js ........... ~ 0.44ms
+  2026-08-01 19:40:14 /build/assets/circle-alert-BNlIvVrQ.js ....... ~ 0.53ms
+  2026-08-01 19:40:14 /logo4.jpeg .................................. ~ 0.04ms
+  2026-08-01 19:40:15 /categories .................................. ~ 0.11ms
+  2026-08-01 19:40:16 /build/assets/app-M9_kVF4O.css ............... ~ 0.10ms
+  2026-08-01 19:40:16 /build/assets/index-CVASevg5.js .............. ~ 0.05ms
+  2026-08-01 19:40:16 /build/assets/app-F0kCo0zI.js ................ ~ 0.34ms
+  2026-08-01 19:40:16 /build/assets/app-layout-D8BqIP8A.js ......... ~ 0.57ms
+  2026-08-01 19:40:16 /build/assets/delete-confirmation-modal-giJx8I2o.js  ~ 0.06ms
+  2026-08-01 19:40:16 /build/assets/save-confirmation-modal-CXVH6hkr.js  ~ 0.11ms
+  2026-08-01 19:40:16 /build/assets/form-input-hz0O3Sno.js ......... ~ 0.22ms
+  2026-08-01 19:40:16 /build/assets/form-button-CY8S-ooT.js ........ ~ 0.38ms
+  2026-08-01 19:40:16 /build/assets/app-logo-icon-BXOcUDHL.js ...... ~ 0.24ms
+  2026-08-01 19:40:16 /build/assets/plus-DO5JhzBz.js ............... ~ 0.34ms
+  2026-08-01 19:40:16 /build/assets/tag-BGQ089VY.js ................ ~ 0.48ms
+  2026-08-01 19:40:16 /build/assets/trash-2-C9XKdF9b.js ............ ~ 0.49ms
+  2026-08-01 19:40:16 /build/assets/dialog-DYujVRET.js ............. ~ 0.61ms
+  2026-08-01 19:40:16 /build/assets/utils-95sC8h6V.js .............. ~ 0.79ms
+  2026-08-01 19:40:16 /build/assets/index-CsUcC8GY.js .............. ~ 0.28ms
+  2026-08-01 19:40:16 /build/assets/index-BTWRshjR.js .............. ~ 0.46ms
+  2026-08-01 19:40:16 /build/assets/floating-ui.react-dom-CV9XUwhf.js  ~ 0.60ms
+  2026-08-01 19:40:16 /build/assets/check-IeoFKK6s.js .............. ~ 0.65ms
+  2026-08-01 19:40:16 /build/assets/label-BKdF5U_9.js .............. ~ 0.78ms
+  2026-08-01 19:40:16 /build/assets/loader-circle-BzvscT3J.js ...... ~ 0.03ms
+  2026-08-01 19:40:16 /build/assets/app-M9_kVF4O.css ............... ~ 0.03ms
+  2026-08-01 19:40:17 /logo4.jpeg .................................. ~ 0.11ms
+  2026-08-01 19:40:17 /logo3.jpeg .................................. ~ 0.48ms
+  2026-08-01 19:40:21 /categories .................................. ~ 0.10ms
+  2026-08-01 19:40:21 /categories .................................. ~ 0.03ms
+  2026-08-01 19:40:23 /manage-assets ............................... ~ 0.10ms
+  2026-08-01 19:40:23 /build/assets/app-M9_kVF4O.css ............... ~ 0.03ms
+  2026-08-01 19:40:23 /build/assets/index-CZHgbmfc.js .............. ~ 0.08ms
+  2026-08-01 19:40:23 /build/assets/search-BIIaKmkq.js ............. ~ 0.22ms
+  2026-08-01 19:40:23 /build/assets/pen-line-BRH5KXc0.js ........... ~ 0.34ms
+  2026-08-01 19:40:23 /build/assets/app-F0kCo0zI.js ................ ~ 0.48ms
+  2026-08-01 19:40:23 /build/assets/app-layout-D8BqIP8A.js ......... ~ 0.60ms
+  2026-08-01 19:40:23 /build/assets/credit-card-p7sjtsot.js ........ ~ 0.69ms
+  2026-08-01 19:40:23 /build/assets/delete-confirmation-modal-giJx8I2o.js  ~ 0.06ms
+  2026-08-01 19:40:23 /build/assets/save-confirmation-modal-CXVH6hkr.js  ~ 0.16ms
+  2026-08-01 19:40:23 /build/assets/plus-DO5JhzBz.js ............... ~ 0.21ms
+  2026-08-01 19:40:23 /build/assets/trash-2-C9XKdF9b.js ............ ~ 0.35ms
+  2026-08-01 19:40:23 /build/assets/tag-BGQ089VY.js ................ ~ 0.58ms
+  2026-08-01 19:40:23 /build/assets/circle-alert-BNlIvVrQ.js ....... ~ 0.30ms
+  2026-08-01 19:40:23 /build/assets/app-logo-icon-BXOcUDHL.js ...... ~ 0.33ms
+  2026-08-01 19:40:23 /build/assets/utils-95sC8h6V.js .............. ~ 0.40ms
+  2026-08-01 19:40:23 /build/assets/index-CsUcC8GY.js .............. ~ 0.59ms
+  2026-08-01 19:40:23 /build/assets/index-BTWRshjR.js .............. ~ 0.59ms
+  2026-08-01 19:40:23 /build/assets/floating-ui.react-dom-CV9XUwhf.js  ~ 0.36ms
+  2026-08-01 19:40:23 /build/assets/check-IeoFKK6s.js .............. ~ 0.23ms
+  2026-08-01 19:40:23 /build/assets/dialog-DYujVRET.js ............. ~ 0.35ms
+  2026-08-01 19:40:23 /build/assets/app-M9_kVF4O.css ............... ~ 0.03ms
+  2026-08-01 19:40:23 /logo4.jpeg .................................. ~ 0.03ms
+  2026-08-01 19:40:23 /logo3.jpeg .................................. ~ 0.35ms
