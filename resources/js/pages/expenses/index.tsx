@@ -46,6 +46,10 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
+    const [day, setDay] = useState(new Date().getDate());
+    const [month, setMonth] = useState(new Date().getMonth() + 1);
+    const [year, setYear] = useState(new Date().getFullYear());
+
     useEffect(() => {
         if (showModal) {
             document.body.style.overflow = 'hidden';
@@ -62,6 +66,12 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
             setData('outlet_id', '');
         }
     }, [isMaterial, isPayroll]);
+
+    useEffect(() => {
+        const formattedDay = String(day || 1).padStart(2, '0');
+        const formattedMonth = String(month || 1).padStart(2, '0');
+        setData('date', `${year || new Date().getFullYear()}-${formattedMonth}-${formattedDay}`);
+    }, [day, month, year]);
 
     const { settings } = usePage<SharedData>().props;
     const salaryCategoryId = settings.salary_category_id;
@@ -149,11 +159,22 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
     const openCreateModal = () => {
         setEditingExpense(null);
         reset();
+        setDay(new Date().getDate());
+        setMonth(new Date().getMonth() + 1);
+        setYear(new Date().getFullYear());
         setShowModal(true);
     };
 
     const openEditModal = (expense: Expense) => {
         setEditingExpense(expense);
+        if (expense.date) {
+            const parts = expense.date.split('-');
+            if (parts.length === 3) {
+                setYear(parseInt(parts[0], 10));
+                setMonth(parseInt(parts[1], 10));
+                setDay(parseInt(parts[2], 10));
+            }
+        }
         setData({
             expense_category_id: expense.expense_category_id,
             amount: expense.amount,
@@ -400,13 +421,58 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Date</label>
-                                    <input
-                                        type="date"
-                                        value={data.date}
-                                        onChange={e => setData('date', e.target.value)}
-                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                        required
-                                    />
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <div>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="31"
+                                                value={day}
+                                                onChange={e => {
+                                                    let val = e.target.value;
+                                                    if (val.length > 1 && val.startsWith('0')) {
+                                                        val = val.replace(/^0+/, '');
+                                                    }
+                                                    setDay(val === '' ? '' as any : Math.min(31, Math.max(1, parseInt(val, 10))));
+                                                }}
+                                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-2 py-2 text-xs bg-transparent dark:text-neutral-100 text-center"
+                                                placeholder="Day"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <select
+                                                value={month}
+                                                onChange={e => setMonth(parseInt(e.target.value, 10))}
+                                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-1 py-2 text-xs bg-transparent dark:text-neutral-100"
+                                                required
+                                            >
+                                                {Array.from({ length: 12 }, (_, i) => (
+                                                    <option key={i + 1} value={i + 1}>
+                                                        {new Date(0, i).toLocaleString('default', { month: 'short' })}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="number"
+                                                min="1900"
+                                                max="2100"
+                                                value={year}
+                                                onChange={e => {
+                                                    let val = e.target.value;
+                                                    if (val.length > 1 && val.startsWith('0')) {
+                                                        val = val.replace(/^0+/, '');
+                                                    }
+                                                    setYear(val === '' ? '' as any : parseInt(val, 10));
+                                                }}
+                                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-2 py-2 text-xs bg-transparent dark:text-neutral-100 text-center"
+                                                placeholder="Year"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
                                     {errors.date && <p className="text-xs text-red-500">{errors.date}</p>}
                                 </div>
                                 <div className="space-y-1">

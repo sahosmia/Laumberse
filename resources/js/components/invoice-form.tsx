@@ -384,7 +384,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
 
                     <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5">
                         <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3 flex items-center gap-2">
-                            <Search className="w-4 h-4" /> Add Service / Product
+                            <Search className="w-4 h-4" /> Add Product
                         </h3>
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />

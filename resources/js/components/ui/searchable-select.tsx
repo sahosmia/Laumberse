@@ -1,6 +1,6 @@
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions, Transition } from '@headlessui/react';
 import { Check as CheckIcon, ChevronsUpDown as ChevronsUpDownIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 interface Option {
@@ -28,6 +28,7 @@ export function SearchableSelect({
     disabled = false,
 }: SearchableSelectProps) {
     const [query, setQuery] = useState('');
+    const inputRef = useRef<HTMLInputElement>(null);
 
     const filteredOptions =
         query === ''
@@ -39,12 +40,20 @@ export function SearchableSelect({
                       .includes(query.toLowerCase().replace(/\s+/g, '')),
               );
 
+    const handleChange = (val: string | number) => {
+        onChange(val);
+        if (inputRef.current) {
+            inputRef.current.blur();
+        }
+    };
+
     return (
         <div className={cn('w-full', className)}>
-            <Combobox value={value} onChange={onChange} disabled={disabled} onClose={() => setQuery('')}>
+            <Combobox value={value} onChange={handleChange} disabled={disabled} onClose={() => setQuery('')}>
                 <div className="relative mt-1">
                     <div className="relative w-full cursor-default overflow-hidden rounded-md border border-input bg-background text-left focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 sm:text-sm">
                         <ComboboxInput
+                            ref={inputRef}
                             className={cn(
                                 'w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-transparent focus:ring-0 focus:outline-none',
                                 disabled && 'cursor-not-allowed opacity-50',
