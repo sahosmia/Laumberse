@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Category, Outlet, Product, Client } from '@/types';
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 
 export interface InvoiceItem {
     productId: number;
@@ -56,6 +57,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
     const [searchTerm, setSearchTerm] = useState("");
     const [showDropdown, setShowDropdown] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState("All");
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
     const { data, setData, post, put, processing, errors } = useForm({
         invoice_uuid: invoice?.invoice_uuid || generateInvoiceUuid(),
@@ -222,9 +224,17 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (isEdit && invoice?.id) {
-            put(route('invoices.update', invoice.id));
+            setShowSaveConfirm(true);
         } else {
             post(route('invoices.store'));
+        }
+    };
+
+    const confirmSave = () => {
+        if (isEdit && invoice?.id) {
+            put(route('invoices.update', invoice.id), {
+                onSuccess: () => setShowSaveConfirm(false),
+            });
         }
     };
 
@@ -241,8 +251,17 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
     : selectedClient?.type === 'Corporate';
 
     return (
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
-            <div className="flex items-center justify-between">
+        <>
+            <SaveConfirmationModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={confirmSave}
+                title="Save Invoice Changes"
+                description="Are you sure you want to save these changes to the invoice?"
+                isProcessing={processing}
+            />
+            <form onSubmit={handleSubmit} className="p-4 space-y-4">
+                <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{isEdit ? 'Edit Invoice' : 'Create Invoice'}</h1>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">POS — quick service entry</p>
@@ -698,7 +717,8 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                         </button>
                     </div>
                 </div>
-            </div>
-        </form>
+                </div>
+            </form>
+        </>
     );
 }
