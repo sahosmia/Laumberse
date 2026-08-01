@@ -24,6 +24,8 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+import { useEffect } from "react";
+
 export default function ExpenseCategories({ categories }: ExpenseCategoriesProps) {
     const [search, setSearch] = useState("");
     const [showModal, setShowModal] = useState(false);
@@ -31,6 +33,20 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+
+    useEffect(() => {
+        if (showModal) {
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+        };
+    }, [showModal]);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -126,7 +142,7 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
 
                 <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="w-full text-sm min-w-[500px]">
                             <thead>
                                 <tr className="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 text-xs uppercase tracking-wider">
                                     <th className="text-left px-5 py-3 font-semibold">Name</th>
@@ -190,8 +206,14 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
 
             {/* Category Modal */}
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-6">
+                <div 
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+                    onClick={() => setShowModal(false)}
+                >
+                    <div 
+                        className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-6"
+                        onClick={e => e.stopPropagation()}
+                    >
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
                                 {editingCategory ? 'Edit Category' : 'Add Category'}

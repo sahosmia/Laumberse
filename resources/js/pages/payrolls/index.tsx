@@ -52,9 +52,10 @@ export default function PayrollLedger({ payrolls }: PayrollsProps) {
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">View and track salary disbursement history</p>
                 </div>
 
-                <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+                {/* Desktop view */}
+                <div className="hidden md:block bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="w-full text-sm min-w-[600px]">
                             <thead>
                                 <tr className="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 text-xs uppercase tracking-wider">
                                     <th className="text-left px-5 py-3 font-semibold">Employee</th>
@@ -101,6 +102,59 @@ export default function PayrollLedger({ payrolls }: PayrollsProps) {
                             </tbody>
                         </table>
                     </div>
+                </div>
+
+                {/* Mobile view */}
+                <div className="block md:hidden space-y-4">
+                    {payrolls.map((p) => (
+                        <div key={p.id} className="bg-white dark:bg-neutral-900 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h4 className="font-bold text-neutral-900 dark:text-neutral-100 text-sm">
+                                        {p.employee?.name}
+                                    </h4>
+                                    <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                                        {new Date(0, p.month - 1).toLocaleString('default', { month: 'short' })} {p.year}
+                                    </p>
+                                </div>
+                                <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${getStatusStyle(p.status)}`}>
+                                    {p.status}
+                                </span>
+                            </div>
+                            <div className="border-t border-neutral-100 dark:border-neutral-800 pt-2.5 grid grid-cols-2 gap-y-2.5 gap-x-2 text-xs">
+                                <div>
+                                    <p className="text-neutral-400 font-medium">Base Salary</p>
+                                    <p className="font-semibold text-neutral-700 dark:text-neutral-300">{formatCurrency(p.base_salary)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-neutral-400 font-medium">Bonus</p>
+                                    <p className="font-semibold text-green-600">+{formatCurrency(p.bonus)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-neutral-400 font-medium">Deduction</p>
+                                    <p className="font-semibold text-red-500">
+                                        -{formatCurrency(p.deduction)}
+                                        {p.deduction_note && (
+                                            <span className="block text-[10px] text-neutral-400 italic leading-none">{p.deduction_note}</span>
+                                        )}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-neutral-400 font-medium">Paid Amount</p>
+                                    <p className="font-bold text-blue-600">{formatCurrency(p.paid_amount)}</p>
+                                </div>
+                            </div>
+                            <div className="border-t border-neutral-100 dark:border-neutral-800 pt-2.5 flex justify-between items-center text-xs">
+                                <span className="text-neutral-400 font-medium">Net Salary</span>
+                                <span className="font-bold text-neutral-900 dark:text-neutral-100 text-sm">{formatCurrency(p.net_salary)}</span>
+                            </div>
+                        </div>
+                    ))}
+                    {payrolls.length === 0 && (
+                        <div className="p-8 text-center bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 text-neutral-400 italic">
+                            No payroll records found
+                        </div>
+                    )}
                 </div>
             </div>
         </AppLayout>

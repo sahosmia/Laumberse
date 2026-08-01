@@ -40,7 +40,7 @@ export function PayrollForm({
 }: PayrollFormProps) {
     return (
         <>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                     <label htmlFor="month" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                         Month
@@ -49,7 +49,7 @@ export function PayrollForm({
                         id="month"
                         value={data.month}
                         onChange={(e) => setData('month', parseInt(e.target.value, 10))}
-                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
+                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-transparent dark:text-neutral-100"
                         required
                     >
                         {Array.from({ length: 12 }, (_, i) => (
@@ -68,7 +68,7 @@ export function PayrollForm({
                         type="number"
                         value={data.year}
                         onChange={(e) => setData('year', parseInt(e.target.value, 10))}
-                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
+                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-transparent dark:text-neutral-100"
                         required
                     />
                 </div>
@@ -96,7 +96,7 @@ export function PayrollForm({
                             {formatCurrency(selectedEmployee.base_salary)}
                         </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1">
                             <label htmlFor="bonus" className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
                                 Bonus
@@ -112,7 +112,7 @@ export function PayrollForm({
                                     }
                                     setData('bonus', val === '' ? '' : parseFloat(val));
                                 }}
-                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 py-1.5 text-xs bg-transparent dark:text-neutral-100"
+                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 h-12 sm:h-9 text-xs bg-transparent dark:text-neutral-100"
                                 step="any"
                             />
                         </div>
@@ -131,7 +131,7 @@ export function PayrollForm({
                                     }
                                     setData('deduction', val === '' ? '' : parseFloat(val));
                                 }}
-                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 py-1.5 text-xs bg-transparent dark:text-neutral-100"
+                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 h-12 sm:h-9 text-xs bg-transparent dark:text-neutral-100"
                                 step="any"
                             />
                         </div>
@@ -146,7 +146,7 @@ export function PayrollForm({
                                 type="text"
                                 value={data.deduction_note}
                                 onChange={(e) => setData('deduction_note', e.target.value)}
-                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 py-1.5 text-xs bg-transparent dark:text-neutral-100"
+                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 h-12 sm:h-9 text-xs bg-transparent dark:text-neutral-100"
                                 required
                                 placeholder="Reason for deduction"
                             />

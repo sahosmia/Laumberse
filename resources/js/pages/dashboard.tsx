@@ -100,7 +100,7 @@ export default function Dashboard({ stats, top_clients, dailyRevenue }: Dashboar
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <div className="lg:col-span-2 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5">
+                    <div className="lg:col-span-2 min-w-0 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5">
                         <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-4">Daily Revenue (Last 7 Days)</h3>
                         <ResponsiveContainer width="100%" height={260}>
                             <LineChart data={dailyRevenue}>
@@ -114,7 +114,7 @@ export default function Dashboard({ stats, top_clients, dailyRevenue }: Dashboar
                         </ResponsiveContainer>
                     </div>
 
-                    <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5">
+                    <div className="min-w-0 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5">
                         <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-4">Paid vs Due</h3>
                         <ResponsiveContainer width="100%" height={200}>
                             <PieChart>

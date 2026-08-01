@@ -5,3 +5,22 @@ Problem:
 
 
 
+* Manage Assets list, asset category er item gulo te hover korle edit delete icon gulo show kore but ami cai ai gulo sob somoy show korbe,
+
+* manage asset, asset category er kono create ba edit modal open thakle jodi scroll kori tahole bg scroll hoi, ata fix korte hobe,
+
+
+* product category create edit form ta modal e ante hobe onno gulor moto, new page e jabe na
+
+
+
+
+
+
+
+
+
+
+
+
+

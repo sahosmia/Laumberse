@@ -613,7 +613,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                         due: newTotal - (Number(d.paid) || 0)
                                     }));
                                 }}
-                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm bg-transparent dark:text-neutral-100"
+                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-transparent dark:text-neutral-100"
                                 required
                             >
                                 <option value="" disabled>Select Outlet</option>
@@ -633,14 +633,14 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                             type="date"
                             value={data.date}
                             onChange={e => setData('date', e.target.value)}
-                            className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm bg-transparent dark:text-neutral-100"
+                            className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-transparent dark:text-neutral-100"
                             placeholder="Select Date"
                             required
                         />
                         <select
                             value={data.status}
                             onChange={e => setData('status', e.target.value)}
-                            className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm bg-transparent dark:text-neutral-100"
+                            className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-transparent dark:text-neutral-100"
                         >
                             <option value="Processing">Processing</option>
                             <option value="In House">In House</option>
