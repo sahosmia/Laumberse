@@ -61,8 +61,8 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
 
             <div className="space-y-3">
                 {items.map((item, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-2 items-start bg-white dark:bg-neutral-900 p-2 rounded-lg border border-neutral-100 dark:border-neutral-800 shadow-sm relative pr-8">
-                        <div className="col-span-6 space-y-1">
+                    <div key={index} className="grid grid-cols-12 gap-2 items-start bg-white dark:bg-neutral-900 p-3 rounded-lg border border-neutral-100 dark:border-neutral-800 shadow-sm relative pr-8">
+                        <div className="col-span-12 sm:col-span-6 space-y-1">
                             <label className="text-[10px] font-bold text-neutral-400 uppercase">Material</label>
                             <SearchableSelect
                                 options={materials.map(m => ({
@@ -74,7 +74,7 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
                                 placeholder="Select"
                             />
                         </div>
-                        <div className="col-span-3 space-y-1">
+                        <div className="col-span-6 sm:col-span-3 space-y-1">
                             <label className="text-[10px] font-bold text-neutral-400 uppercase">Qty</label>
                             <input
                                 type="number"
@@ -86,11 +86,11 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
                                     }
                                     handleItemChange(index, 'quantity', val === '' ? '' : parseFloat(val));
                                 }}
-                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 py-1.5 text-xs bg-transparent dark:text-neutral-100"
+                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 h-12 sm:h-9 text-xs bg-transparent dark:text-neutral-100"
                                 step="any"
                             />
                         </div>
-                        <div className="col-span-3 space-y-1">
+                        <div className="col-span-6 sm:col-span-3 space-y-1">
                             <label className="text-[10px] font-bold text-neutral-400 uppercase">Price</label>
                             <input
                                 type="number"
@@ -102,7 +102,7 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
                                     }
                                     handleItemChange(index, 'unit_price', val === '' ? '' : parseFloat(val));
                                 }}
-                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 py-1.5 text-xs bg-transparent dark:text-neutral-100"
+                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 h-12 sm:h-9 text-xs bg-transparent dark:text-neutral-100"
                                 step="any"
                             />
                         </div>

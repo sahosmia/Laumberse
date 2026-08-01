@@ -353,14 +353,20 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
 
             {/* Expense Modal */}
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] p-6 overflow-y-auto">
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+                    onClick={() => setShowModal(false)}
+                >
+                    <div
+                        className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] p-6 overflow-y-auto"
+                        onClick={e => e.stopPropagation()}
+                    >
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{editingExpense ? 'Edit Expense' : 'New Expense'}</h3>
                             <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"><X className="w-5 h-5 text-neutral-400" /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label htmlFor="expense_category_id" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Category</label>
                                     <select
@@ -369,7 +375,7 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                         onChange={e =>
                                             setData('expense_category_id', Number(e.target.value))
                                         }
-                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
+                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-transparent dark:text-neutral-100"
                                         required
                                     >
                                         <option value="">Select Category</option>
@@ -393,7 +399,7 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                                 }
                                                 setData('amount', val === '' ? '' : parseFloat(val));
                                             }}
-                                            className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100 disabled:opacity-50 disabled:bg-neutral-50 dark:disabled:bg-neutral-800/50"
+                                            className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-transparent dark:text-neutral-100 disabled:opacity-50 disabled:bg-neutral-50 dark:disabled:bg-neutral-800/50"
                                             required
                                             placeholder="0.00"
                                             readOnly={isMaterial}
@@ -424,7 +430,7 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                     formatCurrency={formatCurrency}
                                 />
                             )}
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Date</label>
                                     <div className="grid grid-cols-3 gap-2">
@@ -441,7 +447,7 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                                     }
                                                     setDay(val === '' ? '' as any : Math.min(31, Math.max(1, parseInt(val, 10))));
                                                 }}
-                                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-2 py-2 text-xs bg-transparent dark:text-neutral-100 text-center"
+                                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-2 h-12 md:h-10 text-xs bg-transparent dark:text-neutral-100 text-center"
                                                 placeholder="Day"
                                                 required
                                             />
@@ -450,7 +456,7 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                             <select
                                                 value={month}
                                                 onChange={e => setMonth(parseInt(e.target.value, 10))}
-                                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-1 py-2 text-xs bg-transparent dark:text-neutral-100"
+                                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-1 h-12 md:h-10 text-xs bg-transparent dark:text-neutral-100"
                                                 required
                                             >
                                                 {Array.from({ length: 12 }, (_, i) => (
@@ -473,7 +479,7 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                                     }
                                                     setYear(val === '' ? '' as any : parseInt(val, 10));
                                                 }}
-                                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-2 py-2 text-xs bg-transparent dark:text-neutral-100 text-center"
+                                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-2 h-12 md:h-10 text-xs bg-transparent dark:text-neutral-100 text-center"
                                                 placeholder="Year"
                                                 required
                                             />
@@ -486,7 +492,7 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                     <select
                                         value={data.payment_method}
                                         onChange={e => setData('payment_method', e.target.value)}
-                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
+                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-transparent dark:text-neutral-100"
                                         required
                                     >
                                         <option value="Cash">Cash</option>
@@ -501,7 +507,7 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                     <select
                                         value={data.outlet_id}
                                         onChange={e => setData('outlet_id', e.target.value)}
-                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
+                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-transparent dark:text-neutral-100"
                                     >
                                         <option value="">Main Shop</option>
                                         {outlets.map(o => (

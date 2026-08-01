@@ -217,8 +217,14 @@ const confirmSave = () => {
 
            {/* Client Modal */}
 {showModal && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in">
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-xl w-full p-6 max-h-[90vh] overflow-y-auto transform transition-all">
+    <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in"
+        onClick={() => setShowModal(false)}
+    >
+        <div
+            className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-xl w-full p-6 max-h-[90vh] overflow-y-auto transform transition-all"
+            onClick={e => e.stopPropagation()}
+        >
 
             {/* Modal Header */}
             <div className="flex justify-between items-center mb-6 border-b border-neutral-100 dark:border-neutral-800 pb-4">

@@ -190,8 +190,14 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
 
             {/* Category Modal */}
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-6">
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+                    onClick={() => setShowModal(false)}
+                >
+                    <div
+                        className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-6"
+                        onClick={e => e.stopPropagation()}
+                    >
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
                                 {editingCategory ? 'Edit Category' : 'Add Category'}
