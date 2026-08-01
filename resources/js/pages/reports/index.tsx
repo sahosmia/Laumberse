@@ -88,7 +88,7 @@ export default function Reports({ monthlyData, categorySplit, totalServices }: R
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <div className="lg:col-span-2 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5">
+                    <div className="lg:col-span-2 min-w-0 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5">
                         <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-4">Monthly Revenue vs Paid vs Due</h3>
                         <ResponsiveContainer width="100%" height={280}>
                             <BarChart data={monthlyData}>
@@ -104,7 +104,7 @@ export default function Reports({ monthlyData, categorySplit, totalServices }: R
                         </ResponsiveContainer>
                     </div>
 
-                    <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5">
+                    <div className="min-w-0 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5">
                         <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-4">Revenue by Category</h3>
                         <ResponsiveContainer width="100%" height={200}>
                             <PieChart>
@@ -130,7 +130,7 @@ export default function Reports({ monthlyData, categorySplit, totalServices }: R
                         <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Monthly Breakdown</h3>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="w-full text-sm min-w-[600px]">
                             <thead>
                                 <tr className="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 text-xs uppercase tracking-wider">
                                     <th className="text-left px-5 py-2.5 font-semibold">Month</th>

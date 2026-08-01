@@ -192,7 +192,7 @@ export default function Products({ products, categories, filter, units, outlets 
                 <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
                     {/* Desktop Table */}
                     <div className="hidden md:block overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="w-full text-sm min-w-[600px]">
                             <thead>
                                 <tr className="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 text-xs uppercase tracking-wider">
                                     <th className="px-5 py-3 text-center">
