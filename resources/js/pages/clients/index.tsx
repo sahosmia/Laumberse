@@ -245,7 +245,7 @@ const confirmSave = () => {
                         value={data.name}
                         disabled={processing}
                         onChange={e => setData('name', e.target.value)}
-                        className="w-full mt-1 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60 transition-all"
+                        className="w-full mt-1 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-transparent dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60 transition-all"
                         placeholder="John Doe"
                         required
                     />
@@ -262,7 +262,7 @@ const confirmSave = () => {
                             value={data.phone}
                             disabled={processing}
                             onChange={e => setData('phone', e.target.value)}
-                            className="w-full mt-1 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60 transition-all"
+                            className="w-full mt-1 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-transparent dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60 transition-all"
                             placeholder="+1 (555) 000-0000"
                             required
                         />
@@ -275,7 +275,7 @@ const confirmSave = () => {
                             value={data.type}
                             disabled={processing}
                             onChange={e => setData('type', e.target.value as any)}
-                            className="w-full mt-1 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-white dark:bg-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60 transition-all"
+                            className="w-full mt-1 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-white dark:bg-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60 transition-all"
                         >
                             <option value="Consumer" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">Consumer</option>
                             <option value="Corporate" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">Corporate</option>
@@ -387,7 +387,7 @@ const confirmSave = () => {
                                                         setData('custom_prices', newPrices);
                                                     }}
                                                     placeholder="Custom Price"
-                                                    className="w-28 sm:w-32 border border-neutral-200 dark:border-neutral-800 rounded-xl px-2.5 py-1.5 text-xs bg-transparent dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60"
+                                                    className="w-28 sm:w-32 border border-neutral-200 dark:border-neutral-800 rounded-xl px-2.5 h-12 sm:h-9 text-xs bg-transparent dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60"
                                                 />
                                                 <button
                                                     type="button"
