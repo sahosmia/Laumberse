@@ -81,6 +81,9 @@ export default function Employees({ employees }: EmployeesProps) {
                     setShowSaveConfirm(false);
                     setShowModal(false);
                 },
+                onError: () => {
+                    setShowSaveConfirm(false);
+                },
             });
         }
     };

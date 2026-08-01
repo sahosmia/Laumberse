@@ -82,6 +82,9 @@ export default function Materials({ materials, units }: MaterialsProps) {
                     setShowSaveConfirm(false);
                     setShowModal(false);
                 },
+                onError: () => {
+                    setShowSaveConfirm(false);
+                },
             });
         }
     };

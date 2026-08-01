@@ -219,6 +219,9 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                     setShowSaveConfirm(false);
                     setShowModal(false);
                 },
+                onError: () => {
+                    setShowSaveConfirm(false);
+                },
             });
         }
     };

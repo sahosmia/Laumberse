@@ -103,6 +103,9 @@ export default function Products({ products, categories, filter, units, outlets 
                     setShowSaveConfirm(false);
                     setShowModal(false);
                 },
+                onError: () => {
+                    setShowSaveConfirm(false);
+                },
             });
         }
     };

@@ -67,6 +67,9 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
                     setShowModal(false);
                     reset();
                 },
+                onError: () => {
+                    setShowSaveConfirm(false);
+                },
             });
         }
     };
