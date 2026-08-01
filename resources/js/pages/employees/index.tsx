@@ -1,5 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Plus, Trash2, Edit3, X, User } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, Employee } from '@/types';
@@ -26,6 +26,17 @@ export default function Employees({ employees }: EmployeesProps) {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+
+    useEffect(() => {
+        if (showModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [showModal]);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -286,7 +297,7 @@ export default function Employees({ employees }: EmployeesProps) {
                                         value={data.designation}
                                         onChange={e => setData('designation', e.target.value)}
                                         className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                        
+                                        required
                                     />
                                     {errors.designation && <p className="text-xs text-red-500">{errors.designation}</p>}
                                 </div>
