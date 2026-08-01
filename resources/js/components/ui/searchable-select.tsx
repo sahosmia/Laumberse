@@ -71,9 +71,9 @@ export function SearchableSelect({
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <ComboboxOptions anchor="bottom start" className="z-50 mt-1 max-h-60 w-[var(--input-width)] overflow-auto rounded-md bg-popover py-1 text-base shadow-lg focus:outline-none sm:text-sm border border-border">
+                        <ComboboxOptions anchor="bottom start" className="z-50 mt-1 max-h-60 w-[var(--input-width)] overflow-auto rounded-md bg-white dark:bg-neutral-900 py-1 text-base shadow-lg focus:outline-none sm:text-sm border border-neutral-200 dark:border-neutral-800">
                             {filteredOptions.length === 0 && query !== '' ? (
-                                <div className="relative cursor-default select-none py-2 px-4 text-muted-foreground">
+                                <div className="relative cursor-default select-none py-2 px-4 text-neutral-500 dark:text-neutral-400">
                                     Nothing found.
                                 </div>
                             ) : (
@@ -83,7 +83,7 @@ export function SearchableSelect({
                                         className={({ focus }) =>
                                             cn(
                                                 'relative cursor-default select-none py-2 pl-10 pr-4 transition-colors',
-                                                focus ? 'bg-accent text-accent-foreground' : 'text-foreground',
+                                                focus ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100' : 'text-neutral-900 dark:text-neutral-100',
                                             )
                                         }
                                         value={option.value}
@@ -97,7 +97,7 @@ export function SearchableSelect({
                                                     <span
                                                         className={cn(
                                                             'absolute inset-y-0 left-0 flex items-center pl-3',
-                                                            focus ? 'text-accent-foreground' : 'text-primary',
+                                                            focus ? 'text-neutral-900 dark:text-neutral-100' : 'text-primary',
                                                         )}
                                                     >
                                                         <CheckIcon className="h-4 w-4" aria-hidden="true" />
