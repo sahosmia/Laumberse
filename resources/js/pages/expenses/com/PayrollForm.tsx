@@ -16,12 +16,12 @@ interface PayrollFormProps {
         month: number;
         year: number;
         employee_id: string | number;
-        bonus: number;
-        deduction: number;
+        bonus: number | '';
+        deduction: number | '';
         deduction_note: string;
     };
-    // Alignment with Inertia's useForm signature
-    setData: <K extends keyof any>(key: K, value: any) => void;
+    // Alignment with Inertia's useForm signature without using any
+    setData: (key: string, value: string | number | boolean | null | undefined) => void;
     errors: Record<string, string | undefined>;
     eligibleEmployees: EligibleEmployee[];
     selectedEmployee: EligibleEmployee | null;
@@ -82,7 +82,7 @@ export function PayrollForm({
                         value: e.id,
                     }))}
                     value={data.employee_id}
-                    onChange={(val) => setData('employee_id', val)}
+                    onChange={(val) => setData('employee_id', val as string | number)}
                     placeholder="Select Employee"
                     error={errors.employee_id}
                 />
@@ -136,7 +136,7 @@ export function PayrollForm({
                             />
                         </div>
                     </div>
-                    {data.deduction > 0 && (
+                    {typeof data.deduction === 'number' && data.deduction > 0 && (
                         <div className="space-y-1">
                             <label htmlFor="deduction_note" className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
                                 Deduction Note

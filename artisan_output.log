@@ -1,0 +1,60 @@
+
+   WARN  Unable to respect the `PHP_CLI_SERVER_WORKERS` environment variable without the `--no-reload` flag. Only creating a single server.
+
+   INFO  Server running on [http://127.0.0.1:8000].
+
+  Press Ctrl+C to stop the server
+
+  2026-08-01 16:41:34 / ................................................ ~ 1s
+  2026-08-01 16:42:50 / ............................................ ~ 0.18ms
+  2026-08-01 16:45:08 /login ....................................... ~ 0.12ms
+  2026-08-01 16:45:08 /build/assets/app-BNqgf85N.css ............... ~ 0.11ms
+  2026-08-01 16:45:08 /build/assets/app-DyAmUhd7.js ................ ~ 0.03ms
+  2026-08-01 16:45:08 /build/assets/login-DYD1nWto.js .............. ~ 0.07ms
+  2026-08-01 16:45:08 /build/assets/input-error-99txyswk.js ........ ~ 0.21ms
+  2026-08-01 16:45:08 /build/assets/text-link-B228oIyX.js .......... ~ 0.31ms
+  2026-08-01 16:45:08 /build/assets/app-logo-icon-PU01WYrZ.js ...... ~ 0.42ms
+  2026-08-01 16:45:08 /build/assets/checkbox-BSxrdAOi.js ........... ~ 0.50ms
+  2026-08-01 16:45:08 /build/assets/index-DH4X9PVJ.js .............. ~ 0.07ms
+  2026-08-01 16:45:08 /build/assets/label-9cwX92L5.js .............. ~ 0.25ms
+  2026-08-01 16:45:08 /build/assets/auth-layout-3VyZaqrq.js ........ ~ 0.41ms
+  2026-08-01 16:45:08 /build/assets/loader-circle-CuK_JLuY.js ...... ~ 0.51ms
+  2026-08-01 16:45:08 /build/assets/utils-BFz4aEnJ.js .............. ~ 0.59ms
+  2026-08-01 16:45:08 /build/assets/index-DmNEeKgj.js .............. ~ 0.72ms
+  2026-08-01 16:45:08 /build/assets/check-Crvkq3-k.js .............. ~ 0.55ms
+  2026-08-01 16:45:08 /build/assets/app-BNqgf85N.css ............... ~ 0.10ms
+  2026-08-01 16:45:09 /logo3.jpeg .................................. ~ 0.10ms
+  2026-08-01 16:45:10 /login ..................................... ~ 500.64ms
+  2026-08-01 16:45:11 /dashboard ................................... ~ 0.09ms
+  2026-08-01 16:45:11 /build/assets/dashboard-DkxkELNN.js .......... ~ 0.15ms
+  2026-08-01 16:45:11 /build/assets/floating-ui.react-dom-D1oq5QhQ.js  ~ 0.34ms
+  2026-08-01 16:45:11 /build/assets/with-selector-BbMUXakE.js ...... ~ 0.39ms
+  2026-08-01 16:45:11 /build/assets/circle-alert-D5DHBix1.js ....... ~ 0.55ms
+  2026-08-01 16:45:11 /build/assets/app-layout-ClPyEMVa.js ......... ~ 0.86ms
+  2026-08-01 16:45:11 /build/assets/PieChart-gbznSR7W.js ........... ~ 1.10ms
+  2026-08-01 16:45:12 /logo4.jpeg .................................. ~ 0.21ms
+  2026-08-01 16:45:12 /units ....................................... ~ 0.14ms
+  2026-08-01 16:45:13 /build/assets/app-BNqgf85N.css ............... ~ 0.12ms
+  2026-08-01 16:45:13 /build/assets/index-BPfwSaQm.js .............. ~ 0.34ms
+  2026-08-01 16:45:13 /build/assets/delete-confirmation-modal-CCiVfIca.js  ~ 0.24ms
+  2026-08-01 16:45:13 /build/assets/save-confirmation-modal-DXnYjKuB.js  ~ 0.29ms
+  2026-08-01 16:45:13 /build/assets/reusable-input-3X-9Xgph.js ..... ~ 0.33ms
+  2026-08-01 16:45:13 /build/assets/reusable-button-iAgi0Za7.js .... ~ 0.47ms
+  2026-08-01 16:45:13 /build/assets/plus-C6RaRTYV.js ............... ~ 0.39ms
+  2026-08-01 16:45:13 /build/assets/app-DyAmUhd7.js ................ ~ 0.73ms
+  2026-08-01 16:45:13 /build/assets/search-DoD3v_z-.js ............. ~ 0.07ms
+  2026-08-01 16:45:13 /build/assets/pen-line-C9Movwvr.js ........... ~ 0.19ms
+  2026-08-01 16:45:13 /build/assets/trash-2-BjRBgM3-.js ............ ~ 0.30ms
+  2026-08-01 16:45:13 /build/assets/dialog-CZqSKQjq.js ............. ~ 0.42ms
+  2026-08-01 16:45:13 /build/assets/app-layout-ClPyEMVa.js ......... ~ 0.60ms
+  2026-08-01 16:45:13 /build/assets/app-logo-icon-PU01WYrZ.js ...... ~ 0.06ms
+  2026-08-01 16:45:13 /build/assets/utils-BFz4aEnJ.js .............. ~ 0.14ms
+  2026-08-01 16:45:13 /build/assets/index-DH4X9PVJ.js .............. ~ 0.27ms
+  2026-08-01 16:45:13 /build/assets/index-DmNEeKgj.js .............. ~ 0.40ms
+  2026-08-01 16:45:13 /build/assets/floating-ui.react-dom-D1oq5QhQ.js  ~ 0.09ms
+  2026-08-01 16:45:13 /build/assets/check-Crvkq3-k.js .............. ~ 0.17ms
+  2026-08-01 16:45:13 /build/assets/label-9cwX92L5.js .............. ~ 0.30ms
+  2026-08-01 16:45:13 /build/assets/loader-circle-CuK_JLuY.js ...... ~ 0.43ms
+  2026-08-01 16:45:13 /build/assets/app-BNqgf85N.css ............... ~ 0.12ms
+  2026-08-01 16:45:13 /logo4.jpeg .................................. ~ 0.09ms
+  2026-08-01 16:45:13 /logo3.jpeg .................................. ~ 0.41ms

@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Unit;
-use Illuminate\Http\Request;
+use App\Http\Requests\Units\StoreUnitRequest;
+use App\Http\Requests\Units\UpdateUnitRequest;
 use Inertia\Inertia;
 
 class UnitController extends Controller
@@ -15,26 +16,16 @@ class UnitController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreUnitRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'short_name' => 'required|string|max:10',
-        ]);
-
-        Unit::create($validated);
+        Unit::create($request->validated());
 
         return redirect()->back()->with('success', 'Unit created successfully.');
     }
 
-    public function update(Request $request, Unit $unit)
+    public function update(UpdateUnitRequest $request, Unit $unit)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'short_name' => 'required|string|max:10',
-        ]);
-
-        $unit->update($validated);
+        $unit->update($request->validated());
 
         return redirect()->back()->with('success', 'Unit updated successfully.');
     }

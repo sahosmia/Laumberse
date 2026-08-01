@@ -5,6 +5,8 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
+import { FormInput } from '@/components/ui/form-input';
+import { FormButton } from '@/components/ui/form-button';
 
 interface Unit {
     id: number;
@@ -116,12 +118,12 @@ export default function Units({ units }: UnitsProps) {
                         <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Product Units</h1>
                         <p className="text-sm text-neutral-500 dark:text-neutral-400">{units.length} units defined</p>
                     </div>
-                    <button
+                    <FormButton
                         onClick={openCreateModal}
-                        className="flex items-center gap-2 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg"
+                        icon={<Plus className="w-4 h-4" />}
                     >
-                        <Plus className="w-4 h-4" /> Add Unit
-                    </button>
+                        Add Unit
+                    </FormButton>
                 </div>
 
                 <div className="relative">
@@ -131,7 +133,7 @@ export default function Units({ units }: UnitsProps) {
                         placeholder="Search units..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full sm:w-80 pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                        className="w-full sm:w-80 pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all min-h-12 md:min-h-10 text-neutral-900 dark:text-neutral-100"
                     />
                 </div>
 
@@ -152,8 +154,8 @@ export default function Units({ units }: UnitsProps) {
                                         <td className="px-3 py-3 text-neutral-600 dark:text-neutral-400 font-mono">{u.short_name}</td>
                                         <td className="px-3 py-3">
                                             <div className="flex items-center justify-center gap-1">
-                                                <button onClick={() => openEditModal(u)} className="p-1.5 text-neutral-400 hover:text-blue-600"><Edit3 className="w-4 h-4" /></button>
-                                                <button onClick={() => handleDelete(u.id)} className="p-1.5 text-neutral-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                                                <button onClick={() => openEditModal(u)} className="p-1.5 text-neutral-400 hover:text-blue-600 min-h-12 md:min-h-10 min-w-12 md:min-w-10 flex items-center justify-center"><Edit3 className="w-4 h-4" /></button>
+                                                <button onClick={() => handleDelete(u.id)} className="p-1.5 text-neutral-400 hover:text-red-600 min-h-12 md:min-h-10 min-w-12 md:min-w-10 flex items-center justify-center"><Trash2 className="w-4 h-4" /></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -188,48 +190,41 @@ export default function Units({ units }: UnitsProps) {
                     <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{editingUnit ? 'Edit Unit' : 'New Unit'}</h3>
-                            <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"><X className="w-5 h-5 text-gray-400" /></button>
+                            <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg min-h-12 min-w-12 flex items-center justify-center"><X className="w-5 h-5 text-gray-400" /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Unit Name</label>
-                                <input
-                                    type="text"
-                                    value={data.name}
-                                    onChange={e => setData('name', e.target.value)}
-                                    className="w-full mt-1 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                    placeholder="e.g. Kilogram"
-                                    required
-                                />
-                                {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Short Name</label>
-                                <input
-                                    type="text"
-                                    value={data.short_name}
-                                    onChange={e => setData('short_name', e.target.value)}
-                                    className="w-full mt-1 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                    placeholder="e.g. kg"
-                                    required
-                                />
-                                {errors.short_name && <p className="text-xs text-red-500 mt-1">{errors.short_name}</p>}
-                            </div>
+                            <FormInput
+                                label="Unit Name"
+                                value={data.name}
+                                onChange={e => setData('name', e.target.value)}
+                                placeholder="e.g. Kilogram"
+                                required
+                                error={errors.name}
+                            />
+                            <FormInput
+                                label="Short Name"
+                                value={data.short_name}
+                                onChange={e => setData('short_name', e.target.value)}
+                                placeholder="e.g. kg"
+                                required
+                                error={errors.short_name}
+                            />
                             <div className="flex gap-2 pt-2">
-                                <button
+                                <FormButton
                                     type="submit"
-                                    disabled={processing}
-                                    className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
+                                    loading={processing}
+                                    className="flex-1"
                                 >
                                     {editingUnit ? 'Update Unit' : 'Save Unit'}
-                                </button>
-                                <button
+                                </FormButton>
+                                <FormButton
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    className="flex-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 py-2.5 rounded-xl text-sm font-semibold"
+                                    variant="secondary"
+                                    className="flex-1"
                                 >
                                     Cancel
-                                </button>
+                                </FormButton>
                             </div>
                         </form>
                     </div>

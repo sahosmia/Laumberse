@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\ExpenseCategory;
 use App\Models\GlobalSetting;
-use Illuminate\Http\Request;
+use App\Http\Requests\Settings\UpdateGlobalSettingsRequest;
 use Inertia\Inertia;
 
 class GlobalSettingController extends Controller
@@ -22,13 +22,9 @@ class GlobalSettingController extends Controller
         ]);
     }
 
-    public function update(Request $request)
+    public function update(UpdateGlobalSettingsRequest $request)
     {
-        $validated = $request->validate([
-            'salary_category_id' => 'required|exists:expense_categories,id',
-            'material_expense_category_id' => 'required|exists:expense_categories,id',
-
-        ]);
+        $validated = $request->validated();
 
         GlobalSetting::updateOrCreate(
             ['key' => 'salary_category_id'],

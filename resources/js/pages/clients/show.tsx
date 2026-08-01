@@ -1,12 +1,22 @@
 import { Head, Link } from '@inertiajs/react';
 import { User, Phone, MapPin, Briefcase, CreditCard, ShoppingBag, ArrowLeft, History, Settings, Tag } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, Client, Invoice } from '@/types';
+import { type BreadcrumbItem, Client, Invoice, InvoiceItem } from '@/types';
+
+interface CustomPrice {
+    id: number;
+    customer_id: number;
+    product_id: number;
+    custom_price: number;
+    product?: {
+        name: string;
+    };
+}
 
 interface ClientShowProps {
     client: Client & {
-        invoices: (Invoice & { items: any[] })[];
-        custom_prices: any[];
+        invoices: (Invoice & { items: InvoiceItem[] })[];
+        custom_prices: CustomPrice[];
     };
 }
 
@@ -94,7 +104,7 @@ export default function ClientShow({ client }: ClientShowProps) {
                                     <Settings className="w-4 h-4 text-purple-500" /> Custom Pricing Matrix
                                 </h3>
                                 <div className="space-y-3">
-                                    {client.custom_prices?.map((cp: any, idx) => (
+                                    {client.custom_prices?.map((cp, idx) => (
                                         <div key={idx} className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl">
                                             <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">{cp.product?.name}</span>
                                             <span className="text-xs font-bold text-blue-600">{formatCurrency(Number(cp.custom_price))}</span>

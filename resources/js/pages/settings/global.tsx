@@ -4,9 +4,9 @@ import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 import HeadingSmall from '@/components/heading-small';
-import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { FormLabel } from '@/components/ui/form-label';
+import { FormError } from '@/components/ui/form-error';
+import { FormButton } from '@/components/ui/form-button';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
@@ -20,8 +20,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Global({ settings, expense_categories }: { settings: { salary_category_id: string | number, material_expense_category_id: string | number }, expense_categories: ExpenseCategory[] }) {
     const { data, setData, patch, errors, processing, recentlySuccessful } = useForm({
         salary_category_id: settings.salary_category_id || '',
-                material_expense_category_id: settings.material_expense_category_id || '',
-
+        material_expense_category_id: settings.material_expense_category_id || '',
     });
 
     const submit: FormEventHandler = (e) => {
@@ -39,11 +38,11 @@ export default function Global({ settings, expense_categories }: { settings: { s
 
                     <form onSubmit={submit} className="space-y-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="salary_category_id">Salary Expense Category</Label>
+                            <FormLabel htmlFor="salary_category_id" required>Salary Expense Category</FormLabel>
 
                             <select
                                 id="salary_category_id"
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="flex h-12 md:h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-neutral-900 dark:text-neutral-100"
                                 value={data.salary_category_id}
                                 onChange={(e) => setData('salary_category_id', e.target.value)}
                                 required
@@ -56,15 +55,15 @@ export default function Global({ settings, expense_categories }: { settings: { s
 
                             <p className="text-xs text-neutral-500">Expenses in this category will trigger the payroll workflow.</p>
 
-                            <InputError className="mt-2" message={errors.salary_category_id} />
+                            <FormError message={errors.salary_category_id} />
                         </div>
 
-                                       <div className="grid gap-2">
-                            <Label htmlFor="material_expense_category_id">Material Expense Category</Label>
+                        <div className="grid gap-2">
+                            <FormLabel htmlFor="material_expense_category_id" required>Material Expense Category</FormLabel>
 
                             <select
                                 id="material_expense_category_id"
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="flex h-12 md:h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-neutral-900 dark:text-neutral-100"
                                 value={data.material_expense_category_id}
                                 onChange={(e) => setData('material_expense_category_id', e.target.value)}
                                 required
@@ -77,11 +76,11 @@ export default function Global({ settings, expense_categories }: { settings: { s
 
                             <p className="text-xs text-neutral-500">Expenses in this category will trigger the material tracking workflow.</p>
 
-                            <InputError className="mt-2" message={errors.material_expense_category_id} />
+                            <FormError message={errors.material_expense_category_id} />
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <Button disabled={processing}>Save</Button>
+                            <FormButton disabled={processing} type="submit">Save</FormButton>
 
                             <Transition
                                 show={recentlySuccessful}
