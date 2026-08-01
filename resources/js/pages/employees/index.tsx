@@ -4,6 +4,7 @@ import { Search, Plus, Trash2, Edit3, X, User } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, Employee } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 
 interface EmployeesProps {
     employees: Employee[];
@@ -24,6 +25,7 @@ export default function Employees({ employees }: EmployeesProps) {
     const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -61,14 +63,23 @@ export default function Employees({ employees }: EmployeesProps) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingEmployee) {
-            put(route('employees.update', editingEmployee.id), {
-                onSuccess: () => setShowModal(false),
-            });
+            setShowSaveConfirm(true);
         } else {
             post(route('employees.store'), {
                 onSuccess: () => {
                     setShowModal(false);
                     reset();
+                },
+            });
+        }
+    };
+
+    const confirmSave = () => {
+        if (editingEmployee) {
+            put(route('employees.update', editingEmployee.id), {
+                onSuccess: () => {
+                    setShowSaveConfirm(false);
+                    setShowModal(false);
                 },
             });
         }
@@ -115,7 +126,8 @@ export default function Employees({ employees }: EmployeesProps) {
                     />
                 </div>
 
-                <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+                {/* Desktop view */}
+                <div className="hidden md:block bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
@@ -168,6 +180,51 @@ export default function Employees({ employees }: EmployeesProps) {
                         </table>
                     </div>
                 </div>
+
+                {/* Mobile view */}
+                <div className="block md:hidden space-y-4">
+                    {filtered.map((e) => (
+                        <div key={e.id} className="bg-white dark:bg-neutral-900 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                        <User className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-neutral-900 dark:text-neutral-100 text-sm">{e.name}</h4>
+                                        <p className="text-xs text-neutral-500 dark:text-neutral-400">{e.designation}</p>
+                                    </div>
+                                </div>
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${e.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                                    {e.is_active ? 'Active' : 'Inactive'}
+                                </span>
+                            </div>
+                            <div className="border-t border-neutral-100 dark:border-neutral-800 pt-2.5 flex justify-between items-center text-xs">
+                                <div>
+                                    <p className="text-neutral-400 font-medium">Phone</p>
+                                    <p className="font-semibold text-neutral-700 dark:text-neutral-300">{e.phone}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-neutral-400 font-medium">Base Salary</p>
+                                    <p className="font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(e.base_salary)}</p>
+                                </div>
+                            </div>
+                            <div className="border-t border-neutral-100 dark:border-neutral-800 pt-2.5 flex justify-end gap-2">
+                                <button onClick={() => openEditModal(e)} className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-blue-600 transition-colors">
+                                    <Edit3 className="w-3.5 h-3.5" /> Edit
+                                </button>
+                                <button onClick={() => handleDelete(e.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-red-600 transition-colors">
+                                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                    {filtered.length === 0 && (
+                        <div className="p-8 text-center bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 text-neutral-400 italic">
+                            No employees found
+                        </div>
+                    )}
+                </div>
             </div>
 
             <DeleteConfirmationModal
@@ -176,6 +233,15 @@ export default function Employees({ employees }: EmployeesProps) {
                 onConfirm={confirmDelete}
                 title="Delete Employee"
                 description="Are you sure you want to delete this employee? This action cannot be undone."
+                isProcessing={processing}
+            />
+
+            <SaveConfirmationModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={confirmSave}
+                title="Save Employee Changes"
+                description="Are you sure you want to save these changes to the employee?"
                 isProcessing={processing}
             />
 

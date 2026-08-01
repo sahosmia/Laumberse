@@ -62,12 +62,6 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
     }, [showModal]);
 
     useEffect(() => {
-        if (isMaterial || isPayroll) {
-            setData('outlet_id', '');
-        }
-    }, [isMaterial, isPayroll]);
-
-    useEffect(() => {
         const formattedDay = String(day || 1).padStart(2, '0');
         const formattedMonth = String(month || 1).padStart(2, '0');
         setData('date', `${year || new Date().getFullYear()}-${formattedMonth}-${formattedDay}`);
@@ -100,6 +94,13 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
 
     const isPayroll = Number(data.expense_category_id) === Number(salaryCategoryId);
     const isMaterial = Number(data.expense_category_id) === Number(materialExpenseCategoryId);
+
+    useEffect(() => {
+        if (isMaterial || isPayroll) {
+            setData('outlet_id', '');
+        }
+    }, [isMaterial, isPayroll]);
+
     useEffect(() => {
         if (isPayroll && data.month && data.year) {
             axios.get(route('employees.payroll-eligible', { month: data.month, year: data.year }))

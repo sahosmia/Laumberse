@@ -155,39 +155,38 @@ const confirmSave = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filtered.map((c) => (
                         <div key={c.id} className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 hover:shadow-lg transition-shadow duration-300 relative group">
-                            <div className="absolute top-4 right-4 flex gap-1">
+                            <div className="absolute top-4 right-4 flex gap-1 z-10">
                                 <Link href={route('clients.show', c.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600"><Eye className="w-3.5 h-3.5" /></Link>
-
                                 <button onClick={() => openEditModal(c)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600"><Edit3 className="w-3.5 h-3.5" /></button>
                                 <button onClick={() => handleDelete(c.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
                             </div>
                             <div className="flex items-start justify-between mb-3">
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <h4 className="font-bold text-neutral-900 dark:text-neutral-100">{c.name}</h4>
+                                <div className="pr-16">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h4 className="font-bold text-neutral-900 dark:text-neutral-100 text-sm sm:text-base break-words">{c.name}</h4>
                                         <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase ${c.type === 'Corporate' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'}`}>
                                             {c.type}
                                         </span>
                                     </div>
-                                    <p className="text-xs text-neutral-400 mt-0.5">{c.phone}</p>
-                                    <p className="text-xs text-neutral-400">{c.address}</p>
+                                    <p className="text-xs text-neutral-400 mt-0.5 break-all">{c.phone}</p>
+                                    <p className="text-xs text-neutral-400 mt-0.5 line-clamp-2">{c.address || '-'}</p>
                                 </div>
-                                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
                                     <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{c.name.charAt(0)}</span>
                                 </div>
                             </div>
                             <div className="grid grid-cols-3 gap-2 mt-4">
-                                <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-2.5 text-center">
-                                    <p className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{c.total_orders}</p>
-                                    <p className="text-[10px] text-neutral-500 font-medium uppercase tracking-wider">Orders</p>
+                                <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-2.5 text-center min-w-0">
+                                    <p className="text-sm sm:text-base lg:text-lg font-bold text-neutral-900 dark:text-neutral-100 truncate">{c.total_orders}</p>
+                                    <p className="text-[9px] sm:text-[10px] text-neutral-500 font-medium uppercase tracking-wider truncate">Orders</p>
                                 </div>
-                                <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-2.5 text-center">
-                                    <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(Number(c.total_paid))}</p>
-                                    <p className="text-[10px] text-emerald-600 font-medium uppercase tracking-wider">Paid</p>
+                                <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-2.5 text-center min-w-0">
+                                    <p className="text-sm sm:text-base lg:text-lg font-bold text-emerald-600 dark:text-emerald-400 truncate">{formatCurrency(Number(c.total_paid))}</p>
+                                    <p className="text-[9px] sm:text-[10px] text-emerald-600 font-medium uppercase tracking-wider truncate">Paid</p>
                                 </div>
-                                <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-2.5 text-center">
-                                    <p className="text-lg font-bold text-red-500 dark:text-red-400">{formatCurrency(Number(c.total_due))}</p>
-                                    <p className="text-[10px] text-red-500 font-medium uppercase tracking-wider">Due</p>
+                                <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-2.5 text-center min-w-0">
+                                    <p className="text-sm sm:text-base lg:text-lg font-bold text-red-500 dark:text-red-400 truncate">{formatCurrency(Number(c.total_due))}</p>
+                                    <p className="text-[9px] sm:text-[10px] text-red-500 font-medium uppercase tracking-wider truncate">Due</p>
                                 </div>
                             </div>
                         </div>

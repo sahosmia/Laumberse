@@ -127,7 +127,8 @@ export default function Materials({ materials, units }: MaterialsProps) {
                     />
                 </div>
 
-                <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+                {/* Desktop view */}
+                <div className="hidden md:block bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
@@ -164,6 +165,35 @@ export default function Materials({ materials, units }: MaterialsProps) {
                             </tbody>
                         </table>
                     </div>
+                </div>
+
+                {/* Mobile view */}
+                <div className="block md:hidden space-y-4">
+                    {filtered.map((m) => (
+                        <div key={m.id} className="bg-white dark:bg-neutral-900 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 space-y-3">
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <h4 className="font-bold text-neutral-900 dark:text-neutral-100 text-sm">{m.name}</h4>
+                                    <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                                        Unit: {m.unit ? `${m.unit.name} (${m.unit.short_name})` : <span className="text-neutral-400 italic">None</span>}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="border-t border-neutral-100 dark:border-neutral-800 pt-2.5 flex justify-end gap-2">
+                                <button onClick={() => openEditModal(m)} className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-blue-600 transition-colors">
+                                    <Edit3 className="w-3.5 h-3.5" /> Edit
+                                </button>
+                                <button onClick={() => handleDelete(m.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-red-600 transition-colors">
+                                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                    {filtered.length === 0 && (
+                        <div className="p-8 text-center bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 text-neutral-400 italic">
+                            No materials found
+                        </div>
+                    )}
                 </div>
             </div>
 

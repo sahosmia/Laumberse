@@ -4,6 +4,7 @@ import { Search, Plus, Trash2, Edit3, X, Tag, AlertCircle } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, AssetCategory } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 
 interface AssetCategoriesProps {
     categories: AssetCategory[];
@@ -26,6 +27,7 @@ export default function AssetCategories({ categories }: AssetCategoriesProps) {
     const [editingCategory, setEditingCategory] = useState<AssetCategory | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -55,14 +57,23 @@ export default function AssetCategories({ categories }: AssetCategoriesProps) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingCategory) {
-            put(route('asset-categories.update', editingCategory.id), {
-                onSuccess: () => setShowModal(false),
-            });
+            setShowSaveConfirm(true);
         } else {
             post(route('asset-categories.store'), {
                 onSuccess: () => {
                     setShowModal(false);
                     reset();
+                },
+            });
+        }
+    };
+
+    const confirmSave = () => {
+        if (editingCategory) {
+            put(route('asset-categories.update', editingCategory.id), {
+                onSuccess: () => {
+                    setShowSaveConfirm(false);
+                    setShowModal(false);
                 },
             });
         }
@@ -142,6 +153,15 @@ export default function AssetCategories({ categories }: AssetCategoriesProps) {
                 onConfirm={confirmDelete}
                 title="Delete Category"
                 description="Are you sure you want to delete this category? This action cannot be undone."
+                isProcessing={processing}
+            />
+
+            <SaveConfirmationModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={confirmSave}
+                title="Save Category Changes"
+                description="Are you sure you want to save these changes to the asset category?"
                 isProcessing={processing}
             />
 
