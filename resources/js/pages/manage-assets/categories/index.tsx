@@ -21,6 +21,8 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+import { useEffect } from "react";
+
 export default function AssetCategories({ categories }: AssetCategoriesProps) {
     const [search, setSearch] = useState("");
     const [showModal, setShowModal] = useState(false);
@@ -28,6 +30,20 @@ export default function AssetCategories({ categories }: AssetCategoriesProps) {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+
+    useEffect(() => {
+        if (showModal) {
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+        };
+    }, [showModal]);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
