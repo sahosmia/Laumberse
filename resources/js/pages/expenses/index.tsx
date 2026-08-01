@@ -4,6 +4,7 @@ import { Search, Plus, Trash2, Edit3, X, Tag } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, Expense, ExpenseCategory, Outlet, SharedData, Material } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import axios from 'axios';
 import { MaterialItemsForm } from './com/MaterialItemsForm';
@@ -43,6 +44,28 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
     const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+
+    const [day, setDay] = useState(new Date().getDate());
+    const [month, setMonth] = useState(new Date().getMonth() + 1);
+    const [year, setYear] = useState(new Date().getFullYear());
+
+    useEffect(() => {
+        if (showModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [showModal]);
+
+    useEffect(() => {
+        const formattedDay = String(day || 1).padStart(2, '0');
+        const formattedMonth = String(month || 1).padStart(2, '0');
+        setData('date', `${year || new Date().getFullYear()}-${formattedMonth}-${formattedDay}`);
+    }, [day, month, year]);
 
     const { settings } = usePage<SharedData>().props;
     const salaryCategoryId = settings.salary_category_id;
@@ -71,6 +94,13 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
 
     const isPayroll = Number(data.expense_category_id) === Number(salaryCategoryId);
     const isMaterial = Number(data.expense_category_id) === Number(materialExpenseCategoryId);
+
+    useEffect(() => {
+        if (isMaterial || isPayroll) {
+            setData('outlet_id', '');
+        }
+    }, [isMaterial, isPayroll]);
+
     useEffect(() => {
         if (isPayroll && data.month && data.year) {
             axios.get(route('employees.payroll-eligible', { month: data.month, year: data.year }))
@@ -130,11 +160,22 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
     const openCreateModal = () => {
         setEditingExpense(null);
         reset();
+        setDay(new Date().getDate());
+        setMonth(new Date().getMonth() + 1);
+        setYear(new Date().getFullYear());
         setShowModal(true);
     };
 
     const openEditModal = (expense: Expense) => {
         setEditingExpense(expense);
+        if (expense.date) {
+            const parts = expense.date.split('-');
+            if (parts.length === 3) {
+                setYear(parseInt(parts[0], 10));
+                setMonth(parseInt(parts[1], 10));
+                setDay(parseInt(parts[2], 10));
+            }
+        }
         setData({
             expense_category_id: expense.expense_category_id,
             amount: expense.amount,
@@ -160,14 +201,23 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingExpense) {
-            put(route('expenses.update', editingExpense.id), {
-                onSuccess: () => setShowModal(false),
-            });
+            setShowSaveConfirm(true);
         } else {
             post(route('expenses.store'), {
                 onSuccess: () => {
                     setShowModal(false);
                     reset();
+                },
+            });
+        }
+    };
+
+    const confirmSave = () => {
+        if (editingExpense) {
+            put(route('expenses.update', editingExpense.id), {
+                onSuccess: () => {
+                    setShowSaveConfirm(false);
+                    setShowModal(false);
                 },
             });
         }
@@ -289,6 +339,15 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                 isProcessing={processing}
             />
 
+            <SaveConfirmationModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={confirmSave}
+                title="Save Expense Changes"
+                description="Are you sure you want to save these changes to the expense?"
+                isProcessing={processing}
+            />
+
             {/* Expense Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
@@ -317,21 +376,29 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                     </select>
                                     {errors.expense_category_id && <p className="text-xs text-red-500">{errors.expense_category_id}</p>}
                                 </div>
-                                <div className="space-y-1">
-                                    <label htmlFor="amount" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Amount</label>
-                                    <input
-                                        id="amount"
-                                        type="number"
-                                        value={data.amount}
-                                        onChange={e => setData('amount', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100 disabled:opacity-50 disabled:bg-neutral-50 dark:disabled:bg-neutral-800/50"
-                                        required
-                                        placeholder="0.00"
-                                        readOnly={isMaterial}
-                                        step="any"
-                                    />
-                                    {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
-                                </div>
+                                {!isPayroll && (
+                                    <div className="space-y-1">
+                                        <label htmlFor="amount" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Amount</label>
+                                        <input
+                                            id="amount"
+                                            type="number"
+                                            value={data.amount}
+                                            onChange={e => {
+                                                let val = e.target.value;
+                                                if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
+                                                    val = val.replace(/^0+/, '');
+                                                }
+                                                setData('amount', val === '' ? '' : parseFloat(val));
+                                            }}
+                                            className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100 disabled:opacity-50 disabled:bg-neutral-50 dark:disabled:bg-neutral-800/50"
+                                            required
+                                            placeholder="0.00"
+                                            readOnly={isMaterial}
+                                            step="any"
+                                        />
+                                        {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
+                                    </div>
+                                )}
                             </div>
 
                             {isMaterial && (
@@ -357,13 +424,58 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Date</label>
-                                    <input
-                                        type="date"
-                                        value={data.date}
-                                        onChange={e => setData('date', e.target.value)}
-                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                        required
-                                    />
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <div>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="31"
+                                                value={day}
+                                                onChange={e => {
+                                                    let val = e.target.value;
+                                                    if (val.length > 1 && val.startsWith('0')) {
+                                                        val = val.replace(/^0+/, '');
+                                                    }
+                                                    setDay(val === '' ? '' as any : Math.min(31, Math.max(1, parseInt(val, 10))));
+                                                }}
+                                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-2 py-2 text-xs bg-transparent dark:text-neutral-100 text-center"
+                                                placeholder="Day"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <select
+                                                value={month}
+                                                onChange={e => setMonth(parseInt(e.target.value, 10))}
+                                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-1 py-2 text-xs bg-transparent dark:text-neutral-100"
+                                                required
+                                            >
+                                                {Array.from({ length: 12 }, (_, i) => (
+                                                    <option key={i + 1} value={i + 1}>
+                                                        {new Date(0, i).toLocaleString('default', { month: 'short' })}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="number"
+                                                min="1900"
+                                                max="2100"
+                                                value={year}
+                                                onChange={e => {
+                                                    let val = e.target.value;
+                                                    if (val.length > 1 && val.startsWith('0')) {
+                                                        val = val.replace(/^0+/, '');
+                                                    }
+                                                    setYear(val === '' ? '' as any : parseInt(val, 10));
+                                                }}
+                                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-2 py-2 text-xs bg-transparent dark:text-neutral-100 text-center"
+                                                placeholder="Year"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
                                     {errors.date && <p className="text-xs text-red-500">{errors.date}</p>}
                                 </div>
                                 <div className="space-y-1">
@@ -380,19 +492,21 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                     </select>
                                 </div>
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Outlet (Optional)</label>
-                                <select
-                                    value={data.outlet_id}
-                                    onChange={e => setData('outlet_id', e.target.value)}
-                                    className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                >
-                                    <option value="">Main Shop</option>
-                                    {outlets.map(o => (
-                                        <option key={o.id} value={o.id}>{o.name}</option>
-                                    ))}
-                                </select>
-                            </div>
+                            {(!isMaterial && !isPayroll) && (
+                                <div className="space-y-1">
+                                    <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Outlet (Optional)</label>
+                                    <select
+                                        value={data.outlet_id}
+                                        onChange={e => setData('outlet_id', e.target.value)}
+                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
+                                    >
+                                        <option value="">Main Shop</option>
+                                        {outlets.map(o => (
+                                            <option key={o.id} value={o.id}>{o.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                             <div className="space-y-1">
                                 <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Description</label>
                                 <textarea

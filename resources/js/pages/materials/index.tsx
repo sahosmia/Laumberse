@@ -1,12 +1,14 @@
 import { Head, useForm } from '@inertiajs/react';
-import { useState } from "react";
-import { Search, Plus, Trash2, Edit3, X, ShoppingBag } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Plus, Trash2, Edit3, X } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, Material } from '@/types';
+import { type BreadcrumbItem, Material, Unit } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 
 interface MaterialsProps {
     materials: Material[];
+    units: Unit[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -16,18 +18,28 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const formatCurrency = (n: number | string) => `৳${Number(n).toLocaleString("en-BD")}`;
-
-export default function Materials({ materials }: MaterialsProps) {
+export default function Materials({ materials, units }: MaterialsProps) {
     const [search, setSearch] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+
+    useEffect(() => {
+        if (showModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [showModal]);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
-        market_price: '' as string | number,
+        unit_id: '' as string | number,
     });
 
     const filtered = materials.filter((m) =>
@@ -44,7 +56,7 @@ export default function Materials({ materials }: MaterialsProps) {
         setEditingMaterial(material);
         setData({
             name: material.name,
-            market_price: material.market_price,
+            unit_id: material.unit_id || '',
         });
         setShowModal(true);
     };
@@ -52,14 +64,23 @@ export default function Materials({ materials }: MaterialsProps) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingMaterial) {
-            put(route('materials.update', editingMaterial.id), {
-                onSuccess: () => setShowModal(false),
-            });
+            setShowSaveConfirm(true);
         } else {
             post(route('materials.store'), {
                 onSuccess: () => {
                     setShowModal(false);
                     reset();
+                },
+            });
+        }
+    };
+
+    const confirmSave = () => {
+        if (editingMaterial) {
+            put(route('materials.update', editingMaterial.id), {
+                onSuccess: () => {
+                    setShowSaveConfirm(false);
+                    setShowModal(false);
                 },
             });
         }
@@ -89,7 +110,7 @@ export default function Materials({ materials }: MaterialsProps) {
                     </div>
                     <button
                         onClick={openCreateModal}
-                        className="flex items-center gap-2 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg"
+                        className="flex items-center gap-2 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg animate-fade-in"
                     >
                         <Plus className="w-4 h-4" /> Add Material
                     </button>
@@ -106,13 +127,14 @@ export default function Materials({ materials }: MaterialsProps) {
                     />
                 </div>
 
-                <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+                {/* Desktop view */}
+                <div className="hidden md:block bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 text-xs uppercase tracking-wider">
+                                <tr className="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 text-xs uppercase tracking-wider border-b border-neutral-200 dark:border-neutral-800">
                                     <th className="text-left px-5 py-3 font-semibold">Name</th>
-                                    <th className="text-right px-5 py-3 font-semibold">Market Price</th>
+                                    <th className="text-left px-5 py-3 font-semibold">Unit</th>
                                     <th className="text-center px-5 py-3 font-semibold">Actions</th>
                                 </tr>
                             </thead>
@@ -120,7 +142,9 @@ export default function Materials({ materials }: MaterialsProps) {
                                 {filtered.map((m) => (
                                     <tr key={m.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors">
                                         <td className="px-5 py-4 font-medium text-neutral-900 dark:text-neutral-100">{m.name}</td>
-                                        <td className="px-5 py-4 text-right font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(m.market_price)}</td>
+                                        <td className="px-5 py-4 text-neutral-600 dark:text-neutral-400">
+                                            {m.unit ? `${m.unit.name} (${m.unit.short_name})` : <span className="text-neutral-400 italic">None</span>}
+                                        </td>
                                         <td className="px-5 py-4 text-center">
                                             <div className="flex items-center justify-center gap-2">
                                                 <button onClick={() => openEditModal(m)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600 transition-colors">
@@ -142,6 +166,35 @@ export default function Materials({ materials }: MaterialsProps) {
                         </table>
                     </div>
                 </div>
+
+                {/* Mobile view */}
+                <div className="block md:hidden space-y-4">
+                    {filtered.map((m) => (
+                        <div key={m.id} className="bg-white dark:bg-neutral-900 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 space-y-3">
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <h4 className="font-bold text-neutral-900 dark:text-neutral-100 text-sm">{m.name}</h4>
+                                    <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                                        Unit: {m.unit ? `${m.unit.name} (${m.unit.short_name})` : <span className="text-neutral-400 italic">None</span>}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="border-t border-neutral-100 dark:border-neutral-800 pt-2.5 flex justify-end gap-2">
+                                <button onClick={() => openEditModal(m)} className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-blue-600 transition-colors">
+                                    <Edit3 className="w-3.5 h-3.5" /> Edit
+                                </button>
+                                <button onClick={() => handleDelete(m.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-red-600 transition-colors">
+                                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                    {filtered.length === 0 && (
+                        <div className="p-8 text-center bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 text-neutral-400 italic">
+                            No materials found
+                        </div>
+                    )}
+                </div>
             </div>
 
             <DeleteConfirmationModal
@@ -150,6 +203,15 @@ export default function Materials({ materials }: MaterialsProps) {
                 onConfirm={confirmDelete}
                 title="Delete Material"
                 description="Are you sure you want to delete this material? This action cannot be undone."
+                isProcessing={processing}
+            />
+
+            <SaveConfirmationModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={confirmSave}
+                title="Save Material Changes"
+                description="Are you sure you want to save these changes to the material?"
                 isProcessing={processing}
             />
 
@@ -176,18 +238,19 @@ export default function Materials({ materials }: MaterialsProps) {
                                 {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
                             </div>
                             <div className="space-y-1">
-                                <label htmlFor="market_price" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Market Price (Base)</label>
-                                <input
-                                    id="market_price"
-                                    type="number"
-                                    step="0.01"
-                                    value={data.market_price}
-                                    onChange={e => setData('market_price', e.target.value)}
-                                    className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                    required
-                                    placeholder="0.00"
-                                />
-                                {errors.market_price && <p className="text-xs text-red-500">{errors.market_price}</p>}
+                                <label htmlFor="unit_id" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Unit</label>
+                                <select
+                                    id="unit_id"
+                                    value={data.unit_id}
+                                    onChange={e => setData('unit_id', e.target.value)}
+                                    className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100 dark:bg-neutral-900"
+                                >
+                                    <option value="">Select Unit</option>
+                                    {units.map(u => (
+                                        <option key={u.id} value={u.id}>{u.name} ({u.short_name})</option>
+                                    ))}
+                                </select>
+                                {errors.unit_id && <p className="text-xs text-red-500">{errors.unit_id}</p>}
                             </div>
 
                             <div className="flex gap-2 pt-2">

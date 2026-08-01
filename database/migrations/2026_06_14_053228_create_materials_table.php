@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('materials', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->decimal('market_price', 15, 2);
+            $table->foreignId('unit_id')->nullable()->constrained()->onDelete('set null');
             $table->timestamps();
         });
     }

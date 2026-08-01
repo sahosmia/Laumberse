@@ -4,6 +4,7 @@ import { Search, Plus, Trash2, Edit3, X, Wallet, AlertCircle, Clock, Tag, Credit
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, ManageAsset, AssetCategory } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 
 interface ManageAssetsProps {
     manageAssets: ManageAsset[];
@@ -25,6 +26,7 @@ export default function ManageAssets({ manageAssets, categories }: ManageAssetsP
     const [editingAsset, setEditingAsset] = useState<ManageAsset | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -67,14 +69,23 @@ export default function ManageAssets({ manageAssets, categories }: ManageAssetsP
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingAsset) {
-            put(route('manage-assets.update', editingAsset.id), {
-                onSuccess: () => setShowModal(false),
-            });
+            setShowSaveConfirm(true);
         } else {
             post(route('manage-assets.store'), {
                 onSuccess: () => {
                     setShowModal(false);
                     reset();
+                },
+            });
+        }
+    };
+
+    const confirmSave = () => {
+        if (editingAsset) {
+            put(route('manage-assets.update', editingAsset.id), {
+                onSuccess: () => {
+                    setShowSaveConfirm(false);
+                    setShowModal(false);
                 },
             });
         }
@@ -191,6 +202,15 @@ export default function ManageAssets({ manageAssets, categories }: ManageAssetsP
                 onConfirm={confirmDelete}
                 title="Delete Asset"
                 description="Are you sure you want to delete this asset? This action cannot be undone."
+                isProcessing={processing}
+            />
+
+            <SaveConfirmationModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={confirmSave}
+                title="Save Asset Changes"
+                description="Are you sure you want to save these changes to the asset?"
                 isProcessing={processing}
             />
 

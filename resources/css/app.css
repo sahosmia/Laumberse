@@ -155,4 +155,19 @@
     body {
         @apply bg-background text-foreground;
     }
+
+    select, option {
+        background-color: white;
+        color: #111827;
+    }
+
+    .dark select, .dark option {
+        background-color: #171717 !important;
+        color: #f9fafb !important;
+    }
+
+    /* Style select dropdown menus universally for dark mode */
+    select {
+        color-scheme: light dark;
+    }
 }

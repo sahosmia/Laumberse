@@ -1,10 +1,11 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Plus, Trash2, Edit3, X, Settings2, PackagePlus, Eye } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { type BreadcrumbItem, Client, Product } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 
 interface ClientsProps {
     clients: Client[];
@@ -27,6 +28,18 @@ export default function Clients({ clients, products }: ClientsProps) {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+
+    useEffect(() => {
+        if (showModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [showModal]);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -61,20 +74,39 @@ export default function Clients({ clients, products }: ClientsProps) {
 const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const payload = {
-        ...data,
-        custom_prices: data.custom_prices.filter(
-            cp => cp.product_id && cp.custom_price !== ''
-        ),
-    };
-
     if (editingClient) {
-        put(route('clients.update', editingClient.id), {
-            data: payload,
-        });
+        setShowSaveConfirm(true);
     } else {
+        const payload = {
+            ...data,
+            custom_prices: data.custom_prices.filter(
+                cp => cp.product_id && cp.custom_price !== ''
+            ),
+        };
         post(route('clients.store'), {
             data: payload,
+            onSuccess: () => {
+                setShowModal(false);
+                reset();
+            },
+        });
+    }
+};
+
+const confirmSave = () => {
+    if (editingClient) {
+        const payload = {
+            ...data,
+            custom_prices: data.custom_prices.filter(
+                cp => cp.product_id && cp.custom_price !== ''
+            ),
+        };
+        put(route('clients.update', editingClient.id), {
+            data: payload,
+            onSuccess: () => {
+                setShowSaveConfirm(false);
+                setShowModal(false);
+            },
         });
     }
 };
@@ -123,39 +155,38 @@ const handleSubmit = (e: React.FormEvent) => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filtered.map((c) => (
                         <div key={c.id} className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 hover:shadow-lg transition-shadow duration-300 relative group">
-                            <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute top-4 right-4 flex gap-1 z-10">
                                 <Link href={route('clients.show', c.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600"><Eye className="w-3.5 h-3.5" /></Link>
-
                                 <button onClick={() => openEditModal(c)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600"><Edit3 className="w-3.5 h-3.5" /></button>
                                 <button onClick={() => handleDelete(c.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
                             </div>
                             <div className="flex items-start justify-between mb-3">
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <h4 className="font-bold text-neutral-900 dark:text-neutral-100">{c.name}</h4>
+                                <div className="pr-16">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h4 className="font-bold text-neutral-900 dark:text-neutral-100 text-sm sm:text-base break-words">{c.name}</h4>
                                         <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase ${c.type === 'Corporate' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'}`}>
                                             {c.type}
                                         </span>
                                     </div>
-                                    <p className="text-xs text-neutral-400 mt-0.5">{c.phone}</p>
-                                    <p className="text-xs text-neutral-400">{c.address}</p>
+                                    <p className="text-xs text-neutral-400 mt-0.5 break-all">{c.phone}</p>
+                                    <p className="text-xs text-neutral-400 mt-0.5 line-clamp-2">{c.address || '-'}</p>
                                 </div>
-                                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
                                     <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{c.name.charAt(0)}</span>
                                 </div>
                             </div>
                             <div className="grid grid-cols-3 gap-2 mt-4">
-                                <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-2.5 text-center">
-                                    <p className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{c.total_orders}</p>
-                                    <p className="text-[10px] text-neutral-500 font-medium uppercase tracking-wider">Orders</p>
+                                <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-2.5 text-center min-w-0">
+                                    <p className="text-sm sm:text-base lg:text-lg font-bold text-neutral-900 dark:text-neutral-100 truncate">{c.total_orders}</p>
+                                    <p className="text-[9px] sm:text-[10px] text-neutral-500 font-medium uppercase tracking-wider truncate">Orders</p>
                                 </div>
-                                <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-2.5 text-center">
-                                    <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(Number(c.total_paid))}</p>
-                                    <p className="text-[10px] text-emerald-600 font-medium uppercase tracking-wider">Paid</p>
+                                <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-2.5 text-center min-w-0">
+                                    <p className="text-sm sm:text-base lg:text-lg font-bold text-emerald-600 dark:text-emerald-400 truncate">{formatCurrency(Number(c.total_paid))}</p>
+                                    <p className="text-[9px] sm:text-[10px] text-emerald-600 font-medium uppercase tracking-wider truncate">Paid</p>
                                 </div>
-                                <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-2.5 text-center">
-                                    <p className="text-lg font-bold text-red-500 dark:text-red-400">{formatCurrency(Number(c.total_due))}</p>
-                                    <p className="text-[10px] text-red-500 font-medium uppercase tracking-wider">Due</p>
+                                <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-2.5 text-center min-w-0">
+                                    <p className="text-sm sm:text-base lg:text-lg font-bold text-red-500 dark:text-red-400 truncate">{formatCurrency(Number(c.total_due))}</p>
+                                    <p className="text-[9px] sm:text-[10px] text-red-500 font-medium uppercase tracking-wider truncate">Due</p>
                                 </div>
                             </div>
                         </div>
@@ -169,6 +200,15 @@ const handleSubmit = (e: React.FormEvent) => {
                 onConfirm={confirmDelete}
                 title="Delete Client"
                 description="Are you sure you want to delete this client? This action cannot be undone."
+                isProcessing={processing}
+            />
+
+            <SaveConfirmationModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={confirmSave}
+                title="Save Client Changes"
+                description="Are you sure you want to save these changes to the client?"
                 isProcessing={processing}
             />
 
@@ -234,8 +274,8 @@ const handleSubmit = (e: React.FormEvent) => {
                             onChange={e => setData('type', e.target.value as any)}
                             className="w-full mt-1 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-white dark:bg-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60 transition-all"
                         >
-                            <option value="Consumer">Consumer</option>
-                            <option value="Corporate">Corporate</option>
+                            <option value="Consumer" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">Consumer</option>
+                            <option value="Corporate" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">Corporate</option>
                         </select>
                         {errors.type && <p className="text-xs text-red-500 mt-1 font-medium">{errors.type}</p>}
                     </div>
@@ -304,7 +344,7 @@ const handleSubmit = (e: React.FormEvent) => {
             ...data.custom_prices,
             {
                 product_id: product.id,
-                custom_price: product.price ?? '',
+                custom_price: '',
             },
         ]);
 

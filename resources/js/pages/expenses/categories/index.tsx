@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 
 interface ExpenseCategoriesProps {
     categories: ExpenseCategory[];
@@ -29,6 +30,7 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
     const [editingCategory, setEditingCategory] = useState<ExpenseCategory | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -58,15 +60,22 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingCategory) {
-            put(route('expense-categories.update', editingCategory.id), {
+            setShowSaveConfirm(true);
+        } else {
+            post(route('expense-categories.store'), {
                 onSuccess: () => {
                     setShowModal(false);
                     reset();
                 },
             });
-        } else {
-            post(route('expense-categories.store'), {
+        }
+    };
+
+    const confirmSave = () => {
+        if (editingCategory) {
+            put(route('expense-categories.update', editingCategory.id), {
                 onSuccess: () => {
+                    setShowSaveConfirm(false);
                     setShowModal(false);
                     reset();
                 },
@@ -164,6 +173,15 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
                 onConfirm={confirmDelete}
                 title="Delete Category"
                 description="Are you sure you want to delete this expense category? This action cannot be undone."
+                isProcessing={processing}
+            />
+
+            <SaveConfirmationModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={confirmSave}
+                title="Save Category Changes"
+                description="Are you sure you want to save these changes to the category?"
                 isProcessing={processing}
             />
 
