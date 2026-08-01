@@ -45,6 +45,7 @@ export default function Form({ category }: FormProps) {
         if (category) {
             put(route('categories.update', category.id), {
                 onSuccess: () => setShowSaveConfirm(false),
+                onError: () => setShowSaveConfirm(false),
             });
         }
     };

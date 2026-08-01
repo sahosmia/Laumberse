@@ -234,6 +234,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
         if (isEdit && invoice?.id) {
             put(route('invoices.update', invoice.id), {
                 onSuccess: () => setShowSaveConfirm(false),
+                onError: () => setShowSaveConfirm(false),
             });
         }
     };

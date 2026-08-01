@@ -75,6 +75,9 @@ export default function AssetCategories({ categories }: AssetCategoriesProps) {
                     setShowSaveConfirm(false);
                     setShowModal(false);
                 },
+                onError: () => {
+                    setShowSaveConfirm(false);
+                },
             });
         }
     };

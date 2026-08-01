@@ -87,6 +87,9 @@ export default function Units({ units }: UnitsProps) {
                     setShowSaveConfirm(false);
                     setShowModal(false);
                 },
+                onError: () => {
+                    setShowSaveConfirm(false);
+                },
             });
         }
     };

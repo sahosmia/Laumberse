@@ -81,6 +81,9 @@ export default function Employees({ employees }: EmployeesProps) {
                     setShowSaveConfirm(false);
                     setShowModal(false);
                 },
+                onError: () => {
+                    setShowSaveConfirm(false);
+                },
             });
         }
     };
@@ -283,7 +286,7 @@ export default function Employees({ employees }: EmployeesProps) {
                                         value={data.designation}
                                         onChange={e => setData('designation', e.target.value)}
                                         className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                    
+                                        
                                     />
                                     {errors.designation && <p className="text-xs text-red-500">{errors.designation}</p>}
                                 </div>

@@ -87,6 +87,9 @@ export default function ManageAssets({ manageAssets, categories }: ManageAssetsP
                     setShowSaveConfirm(false);
                     setShowModal(false);
                 },
+                onError: () => {
+                    setShowSaveConfirm(false);
+                },
             });
         }
     };

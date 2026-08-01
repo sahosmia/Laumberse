@@ -83,6 +83,9 @@ export default function Outlets({ outlets }: OutletsProps) {
                     setShowSaveConfirm(false);
                     setShowModal(false);
                 },
+                onError: () => {
+                    setShowSaveConfirm(false);
+                },
             });
         }
     };

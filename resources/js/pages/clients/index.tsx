@@ -107,6 +107,9 @@ const confirmSave = () => {
                 setShowSaveConfirm(false);
                 setShowModal(false);
             },
+            onError: () => {
+                setShowSaveConfirm(false);
+            },
         });
     }
 };
