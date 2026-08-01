@@ -42,9 +42,11 @@ export function SearchableSelect({
 
     const handleChange = (val: string | number) => {
         onChange(val);
-        if (inputRef.current) {
-            inputRef.current.blur();
-        }
+        setTimeout(() => {
+            if (inputRef.current) {
+                inputRef.current.blur();
+            }
+        }, 50);
     };
 
     return (
