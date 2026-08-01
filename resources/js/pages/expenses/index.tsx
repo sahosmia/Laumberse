@@ -376,27 +376,29 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                     </select>
                                     {errors.expense_category_id && <p className="text-xs text-red-500">{errors.expense_category_id}</p>}
                                 </div>
-                                <div className="space-y-1">
-                                    <label htmlFor="amount" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Amount</label>
-                                    <input
-                                        id="amount"
-                                        type="number"
-                                        value={data.amount}
-                                        onChange={e => {
-                                            let val = e.target.value;
-                                            if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
-                                                val = val.replace(/^0+/, '');
-                                            }
-                                            setData('amount', val === '' ? '' : parseFloat(val));
-                                        }}
-                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100 disabled:opacity-50 disabled:bg-neutral-50 dark:disabled:bg-neutral-800/50"
-                                        required
-                                        placeholder="0.00"
-                                        readOnly={isMaterial}
-                                        step="any"
-                                    />
-                                    {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
-                                </div>
+                                {!isPayroll && (
+                                    <div className="space-y-1">
+                                        <label htmlFor="amount" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Amount</label>
+                                        <input
+                                            id="amount"
+                                            type="number"
+                                            value={data.amount}
+                                            onChange={e => {
+                                                let val = e.target.value;
+                                                if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
+                                                    val = val.replace(/^0+/, '');
+                                                }
+                                                setData('amount', val === '' ? '' : parseFloat(val));
+                                            }}
+                                            className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100 disabled:opacity-50 disabled:bg-neutral-50 dark:disabled:bg-neutral-800/50"
+                                            required
+                                            placeholder="0.00"
+                                            readOnly={isMaterial}
+                                            step="any"
+                                        />
+                                        {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
+                                    </div>
+                                )}
                             </div>
 
                             {isMaterial && (

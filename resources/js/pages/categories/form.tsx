@@ -4,6 +4,8 @@ import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
+import { useState } from 'react';
 
 interface Category {
     id: number;
@@ -17,6 +19,8 @@ interface FormProps {
 }
 
 export default function Form({ category }: FormProps) {
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+
     const { data, setData, post, put, processing, errors } = useForm({
         name: category?.name || '',
         slug: category?.slug || '',
@@ -31,9 +35,17 @@ export default function Form({ category }: FormProps) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (category) {
-            put(route('categories.update', category.id));
+            setShowSaveConfirm(true);
         } else {
             post(route('categories.store'));
+        }
+    };
+
+    const confirmSave = () => {
+        if (category) {
+            put(route('categories.update', category.id), {
+                onSuccess: () => setShowSaveConfirm(false),
+            });
         }
     };
 
@@ -48,6 +60,14 @@ export default function Form({ category }: FormProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={category ? 'Edit Category' : 'Create Category'} />
+            <SaveConfirmationModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={confirmSave}
+                title="Save Category Changes"
+                description="Are you sure you want to save these changes to the category?"
+                isProcessing={processing}
+            />
             <div className="p-4 max-w-2xl mx-auto">
                 <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-6">
                     <h1 className="text-xl font-bold mb-6">{category ? 'Edit Category' : 'Create Category'}</h1>
