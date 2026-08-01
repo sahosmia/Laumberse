@@ -5,6 +5,8 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, Employee } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
+import { FormInput } from '@/components/ui/form-input';
+import { FormButton } from '@/components/ui/form-button';
 
 interface EmployeesProps {
     employees: Employee[];
@@ -121,12 +123,12 @@ export default function Employees({ employees }: EmployeesProps) {
                         <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Employees</h1>
                         <p className="text-sm text-neutral-500 dark:text-neutral-400">Manage shop staff</p>
                     </div>
-                    <button
+                    <FormButton
                         onClick={openCreateModal}
-                        className="flex items-center gap-2 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg"
+                        icon={<Plus className="w-4 h-4" />}
                     >
-                        <Plus className="w-4 h-4" /> Add Employee
-                    </button>
+                        Add Employee
+                    </FormButton>
                 </div>
 
                 <div className="relative">
@@ -136,7 +138,7 @@ export default function Employees({ employees }: EmployeesProps) {
                         placeholder="Search employees..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full sm:w-80 pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                        className="w-full sm:w-80 pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all min-h-12 md:min-h-10 text-neutral-900 dark:text-neutral-100"
                     />
                 </div>
 
@@ -175,10 +177,10 @@ export default function Employees({ employees }: EmployeesProps) {
                                         <td className="px-5 py-4 text-right font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(e.base_salary)}</td>
                                         <td className="px-5 py-4 text-center">
                                             <div className="flex items-center justify-center gap-2">
-                                                <button onClick={() => openEditModal(e)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600 transition-colors">
+                                                <button onClick={() => openEditModal(e)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600 transition-colors min-h-12 md:min-h-10 min-w-12 md:min-w-10 flex items-center justify-center">
                                                     <Edit3 className="w-4 h-4" />
                                                 </button>
-                                                <button onClick={() => handleDelete(e.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-red-600 transition-colors">
+                                                <button onClick={() => handleDelete(e.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-red-600 transition-colors min-h-12 md:min-h-10 min-w-12 md:min-w-10 flex items-center justify-center">
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
@@ -224,10 +226,10 @@ export default function Employees({ employees }: EmployeesProps) {
                                 </div>
                             </div>
                             <div className="border-t border-neutral-100 dark:border-neutral-800 pt-2.5 flex justify-end gap-2">
-                                <button onClick={() => openEditModal(e)} className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-blue-600 transition-colors">
+                                <button onClick={() => openEditModal(e)} className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-blue-600 transition-colors min-h-12 min-w-12">
                                     <Edit3 className="w-3.5 h-3.5" /> Edit
                                 </button>
-                                <button onClick={() => handleDelete(e.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-red-600 transition-colors">
+                                <button onClick={() => handleDelete(e.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-red-600 transition-colors min-h-12 min-w-12">
                                     <Trash2 className="w-3.5 h-3.5" /> Delete
                                 </button>
                             </div>
@@ -264,92 +266,75 @@ export default function Employees({ employees }: EmployeesProps) {
                     <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{editingEmployee ? 'Edit Employee' : 'New Employee'}</h3>
-                            <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"><X className="w-5 h-5 text-neutral-400" /></button>
+                            <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg min-h-12 min-w-12 flex items-center justify-center"><X className="w-5 h-5 text-neutral-400" /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-1">
-                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Name</label>
-                                <input
-                                    type="text"
-                                    value={data.name}
-                                    onChange={e => setData('name', e.target.value)}
-                                    className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                    required
-                                />
-                                {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
-                            </div>
+                            <FormInput
+                                label="Name"
+                                value={data.name}
+                                onChange={e => setData('name', e.target.value)}
+                                required
+                                error={errors.name}
+                            />
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Phone</label>
-                                    <input
-                                        type="text"
-                                        value={data.phone}
-                                        onChange={e => setData('phone', e.target.value)}
-                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                        required
-                                    />
-                                    {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Designation</label>
-                                    <input
-                                        type="text"
-                                        value={data.designation}
-                                        onChange={e => setData('designation', e.target.value)}
-                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                        required
-                                    />
-                                    {errors.designation && <p className="text-xs text-red-500">{errors.designation}</p>}
-                                </div>
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Email (Optional)</label>
-                                <input
-                                    type="email"
-                                    value={data.email}
-                                    onChange={e => setData('email', e.target.value)}
-                                    className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                />
-                                {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Base Salary</label>
-                                <input
-                                    type="number"
-                                    value={data.base_salary}
-                                    onChange={e => setData('base_salary', e.target.value)}
-                                    className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
+                                <FormInput
+                                    label="Phone"
+                                    value={data.phone}
+                                    onChange={e => setData('phone', e.target.value)}
                                     required
+                                    error={errors.phone}
                                 />
-                                {errors.base_salary && <p className="text-xs text-red-500">{errors.base_salary}</p>}
+                                <FormInput
+                                    label="Designation"
+                                    value={data.designation}
+                                    onChange={e => setData('designation', e.target.value)}
+                                    required
+                                    error={errors.designation}
+                                />
                             </div>
+                            <FormInput
+                                label="Email (Optional)"
+                                type="email"
+                                value={data.email}
+                                onChange={e => setData('email', e.target.value)}
+                                error={errors.email}
+                            />
+                            <FormInput
+                                label="Base Salary"
+                                type="number"
+                                value={data.base_salary}
+                                onChange={e => setData('base_salary', e.target.value)}
+                                required
+                                error={errors.base_salary}
+                            />
                             {editingEmployee && (
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 py-1">
                                     <input
                                         type="checkbox"
                                         id="is_active"
                                         checked={data.is_active}
                                         onChange={e => setData('is_active', e.target.checked)}
-                                        className="rounded border-neutral-300"
+                                        className="rounded border-neutral-300 min-h-12 min-w-12 md:min-h-5 md:min-w-5 cursor-pointer"
                                     />
-                                    <label htmlFor="is_active" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Active</label>
+                                    <label htmlFor="is_active" className="text-sm font-medium text-neutral-700 dark:text-neutral-300 cursor-pointer select-none">Active</label>
                                 </div>
                             )}
                             <div className="flex gap-2 pt-2">
-                                <button
+                                <FormButton
                                     type="submit"
-                                    disabled={processing}
-                                    className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+                                    loading={processing}
+                                    className="flex-1"
                                 >
                                     {editingEmployee ? 'Update Employee' : 'Save Employee'}
-                                </button>
-                                <button
+                                </FormButton>
+                                <FormButton
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    className="flex-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 py-2.5 rounded-xl text-sm font-semibold"
+                                    variant="secondary"
+                                    className="flex-1"
                                 >
                                     Cancel
-                                </button>
+                                </FormButton>
                             </div>
                         </form>
                     </div>

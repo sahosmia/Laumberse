@@ -27,7 +27,7 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
         onChange(items.filter((_, i) => i !== indexToRemove));
     };
 
-    const handleItemChange = (index: number, field: keyof MaterialItem, value: any) => {
+    const handleItemChange = (index: number, field: keyof MaterialItem, value: string | number) => {
         const newItems = [...items];
 
         if (field === 'material_id') {
@@ -40,7 +40,7 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
             newItems[index] = {
                 ...newItems[index],
                 [field]: value
-            };
+            } as MaterialItem;
         }
 
         onChange(newItems);

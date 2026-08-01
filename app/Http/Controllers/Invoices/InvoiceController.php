@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Invoices;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Invoices\StoreInvoiceRequest;
 use App\Http\Requests\Invoices\UpdateInvoiceRequest;
+use App\Http\Requests\Invoices\UpdateInvoiceStatusRequest;
 use App\Models\Invoice;
 use App\Models\Outlet;
 use App\Models\Product;
@@ -76,11 +77,9 @@ class InvoiceController extends Controller
         return redirect()->back()->with('success', 'Invoice deleted successfully.');
     }
 
-    public function updateStatus(\Illuminate\Http\Request $request, Invoice $invoice)
+    public function updateStatus(UpdateInvoiceStatusRequest $request, Invoice $invoice)
     {
-        $validated = $request->validate([
-            'status' => 'required|string|in:Pending,Delivered,Cancelled,Processing,In House',
-        ]);
+        $validated = $request->validated();
 
         $invoice->update(['status' => $validated['status']]);
 

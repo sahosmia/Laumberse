@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Employees;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\Payroll;
+use App\Http\Requests\Employees\StoreEmployeeRequest;
+use App\Http\Requests\Employees\UpdateEmployeeRequest;
+use App\Http\Requests\Employees\GetEligibleForPayrollRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -17,17 +20,9 @@ class EmployeeController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreEmployeeRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'designation' => 'required|string|max:255',
-            'base_salary' => 'required|numeric|min:0',
-        ]);
-
-        Employee::create($validated);
+        Employee::create($request->validated());
 
         return redirect()->back()->with('success', 'Employee added successfully');
     }
@@ -36,18 +31,9 @@ class EmployeeController extends Controller
         return $employee;
     }
 
-    public function update(Request $request, Employee $employee)
+    public function update(UpdateEmployeeRequest $request, Employee $employee)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'designation' => 'required|string|max:255',
-            'base_salary' => 'required|numeric|min:0',
-            'is_active' => 'required|boolean',
-        ]);
-
-        $employee->update($validated);
+        $employee->update($request->validated());
 
         return redirect()->back()->with('success', 'Employee updated successfully');
     }
@@ -58,15 +44,10 @@ class EmployeeController extends Controller
         return redirect()->back()->with('success', 'Employee deleted successfully');
     }
 
-    public function getEligibleForPayroll(Request $request)
+    public function getEligibleForPayroll(GetEligibleForPayrollRequest $request)
     {
-        $request->validate([
-            'month' => 'required|integer|between:1,12',
-            'year' => 'required|integer',
-        ]);
-
-        $month = $request->month;
-        $year = $request->year;
+        $month = $request->validated()['month'];
+        $year = $request->validated()['year'];
 
         $employees = Employee::where('is_active', true)
             ->whereDoesntHave('payrolls', function ($query) use ($month, $year) {
