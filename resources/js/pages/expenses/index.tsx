@@ -195,7 +195,8 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
             items: expense.materials?.map(m => ({
                 material_id: m.material_id,
                 quantity: m.quantity,
-                unit_price: m.unit_price
+                unit_price: m.unit_price,
+                isSaved: true
             })) || [],
         });
         setShowModal(true);
@@ -436,7 +437,7 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Date</label>
-                                    <div className="grid grid-cols-3 gap-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                         <div>
                                             <input
                                                 type="number"

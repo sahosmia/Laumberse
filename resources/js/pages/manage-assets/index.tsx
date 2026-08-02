@@ -246,7 +246,7 @@ export default function ManageAssets({ manageAssets, categories }: ManageAssetsP
                             <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"><X className="w-5 h-5 text-neutral-400" /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label htmlFor="name" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Asset Name</label>
                                     <input
@@ -290,7 +290,7 @@ export default function ManageAssets({ manageAssets, categories }: ManageAssetsP
                                 {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label htmlFor="purchase_date" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Purchase Date</label>
                                     <input

@@ -362,7 +362,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                     />
                                     {errors.new_client_name && <p className="text-[10px] text-red-500">{errors.new_client_name}</p>}
                                 </div>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div className="space-y-2">
                                         <Label htmlFor="new_client_phone" className="text-[10px] uppercase tracking-wider text-neutral-500">Phone</Label>
                                         <Input
@@ -554,7 +554,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                                 </button>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-4 pt-2">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Quantity</label>
                                                     <div className="flex items-center gap-3 bg-neutral-50 dark:bg-neutral-800/50 p-1.5 rounded-xl w-fit">

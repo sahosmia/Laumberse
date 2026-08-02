@@ -383,7 +383,7 @@ export default function Products({ products, categories, filter, units, outlets 
                                 />
                                 {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Category</label>
                                     <SearchableSelect
@@ -405,7 +405,7 @@ export default function Products({ products, categories, filter, units, outlets 
                                     />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Base Price (৳)</label>
                                     <input
@@ -422,7 +422,7 @@ export default function Products({ products, categories, filter, units, outlets 
                             </div>
                             <div className="space-y-3">
                                 <h4 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">Outlet-wise Prices (Optional)</h4>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {outlets.map((outlet, idx) => (
                                         <div key={outlet.id}>
                                             <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">{outlet.name} Price</label>
