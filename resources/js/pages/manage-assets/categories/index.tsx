@@ -32,7 +32,7 @@ export default function AssetCategories({ categories }: AssetCategoriesProps) {
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
     useEffect(() => {
-        if (showModal) {
+        if (showModal || showDeleteModal || showSaveConfirm) {
             document.body.style.overflow = 'hidden';
             document.documentElement.style.overflow = 'hidden';
         } else {
@@ -43,7 +43,7 @@ export default function AssetCategories({ categories }: AssetCategoriesProps) {
             document.body.style.overflow = '';
             document.documentElement.style.overflow = '';
         };
-    }, [showModal]);
+    }, [showModal, showDeleteModal, showSaveConfirm]);
 
     const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
         name: '',
@@ -142,7 +142,7 @@ export default function AssetCategories({ categories }: AssetCategoriesProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filtered.map((c) => (
                         <div key={c.id} className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 group relative overflow-hidden transition-all hover:shadow-xl">
-                            <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute top-4 right-4 flex gap-1">
                                 <button onClick={() => openEditModal(c)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600"><Edit3 className="w-3.5 h-3.5" /></button>
                                 <button onClick={() => handleDelete(c.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
                             </div>
