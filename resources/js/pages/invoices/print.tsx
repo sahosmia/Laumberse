@@ -120,14 +120,16 @@ export default function Print({ invoice }: PrintProps) {
                             <span className="text-neutral-500 font-medium">Subtotal</span>
                             <span className="font-bold">{formatCurrency(itemsSubtotal)}</span>
                         </div>
-                        {invoice.discount_amount && Number(invoice.discount_amount) > 0 ? (
-                            <div className="flex justify-between text-lg text-amber-600">
-                                <span className="font-medium">Discount ({invoice.discount_type})</span>
-                                <span className="font-bold">
-                                    {invoice.discount_type === 'Percentage' ? `${invoice.discount_amount}%` : formatCurrency(Number(invoice.discount_amount))}
-                                </span>
-                            </div>
-                        ) : null}
+                        {invoice.discount_amount && Number(invoice.discount_amount) > 0 ? (() => {
+                            const disc = Number(invoice.discount_amount) || 0;
+                            const calculatedDiscountAmount = invoice.discount_type === 'Percentage' ? (itemsSubtotal * disc) / 100 : disc;
+                            return (
+                                <div className="flex justify-between text-lg text-amber-600">
+                                    <span className="font-medium">Discount {invoice.discount_type === 'Percentage' ? `(${invoice.discount_amount}%)` : ''}</span>
+                                    <span className="font-bold">-{formatCurrency(calculatedDiscountAmount)}</span>
+                                </div>
+                            );
+                        })() : null}
                         {invoice.delivery_charge && Number(invoice.delivery_charge) > 0 ? (
                             <div className="flex justify-between text-lg text-blue-600">
                                 <span className="font-medium">Delivery Charge</span>

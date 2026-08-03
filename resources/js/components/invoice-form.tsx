@@ -729,22 +729,29 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
 
                     <div className="bg-neutral-900 dark:bg-neutral-100 rounded-2xl p-5 text-white dark:text-neutral-900">
                         <h3 className="text-sm font-semibold text-neutral-400 dark:text-neutral-600 mb-4">Invoice Summary</h3>
-                        <div className="space-y-2 text-sm">
-                            <div className="flex justify-between"><span>Subtotal</span><span>{formatCurrency(data.items.reduce((s, i) => s + i.price * i.qty, 0))}</span></div>
-                            <div className="flex justify-between text-amber-400">
-                                <span>Discount ({data.discount_type})</span>
-                                <span>{data.discount_type === 'Percentage' ? `${data.discount_amount}%` : formatCurrency(Number(data.discount_amount))}</span>
-                            </div>
-                            <div className="flex justify-between text-blue-400">
-                                <span>Delivery Charge</span>
-                                <span>{formatCurrency(Number(data.delivery_charge) || 0)}</span>
-                            </div>
-                            <div className="flex justify-between text-emerald-400"><span>Paid</span><span>{formatCurrency(Number(data.paid) || 0)}</span></div>
-                            <div className="flex justify-between text-red-400"><span>Due</span><span>{formatCurrency(data.due)}</span></div>
-                            <div className="border-t border-white/10 dark:border-neutral-200 pt-2 mt-2 flex justify-between text-lg font-bold">
-                                <span>Total</span><span className="text-blue-400 dark:text-blue-600">{formatCurrency(data.total)}</span>
-                            </div>
-                        </div>
+                        {(() => {
+                            const currentSubtotal = data.items.reduce((s, i) => s + i.price * i.qty, 0);
+                            const currentDisc = Number(data.discount_amount) || 0;
+                            const calculatedDiscountAmount = data.discount_type === 'Percentage' ? (currentSubtotal * currentDisc) / 100 : currentDisc;
+                            return (
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between"><span>Subtotal</span><span>{formatCurrency(currentSubtotal)}</span></div>
+                                    <div className="flex justify-between text-amber-400">
+                                        <span>Discount {data.discount_type === 'Percentage' && data.discount_amount ? `(${data.discount_amount}%)` : ''}</span>
+                                        <span>-{formatCurrency(calculatedDiscountAmount)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-blue-400">
+                                        <span>Delivery Charge</span>
+                                        <span>{formatCurrency(Number(data.delivery_charge) || 0)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-emerald-400"><span>Paid</span><span>{formatCurrency(Number(data.paid) || 0)}</span></div>
+                                    <div className="flex justify-between text-red-400"><span>Due</span><span>{formatCurrency(data.due)}</span></div>
+                                    <div className="border-t border-white/10 dark:border-neutral-200 pt-2 mt-2 flex justify-between text-lg font-bold">
+                                        <span>Total</span><span className="text-blue-400 dark:text-blue-600">{formatCurrency(data.total)}</span>
+                                    </div>
+                                </div>
+                            );
+                        })()}
                         <button
                             type="submit"
                             disabled={processing}

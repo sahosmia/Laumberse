@@ -226,14 +226,13 @@
                         <td style="color: #666;">Subtotal</td>
                         <td class="text-right">{{ number_format($subtotal, 2) }}</td>
                     </tr>
+                    @php
+                        $calculatedDiscount = $invoice->discount_type === 'Percentage' ? ($subtotal * $invoice->discount_amount) / 100 : $invoice->discount_amount;
+                    @endphp
                     <tr>
-                        <td style="color: #d97706;">Discount ({{ $invoice->discount_type }})</td>
+                        <td style="color: #d97706;">Discount @if($invoice->discount_type === 'Percentage') ({{ $invoice->discount_amount }}%) @endif</td>
                         <td class="text-right">
-                            @if ($invoice->discount_type === 'Percentage')
-                                {{ $invoice->discount_amount }}%
-                            @else
-                                {{ number_format($invoice->discount_amount, 2) }}
-                            @endif
+                            -{{ number_format($calculatedDiscount, 2) }}
                         </td>
                     </tr>
                 @endif

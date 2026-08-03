@@ -157,32 +157,39 @@ export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                     </div>
 
                     <div className="flex justify-end pt-8">
-                        <div className="w-64 space-y-3">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-neutral-500">Subtotal</span>
-                                <span className="font-medium">{formatCurrency(invoice.items.reduce((s, i) => s + Number(i.price) * i.qty, 0))}</span>
-                            </div>
-                            <div className="flex justify-between text-sm text-amber-600">
-                                <span>Discount ({invoice.discount_type})</span>
-                                <span>{invoice.discount_type === 'Percentage' ? `${invoice.discount_amount}%` : formatCurrency(Number(invoice.discount_amount))}</span>
-                            </div>
-                            <div className="flex justify-between text-sm text-blue-600 font-medium">
-                                <span>Delivery Charge</span>
-                                <span>{formatCurrency(Number(invoice.delivery_charge || 0))}</span>
-                            </div>
-                            <div className="flex justify-between text-sm text-emerald-600 font-medium">
-                                <span>Paid</span>
-                                <span>{formatCurrency(Number(invoice.paid))}</span>
-                            </div>
-                            <div className="flex justify-between text-sm text-red-500 font-medium border-b border-neutral-100 dark:border-neutral-800 pb-3">
-                                <span>Due</span>
-                                <span>{formatCurrency(Number(invoice.due))}</span>
-                            </div>
-                            <div className="flex justify-between text-xl font-bold pt-1 text-blue-600">
-                                <span>Total</span>
-                                <span>{formatCurrency(Number(invoice.total))}</span>
-                            </div>
-                        </div>
+                        {(() => {
+                            const subtotal = invoice.items.reduce((s, i) => s + Number(i.price) * i.qty, 0);
+                            const disc = Number(invoice.discount_amount) || 0;
+                            const calculatedDiscountAmount = invoice.discount_type === 'Percentage' ? (subtotal * disc) / 100 : disc;
+                            return (
+                                <div className="w-64 space-y-3">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-neutral-500">Subtotal</span>
+                                        <span className="font-medium">{formatCurrency(subtotal)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm text-amber-600">
+                                        <span>Discount {invoice.discount_type === 'Percentage' && invoice.discount_amount ? `(${invoice.discount_amount}%)` : ''}</span>
+                                        <span>-{formatCurrency(calculatedDiscountAmount)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm text-blue-600 font-medium">
+                                        <span>Delivery Charge</span>
+                                        <span>{formatCurrency(Number(invoice.delivery_charge || 0))}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm text-emerald-600 font-medium">
+                                        <span>Paid</span>
+                                        <span>{formatCurrency(Number(invoice.paid))}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm text-red-500 font-medium border-b border-neutral-100 dark:border-neutral-800 pb-3">
+                                        <span>Due</span>
+                                        <span>{formatCurrency(Number(invoice.due))}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xl font-bold pt-1 text-blue-600">
+                                        <span>Total</span>
+                                        <span>{formatCurrency(Number(invoice.total))}</span>
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </div>
 
                     {invoice.remarks && (
