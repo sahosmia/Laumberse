@@ -227,6 +227,12 @@
                         </td>
                     </tr>
                 @endif
+                @if ($invoice->delivery_charge != 0)
+                    <tr>
+                        <td style="color: #2563eb;">Delivery Charge</td>
+                        <td class="text-right">{{ number_format($invoice->delivery_charge, 2) }}</td>
+                    </tr>
+                @endif
                 <tr>
                     <td style="color: #059669;">Paid</td>
                     <td class="text-right">{{ number_format($invoice->paid, 2) }}</td>

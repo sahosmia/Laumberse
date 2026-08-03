@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { Printer, ArrowLeft, Download, CreditCard, Calendar, User, Package } from 'lucide-react';
+import { Printer, ArrowLeft, Download, CreditCard, Calendar, User, Package, Edit3 } from 'lucide-react';
 import { useEffect } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
@@ -27,6 +27,7 @@ interface Invoice {
     remarks: string | null;
     discount_type: string;
     discount_amount: number;
+    delivery_charge?: number | string | null;
     items: InvoiceItem[];
 }
 
@@ -64,6 +65,11 @@ export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                         </Link>
                     </Button>
                     <div className="flex gap-2">
+                        <Button variant="outline" asChild>
+                            <Link href={route('invoices.edit', invoice.id)}>
+                                <Edit3 className="w-4 h-4 mr-2" /> Edit
+                            </Link>
+                        </Button>
                         <Button variant="outline" onClick={handlePrint}>
                             <Printer className="w-4 h-4 mr-2" /> Print
                         </Button>
@@ -159,6 +165,10 @@ export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                             <div className="flex justify-between text-sm text-amber-600">
                                 <span>Discount ({invoice.discount_type})</span>
                                 <span>{invoice.discount_type === 'Percentage' ? `${invoice.discount_amount}%` : formatCurrency(Number(invoice.discount_amount))}</span>
+                            </div>
+                            <div className="flex justify-between text-sm text-blue-600 font-medium">
+                                <span>Delivery Charge</span>
+                                <span>{formatCurrency(Number(invoice.delivery_charge || 0))}</span>
                             </div>
                             <div className="flex justify-between text-sm text-emerald-600 font-medium">
                                 <span>Paid</span>

@@ -21,6 +21,9 @@ interface Invoice {
     status: string;
     method: string;
     remarks: string | null;
+    discount_type?: string;
+    discount_amount?: number;
+    delivery_charge?: number | string | null;
     items: InvoiceItem[];
 }
 
@@ -36,6 +39,8 @@ export default function Print({ invoice }: PrintProps) {
         // Optional: Close the window after printing if it was opened in a new tab
         // window.onafterprint = () => window.close();
     }, []);
+
+    const itemsSubtotal = invoice.items.reduce((s, i) => s + Number(i.price) * i.qty, 0);
 
     return (
         <div className="bg-white min-h-screen p-8 text-neutral-900 font-sans" style={{ fontFamily: "'Noto Sans Bengali', 'Instrument Sans', sans-serif" }}>
@@ -113,8 +118,22 @@ export default function Print({ invoice }: PrintProps) {
                     <div className="w-80 space-y-4">
                         <div className="flex justify-between text-lg">
                             <span className="text-neutral-500 font-medium">Subtotal</span>
-                            <span className="font-bold">{formatCurrency(Number(invoice.total))}</span>
+                            <span className="font-bold">{formatCurrency(itemsSubtotal)}</span>
                         </div>
+                        {invoice.discount_amount && Number(invoice.discount_amount) > 0 ? (
+                            <div className="flex justify-between text-lg text-amber-600">
+                                <span className="font-medium">Discount ({invoice.discount_type})</span>
+                                <span className="font-bold">
+                                    {invoice.discount_type === 'Percentage' ? `${invoice.discount_amount}%` : formatCurrency(Number(invoice.discount_amount))}
+                                </span>
+                            </div>
+                        ) : null}
+                        {invoice.delivery_charge && Number(invoice.delivery_charge) > 0 ? (
+                            <div className="flex justify-between text-lg text-blue-600">
+                                <span className="font-medium">Delivery Charge</span>
+                                <span className="font-bold">{formatCurrency(Number(invoice.delivery_charge))}</span>
+                            </div>
+                        ) : null}
                         <div className="flex justify-between text-lg text-emerald-600">
                             <span className="font-medium">Paid</span>
                             <span className="font-bold">{formatCurrency(Number(invoice.paid))}</span>

@@ -77,6 +77,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
         remarks: invoice?.remarks || '',
         discount_type: invoice?.discount_type || 'Fixed',
         discount_amount: invoice?.discount_amount || 0 as string | number,
+        delivery_charge: invoice?.delivery_charge !== undefined ? invoice.delivery_charge : '' as string | number,
         items: invoice?.items.map(item => ({
             productId: item.product_id,
             name: item.product?.name || 'Unknown Product',
@@ -94,7 +95,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
         });
     }, [searchTerm, selectedCategory, products]);
 
-    const calculateTotals = (items: InvoiceItem[], paid: number | string, discountType: string, discountAmount: number | string) => {
+    const calculateTotals = (items: InvoiceItem[], paid: number | string, discountType: string, discountAmount: number | string, deliveryCharge?: number | string) => {
         const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
         const disc = Number(discountAmount) || 0;
         let discountValue = 0;
@@ -103,9 +104,20 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
         } else {
             discountValue = disc;
         }
-        const total = Math.max(0, subtotal - discountValue);
+        const deliv = Number(deliveryCharge !== undefined ? deliveryCharge : data.delivery_charge) || 0;
+        const total = Math.max(0, subtotal - discountValue) + deliv;
         const due = total - (Number(paid) || 0);
         return { total, due };
+    };
+
+    const handleDeliveryChargeChange = (val: string) => {
+        const { total, due } = calculateTotals(data.items, data.paid, data.discount_type, data.discount_amount, val);
+        setData(d => ({
+            ...d,
+            delivery_charge: val,
+            total,
+            due
+        }));
     };
 
     const addItem = (product: Product) => {
@@ -672,6 +684,18 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                             />
                         </div>
 
+                        <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-1">
+                            <Label htmlFor="delivery_charge" className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold">Delivery Charge</Label>
+                            <Input
+                                id="delivery_charge"
+                                type="number"
+                                placeholder="Delivery Charge"
+                                value={data.delivery_charge}
+                                onChange={e => handleDeliveryChargeChange(e.target.value)}
+                                className="h-12 md:h-9 text-sm md:text-xs"
+                            />
+                        </div>
+
                         <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800">
                             <div className="flex gap-2 mb-3">
                                 {['Cash', 'Bkash', 'Bank'].map(m => (
@@ -702,6 +726,10 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                             <div className="flex justify-between text-amber-400">
                                 <span>Discount ({data.discount_type})</span>
                                 <span>{data.discount_type === 'Percentage' ? `${data.discount_amount}%` : formatCurrency(Number(data.discount_amount))}</span>
+                            </div>
+                            <div className="flex justify-between text-blue-400">
+                                <span>Delivery Charge</span>
+                                <span>{formatCurrency(Number(data.delivery_charge) || 0)}</span>
                             </div>
                             <div className="flex justify-between text-emerald-400"><span>Paid</span><span>{formatCurrency(Number(data.paid) || 0)}</span></div>
                             <div className="flex justify-between text-red-400"><span>Due</span><span>{formatCurrency(data.due)}</span></div>
