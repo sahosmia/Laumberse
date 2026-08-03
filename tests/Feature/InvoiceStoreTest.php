@@ -49,6 +49,53 @@ test('invoice can be stored with existing client', function () {
     $response->assertRedirect(route('history'));
 });
 
+test('invoice can be stored with a delivery charge and defaults to 0 if blank', function () {
+    $user = User::factory()->create();
+    $outlet = Outlet::create(['name' => 'Main Outlet']);
+    $category = Category::create(['name' => 'Test Category', 'slug' => 'test-category']);
+    $product = Product::create([
+        'name' => 'Test Product',
+        'category_id' => $category->id,
+        'price' => 100,
+    ]);
+    $client = Client::create([
+        'name' => 'Existing Client',
+        'phone' => '01700000000',
+        'address' => 'Test Address'
+    ]);
+
+    $data = [
+        'invoice_uuid' => 'INV-DELIVERY-' . time(),
+        'outlet_id' => $outlet->id,
+        'date' => now()->format('Y-m-d'),
+        'client_id' => $client->id,
+        'create_new_client' => false,
+        'total' => 150,
+        'paid' => 150,
+        'due' => 0,
+        'status' => 'Processing',
+        'method' => 'Cash',
+        'discount_type' => 'Fixed',
+        'discount_amount' => 0,
+        'delivery_charge' => 50,
+        'items' => [
+            [
+                'productId' => $product->id,
+                'qty' => 1,
+                'price' => 100
+            ]
+        ]
+    ];
+
+    $response = $this->actingAs($user)->post(route('invoices.store'), $data);
+
+    $response->assertSessionHasNoErrors();
+    $response->assertRedirect(route('history'));
+
+    $invoice = \App\Models\Invoice::where('invoice_uuid', $data['invoice_uuid'])->first();
+    expect($invoice->delivery_charge)->toEqual(50.00);
+});
+
 test('invoice cannot be stored with empty client id when create_new_client is false', function () {
     $user = User::factory()->create();
     $outlet = Outlet::create(['name' => 'Main Outlet']);

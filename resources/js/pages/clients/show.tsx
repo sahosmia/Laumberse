@@ -1,7 +1,9 @@
-import { Head, Link } from '@inertiajs/react';
-import { User, Phone, MapPin, Briefcase, CreditCard, ShoppingBag, ArrowLeft, History, Settings, Tag } from "lucide-react";
+import { Head, Link, useForm } from '@inertiajs/react';
+import { useState } from 'react';
+import { User, Phone, MapPin, Briefcase, CreditCard, ShoppingBag, ArrowLeft, History, Settings, Tag, Edit3, Trash2 } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, Client, Invoice, InvoiceItem } from '@/types';
+import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 
 interface CustomPrice {
     id: number;
@@ -23,6 +25,23 @@ interface ClientShowProps {
 const formatCurrency = (n: number) => `৳${n.toLocaleString("en-BD")}`;
 
 export default function ClientShow({ client }: ClientShowProps) {
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [invoiceToDelete, setInvoiceToDelete] = useState<number | string | null>(null);
+    const { delete: destroy, processing } = useForm();
+
+    const handleDeleteClick = (id: number | string) => {
+        setInvoiceToDelete(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = () => {
+        if (invoiceToDelete) {
+            destroy(route('invoices.destroy', invoiceToDelete), {
+                onSuccess: () => setShowDeleteModal(false),
+            });
+        }
+    };
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Clients', href: '/clients' },
         { title: client.name, href: `/clients/${client.id}` },
@@ -136,6 +155,7 @@ export default function ClientShow({ client }: ClientShowProps) {
                                             <th className="text-right px-6 py-3">Paid</th>
                                             <th className="text-right px-6 py-3">Due</th>
                                             <th className="text-center px-6 py-3">Status</th>
+                                            <th className="text-center px-6 py-3">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -163,6 +183,16 @@ export default function ClientShow({ client }: ClientShowProps) {
                                                         {inv.status}
                                                     </span>
                                                 </td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <Link href={route('invoices.edit', inv.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600 transition-colors">
+                                                            <Edit3 className="w-4 h-4" />
+                                                        </Link>
+                                                        <button onClick={() => handleDeleteClick(inv.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-red-600 transition-colors">
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
                                             </tr>
                                         ))}
                                         {(!client.invoices || client.invoices.length === 0) && (
@@ -177,6 +207,14 @@ export default function ClientShow({ client }: ClientShowProps) {
                     </div>
                 </div>
             </div>
+            <DeleteConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+                title="Delete Invoice"
+                description="Are you sure you want to delete this invoice? This action cannot be undone."
+                isProcessing={processing}
+            />
         </AppLayout>
     );
 }

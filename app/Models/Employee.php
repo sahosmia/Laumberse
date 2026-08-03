@@ -13,6 +13,7 @@ class Employee extends Model
         'name',
         'phone',
         'email',
+        'designation',
         'base_salary',
         'is_active',
     ];

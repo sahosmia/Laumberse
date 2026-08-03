@@ -151,7 +151,7 @@
                     <div style="font-family: monospace;">{{ $invoice->invoice_uuid }}</div>
                 </td>
                 <td class="company-info">
-                    <div style="font-size: 20px; font-weight: bold;">Laurnverse CRM</div>
+                    <div style="font-size: 20px; font-weight: bold;">Launverse CRM</div>
                     <div>Dhaka, Bangladesh</div>
                     <div>Phone: +880 1234 567890</div>
                 </td>
@@ -225,6 +225,12 @@
                                 {{ number_format($invoice->discount_amount, 2) }}
                             @endif
                         </td>
+                    </tr>
+                @endif
+                @if ($invoice->delivery_charge != 0)
+                    <tr>
+                        <td style="color: #2563eb;">Delivery Charge</td>
+                        <td class="text-right">{{ number_format($invoice->delivery_charge, 2) }}</td>
                     </tr>
                 @endif
                 <tr>

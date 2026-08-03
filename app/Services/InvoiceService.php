@@ -37,6 +37,8 @@ class InvoiceService
                 }
             }
 
+            $deliveryCharge = !empty($data['delivery_charge']) ? (float)$data['delivery_charge'] : 0.00;
+
             $invoice = Invoice::create([
                 'invoice_uuid' => $data['invoice_uuid'],
                 'outlet_id' => $data['outlet_id'],
@@ -50,6 +52,7 @@ class InvoiceService
                 'remarks' => $data['remarks'] ?? null,
                 'discount_type' => $data['discount_type'],
                 'discount_amount' => $data['discount_amount'],
+                'delivery_charge' => $deliveryCharge,
             ]);
 
             foreach ($data['items'] as $item) {
@@ -82,6 +85,8 @@ class InvoiceService
                 $oldClient->decrement('total_due', $invoice->due);
             }
 
+            $deliveryCharge = !empty($data['delivery_charge']) ? (float)$data['delivery_charge'] : 0.00;
+
             // Update Invoice
             $invoice->update([
                 'invoice_uuid' => $data['invoice_uuid'],
@@ -96,6 +101,7 @@ class InvoiceService
                 'remarks' => $data['remarks'] ?? null,
                 'discount_type' => $data['discount_type'],
                 'discount_amount' => $data['discount_amount'],
+                'delivery_charge' => $deliveryCharge,
             ]);
 
             // Delete old items
