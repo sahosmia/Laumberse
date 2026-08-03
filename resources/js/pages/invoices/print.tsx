@@ -38,7 +38,7 @@ export default function Print({ invoice }: PrintProps) {
     }, []);
 
     return (
-        <div className="bg-white min-h-screen p-8 text-neutral-900 font-sans">
+        <div className="bg-white min-h-screen p-8 text-neutral-900 font-sans" style={{ fontFamily: "'Noto Sans Bengali', 'Instrument Sans', sans-serif" }}>
             <Head title={`Print Invoice ${invoice.id}`} />
 
             <div className="max-w-4xl mx-auto space-y-8">
@@ -48,7 +48,7 @@ export default function Print({ invoice }: PrintProps) {
                         <p className="text-neutral-500 font-mono mt-1 text-lg">{invoice.id}</p>
                     </div>
                     <div className="text-right">
-                        <h2 className="text-2xl font-bold">Laurnverse</h2>
+                        <h2 className="text-2xl font-bold">Launverse</h2>
                         <p className="text-sm text-neutral-500 italic">Dhaka, Bangladesh</p>
                         <p className="text-sm text-neutral-500 font-medium">Phone: +880 1234 567890</p>
                     </div>

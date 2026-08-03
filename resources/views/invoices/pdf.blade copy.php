@@ -151,7 +151,7 @@
                     <div style="font-family: monospace;">{{ $invoice->invoice_uuid }}</div>
                 </td>
                 <td class="company-info">
-                    <div style="font-size: 20px; font-weight: bold;">Laurnverse CRM</div>
+                    <div style="font-size: 20px; font-weight: bold;">Launverse CRM</div>
                     <div>Dhaka, Bangladesh</div>
                     <div>Phone: +880 1234 567890</div>
                 </td>

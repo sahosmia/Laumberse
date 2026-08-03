@@ -157,7 +157,7 @@ export default function Products({ products, categories, filter, units, outlets 
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Products - Laurnverse" />
+            <Head title="Products - Launverse" />
             <div className="p-4 space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
