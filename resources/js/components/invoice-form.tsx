@@ -76,7 +76,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
         method: invoice?.method || 'Cash',
         remarks: invoice?.remarks || '',
         discount_type: invoice?.discount_type || 'Fixed',
-        discount_amount: invoice?.discount_amount || 0 as string | number,
+        discount_amount: invoice?.discount_amount !== undefined ? invoice.discount_amount : '' as string | number,
         delivery_charge: invoice?.delivery_charge !== undefined ? invoice.delivery_charge : '' as string | number,
         items: invoice?.items.map(item => ({
             productId: item.product_id,
@@ -154,12 +154,13 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
         }
 
 
-        const { total, due } = calculateTotals(newItems, data.paid, data.discount_type, data.discount_amount);
+        const { total } = calculateTotals(newItems, data.paid, data.discount_type, data.discount_amount);
         setData(d => ({
             ...d,
             items: newItems,
             total,
-            due
+            paid: total,
+            due: 0
         }));
 
         setSearchTerm("");
@@ -171,12 +172,13 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
         let newItems = [...data.items];
         newItems[idx].qty = newQty;
 
-        const { total, due } = calculateTotals(newItems, data.paid, data.discount_type, data.discount_amount);
+        const { total } = calculateTotals(newItems, data.paid, data.discount_type, data.discount_amount);
         setData(d => ({
             ...d,
             items: newItems,
             total,
-            due
+            paid: total,
+            due: 0
         }));
     };
 
@@ -184,23 +186,25 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
         let newItems = [...data.items];
         newItems[idx].price = newPrice;
 
-        const { total, due } = calculateTotals(newItems, data.paid, data.discount_type, data.discount_amount);
+        const { total } = calculateTotals(newItems, data.paid, data.discount_type, data.discount_amount);
         setData(d => ({
             ...d,
             items: newItems,
             total,
-            due
+            paid: total,
+            due: 0
         }));
     };
 
     const removeItem = (idx: number) => {
         const newItems = data.items.filter((_, i) => i !== idx);
-        const { total, due } = calculateTotals(newItems, data.paid, data.discount_type, data.discount_amount);
+        const { total } = calculateTotals(newItems, data.paid, data.discount_type, data.discount_amount);
         setData(d => ({
             ...d,
             items: newItems,
             total,
-            due
+            paid: total,
+            due: 0
         }));
     };
 
@@ -214,22 +218,24 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
     };
 
     const handleDiscountTypeChange = (type: string) => {
-        const { total, due } = calculateTotals(data.items, data.paid, type, data.discount_amount);
+        const { total } = calculateTotals(data.items, data.paid, type, data.discount_amount);
         setData(d => ({
             ...d,
             discount_type: type,
             total,
-            due
+            paid: total,
+            due: 0
         }));
     };
 
     const handleDiscountAmountChange = (val: string) => {
-        const { total, due } = calculateTotals(data.items, data.paid, data.discount_type, val);
+        const { total } = calculateTotals(data.items, data.paid, data.discount_type, val);
         setData(d => ({
             ...d,
             discount_amount: val,
             total,
-            due
+            paid: total,
+            due: 0
         }));
     };
 
@@ -331,26 +337,28 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                                 };
                                             }).filter(Boolean) as InvoiceItem[];
 
-                                            const { total, due } = calculateTotals(corporateItems, data.paid, data.discount_type, data.discount_amount);
+                                            const { total } = calculateTotals(corporateItems, data.paid, data.discount_type, data.discount_amount);
                                             setData(d => ({
                                                 ...d,
                                                 client_id: val,
                                                 items: corporateItems,
                                                 total,
-                                                due,
+                                                paid: total,
+                                                due: 0,
                                                 outlet_id: null // Corporate clients don't use outlets
                                             }));
                                         } else {
                                             // For regular clients, clear items if it was previously corporate populated or keep it
                                             // The user specifically asked: "if i select any corporate client that time show his all selected product or items but after select any corporate client if i select any consumer client so selected box so old corporate client products list"
                                             // This suggests we should clear the list when switching to a consumer client.
-                                            const { total, due } = calculateTotals([], data.paid, data.discount_type, data.discount_amount);
+                                            const { total } = calculateTotals([], data.paid, data.discount_type, data.discount_amount);
                                             setData(d => ({
                                                 ...d,
                                                 client_id: val,
                                                 items: [],
                                                 total,
-                                                due
+                                                paid: total,
+                                                due: 0
                                             }));
                                         }
                                     }}
