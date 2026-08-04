@@ -111,12 +111,13 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
     };
 
     const handleDeliveryChargeChange = (val: string) => {
-        const { total, due } = calculateTotals(data.items, data.paid, data.discount_type, data.discount_amount, val);
+        const { total } = calculateTotals(data.items, 0, data.discount_type, data.discount_amount, val);
         setData(d => ({
             ...d,
             delivery_charge: val,
             total,
-            due
+            paid: total,
+            due: 0
         }));
     };
 
