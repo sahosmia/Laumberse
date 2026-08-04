@@ -731,10 +731,17 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                         <h3 className="text-sm font-semibold text-neutral-400 dark:text-neutral-600 mb-4">Invoice Summary</h3>
                         <div className="space-y-2 text-sm">
                             <div className="flex justify-between"><span>Subtotal</span><span>{formatCurrency(data.items.reduce((s, i) => s + i.price * i.qty, 0))}</span></div>
-                            <div className="flex justify-between text-amber-400">
-                                <span>Discount ({data.discount_type})</span>
-                                <span>{data.discount_type === 'Percentage' ? `${data.discount_amount}%` : formatCurrency(Number(data.discount_amount))}</span>
-                            </div>
+                            {(() => {
+                                const subtotal = data.items.reduce((s, i) => s + i.price * i.qty, 0);
+                                const disc = Number(data.discount_amount) || 0;
+                                const discountValue = data.discount_type === 'Percentage' ? (subtotal * disc) / 100 : disc;
+                                return (
+                                    <div className="flex justify-between text-amber-400">
+                                        <span>Discount ({data.discount_type === 'Percentage' ? `Percentage ${data.discount_amount}%` : data.discount_type})</span>
+                                        <span>-{formatCurrency(discountValue)}</span>
+                                    </div>
+                                );
+                            })()}
                             <div className="flex justify-between text-blue-400">
                                 <span>Delivery Charge</span>
                                 <span>{formatCurrency(Number(data.delivery_charge) || 0)}</span>

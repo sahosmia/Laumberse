@@ -1,3 +1,29 @@
+@php
+    if (!function_exists('renderBanglaInPdf')) {
+        function renderBanglaInPdf($text) {
+            if (empty($text)) return '';
+
+            // Split into Bengali character sequences and non-Bengali sequences
+            $parts = preg_split('/([\x{0980}-\x{09FF}]+)/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+
+            static $translator = null;
+            if ($translator === null) {
+                $translator = new \MirazMac\BanglaString\Translator\AvroToBijoy\Translator();
+            }
+
+            $output = '';
+            foreach ($parts as $part) {
+                if (preg_match('/[\x{0980}-\x{09FF}]/u', $part)) {
+                    $bijoy = $translator->translate($part);
+                    $output .= '<span style="font-family: \'SutonnyMJ\'; font-size: 16px;">' . htmlspecialchars($bijoy, ENT_QUOTES, 'UTF-8') . '</span>';
+                } else {
+                    $output .= htmlspecialchars($part, ENT_QUOTES, 'UTF-8');
+                }
+            }
+            return $output;
+        }
+    }
+@endphp
 <!DOCTYPE html>
 <html>
 
@@ -8,12 +34,19 @@
     <style>
         /* ১. বাংলা ফন্টটি পিডিএফে রেজিস্টার করা */
         @font-face {
-    font-family: 'SolaimanLipi';
-    /* নিশ্চিত করুন public/assets/fonts/ ফোল্ডারে ঠিক এই বানানে ফাইলটি আছে */
-    src: url('{{ public_path("assets/fonts/SolaimanLipi-Normal.ttf") }}') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
+            font-family: 'SolaimanLipi';
+            /* নিশ্চিত করুন public/assets/fonts/ ফোল্ডারে ঠিক এই বানানে ফাইলটি আছে */
+            src: url('{{ public_path("assets/fonts/SolaimanLipi-Normal.ttf") }}') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'SutonnyMJ';
+            src: url('{{ public_path("assets/fonts/SutonnyMJ.ttf") }}') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
 
         body {
             /* ২. ডিফল্ট ফন্ট হিসেবে বাংলা ফন্ট সেট করা এবং ফলব্যাক হিসেবে Helvetica রাখা */
@@ -173,9 +206,9 @@
             <tr>
                 <td>
                     <div class="section-title">Billed To</div>
-                    <div style="font-size: 16px; font-weight: bold;">{{ $invoice->client->name }}</div>
-                    <div>{{ $invoice->client->phone }}</div>
-                    <div>{{ $invoice->client->address ?? 'N/A' }}</div>
+                    <div style="font-size: 16px; font-weight: bold;">{!! renderBanglaInPdf($invoice->client->name) !!}</div>
+                    <div>{!! renderBanglaInPdf($invoice->client->phone) !!}</div>
+                    <div>{!! renderBanglaInPdf($invoice->client->address ?? 'N/A') !!}</div>
                 </td>
                 <td class="text-right">
                     <div class="section-title">Invoice Details</div>
@@ -207,9 +240,9 @@
                             @if ($item->product->image)
                                 <img src="{{ public_path('storage/' . $item->product->image) }}" class="product-image" align="left">
                             @else
-                                <div class="product-placeholder" style="float: left;">{{ substr($item->product->name, 0, 1) }}</div>
+                                <div class="product-placeholder" style="float: left;">{!! renderBanglaInPdf(mb_substr($item->product->name, 0, 1, 'UTF-8')) !!}</div>
                             @endif
-                            <div style="padding-top: 10px;">{{ $item->product->name }}</div>
+                            <div style="padding-top: 10px;">{!! renderBanglaInPdf($item->product->name) !!}</div>
                         </td>
                         <td class="text-center">{{ $item->qty }}</td>
                         <td class="text-right">{{ number_format($item->price, 2) }}</td>
@@ -222,19 +255,27 @@
         <div class="summary-wrapper">
             <table class="summary-table">
                 @if ($invoice->discount_amount != 0)
+                    @php
+                        $discountValue = 0;
+                        if ($invoice->discount_type === 'Percentage') {
+                            $discountValue = ($subtotal * $invoice->discount_amount) / 100;
+                        } else {
+                            $discountValue = $invoice->discount_amount;
+                        }
+                    @endphp
                     <tr>
                         <td style="color: #666;">Subtotal</td>
                         <td class="text-right">{{ number_format($subtotal, 2) }}</td>
                     </tr>
                     <tr>
-                        <td style="color: #d97706;">Discount ({{ $invoice->discount_type }})</td>
-                        <td class="text-right">
+                        <td style="color: #d97706;">
                             @if ($invoice->discount_type === 'Percentage')
-                                {{ $invoice->discount_amount }}%
+                                Discount (Percentage {{ $invoice->discount_amount }}%)
                             @else
-                                {{ number_format($invoice->discount_amount, 2) }}
+                                Discount ({{ $invoice->discount_type }})
                             @endif
                         </td>
+                        <td class="text-right">-{{ number_format($discountValue, 2) }}</td>
                     </tr>
                 @endif
                 @if ($invoice->delivery_charge != 0)
@@ -261,7 +302,7 @@
         @if ($invoice->remarks)
             <div class="remarks">
                 <div class="section-title">Remarks</div>
-                {{ $invoice->remarks }}
+                {!! renderBanglaInPdf($invoice->remarks) !!}
             </div>
         @endif
 

@@ -162,10 +162,17 @@ export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                                 <span className="text-neutral-500">Subtotal</span>
                                 <span className="font-medium">{formatCurrency(invoice.items.reduce((s, i) => s + Number(i.price) * i.qty, 0))}</span>
                             </div>
-                            <div className="flex justify-between text-sm text-amber-600">
-                                <span>Discount ({invoice.discount_type})</span>
-                                <span>{invoice.discount_type === 'Percentage' ? `${invoice.discount_amount}%` : formatCurrency(Number(invoice.discount_amount))}</span>
-                            </div>
+                            {(() => {
+                                const subtotal = invoice.items.reduce((s, i) => s + Number(i.price) * i.qty, 0);
+                                const disc = Number(invoice.discount_amount) || 0;
+                                const discountValue = invoice.discount_type === 'Percentage' ? (subtotal * disc) / 100 : disc;
+                                return (
+                                    <div className="flex justify-between text-sm text-amber-600">
+                                        <span>Discount ({invoice.discount_type === 'Percentage' ? `Percentage ${invoice.discount_amount}%` : invoice.discount_type})</span>
+                                        <span>-{formatCurrency(discountValue)}</span>
+                                    </div>
+                                );
+                            })()}
                             <div className="flex justify-between text-sm text-blue-600 font-medium">
                                 <span>Delivery Charge</span>
                                 <span>{formatCurrency(Number(invoice.delivery_charge || 0))}</span>
