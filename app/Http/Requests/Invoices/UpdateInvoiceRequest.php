@@ -19,16 +19,6 @@ class UpdateInvoiceRequest extends FormRequest
     {
         return [
             'invoice_uuid' => 'required|string|unique:invoices,invoice_uuid,' . $this->route('invoice')->id,
-              'outlet_id' => [
-                'nullable',
-                'exists:outlets,id',
-                function ($attribute, $value, $fail) {
-                    $client = \App\Models\Client::find($this->input('client_id'));
-                    if ($client?->type !== 'Corporate' && empty($value)) {
-                        $fail('The outlet field is required for consumer clients.');
-                    }
-                },
-            ],
             'date' => 'required|date',
             'client_id' => 'required|exists:clients,id',
             'total' => 'required|numeric|min:0',

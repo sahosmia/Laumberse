@@ -284,10 +284,11 @@ const confirmSave = () => {
                             value={data.type}
                             disabled={processing}
                             onChange={e => setData('type', e.target.value as any)}
-                            className="w-full mt-1 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-white dark:bg-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60 transition-all"
+                            className="w-full mt-1 border border-neutral-200 dark:bg-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-white dark:bg-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60 transition-all"
                         >
                             <option value="Consumer" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">Consumer</option>
                             <option value="Corporate" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">Corporate</option>
+                            <option value="B2B" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">B2B</option>
                         </select>
                         {errors.type && <p className="text-xs text-red-500 mt-1 font-medium">{errors.type}</p>}
                     </div>

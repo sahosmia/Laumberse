@@ -15,17 +15,11 @@ class Expense extends Model
         'payment_method',
         'date',
         'description',
-        'outlet_id',
     ];
 
     public function category()
     {
         return $this->belongsTo(ExpenseCategory::class, 'expense_category_id');
-    }
-
-    public function outlet()
-    {
-        return $this->belongsTo(Outlet::class);
     }
 
     public function payroll()

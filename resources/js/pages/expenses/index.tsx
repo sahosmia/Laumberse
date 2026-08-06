@@ -2,7 +2,7 @@ import { Head, useForm, Link, usePage } from '@inertiajs/react';
 import { useState, useEffect } from "react";
 import { Search, Plus, Trash2, Edit3, X, Tag } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, Expense, ExpenseCategory, Outlet, SharedData, Material } from '@/types';
+import { type BreadcrumbItem, Expense, ExpenseCategory, SharedData, Material } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { SearchableSelect } from '@/components/ui/searchable-select';
@@ -13,7 +13,6 @@ import { PayrollForm } from './com/PayrollForm';
 interface ExpensesProps {
     expenses: Expense[];
     categories: ExpenseCategory[];
-    outlets: Outlet[];
     materials: Material[];
 }
 
@@ -37,7 +36,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const formatCurrency = (n: number | string) => `৳${Number(n).toLocaleString("en-BD")}`;
 
-export default function Expenses({ expenses, categories, outlets, materials }: ExpensesProps) {
+export default function Expenses({ expenses, categories, materials }: ExpensesProps) {
 
     const [search, setSearch] = useState("");
     const [showModal, setShowModal] = useState(false);
@@ -80,7 +79,6 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
         payment_method: 'Cash',
         date: new Date().toISOString().split('T')[0],
         description: '',
-        outlet_id: '' as string | number,
         // Payroll fields
         employee_id: '' as string | number,
         month: new Date().getMonth() + 1,
@@ -97,12 +95,6 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
 
     const isPayroll = Number(data.expense_category_id) === Number(salaryCategoryId);
     const isMaterial = Number(data.expense_category_id) === Number(materialExpenseCategoryId);
-
-    useEffect(() => {
-        if (isMaterial || isPayroll) {
-            setData('outlet_id', '');
-        }
-    }, [isMaterial, isPayroll]);
 
     useEffect(() => {
         if (isPayroll && data.month && data.year) {
@@ -185,7 +177,6 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
             payment_method: expense.payment_method,
             date: expense.date,
             description: expense.description || '',
-            outlet_id: expense.outlet_id || '',
             employee_id: expense.payroll?.employee_id || '',
             month: expense.payroll?.month || new Date().getMonth() + 1,
             year: expense.payroll?.year || new Date().getFullYear(),
@@ -293,7 +284,6 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                     <th className="text-left px-5 py-3 font-semibold">Category</th>
                                     <th className="text-left px-5 py-3 font-semibold">Description</th>
                                     <th className="text-left px-5 py-3 font-semibold">Method</th>
-                                    <th className="text-left px-5 py-3 font-semibold">Outlet</th>
                                     <th className="text-right px-5 py-3 font-semibold">Amount</th>
                                     <th className="text-center px-5 py-3 font-semibold">Actions</th>
                                 </tr>
@@ -309,7 +299,6 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                         </td>
                                         <td className="px-5 py-4 text-neutral-900 dark:text-neutral-100">{e.description || '-'}</td>
                                         <td className="px-5 py-4 text-neutral-600 dark:text-neutral-400">{e.payment_method}</td>
-                                        <td className="px-5 py-4 text-neutral-600 dark:text-neutral-400">{e.outlet?.name || 'Main Shop'}</td>
                                         <td className="px-5 py-4 text-right font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(Number(e.amount))}</td>
                                         <td className="px-5 py-4 text-center">
                                             <div className="flex items-center justify-center gap-2">
@@ -328,7 +317,7 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                 ))}
                                 {filtered.length === 0 && (
                                     <tr>
-                                        <td colSpan={7} className="px-5 py-10 text-center text-neutral-400 italic">No expenses found</td>
+                                        <td colSpan={6} className="px-5 py-10 text-center text-neutral-400 italic">No expenses found</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -505,21 +494,6 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                     </select>
                                 </div>
                             </div>
-                            {(!isMaterial && !isPayroll) && (
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Outlet (Optional)</label>
-                                    <select
-                                        value={data.outlet_id}
-                                        onChange={e => setData('outlet_id', e.target.value)}
-                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-transparent dark:text-neutral-100"
-                                    >
-                                        <option value="">Main Shop</option>
-                                        {outlets.map(o => (
-                                            <option key={o.id} value={o.id}>{o.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
                             <div className="space-y-1">
                                 <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Description</label>
                                 <textarea

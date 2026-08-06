@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
             $table->string('invoice_uuid')->unique();
-            $table->foreignId('outlet_id')->nullable()->constrained()->onDelete('cascade');
             $table->date('date');
             $table->foreignId('client_id')->constrained()->onDelete('cascade');
              $table->string('discount_type')->default('Fixed'); // Fixed, Percentage

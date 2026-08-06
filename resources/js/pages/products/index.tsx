@@ -2,7 +2,7 @@ import { Head, useForm, router } from '@inertiajs/react';
 import { useState, useEffect } from "react";
 import { Search, Plus, Trash2, Edit3, X } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, Category, Unit, Outlet, Product } from '@/types';
+import { type BreadcrumbItem, Category, Unit, Product } from '@/types';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
@@ -11,7 +11,6 @@ interface ProductsProps {
     products: Product[];
     categories: Category[];
     units: Unit[];
-    outlets: Outlet[];
     filter?: string;
 }
 
@@ -24,7 +23,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const formatCurrency = (n: number) => `৳${n.toLocaleString("en-BD")}`;
 
-export default function Products({ products, categories, filter, units, outlets }: ProductsProps) {
+export default function Products({ products, categories, filter, units }: ProductsProps) {
     const [search, setSearch] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -55,7 +54,6 @@ export default function Products({ products, categories, filter, units, outlets 
                 image: null as File | null,
 
         price: '',
-        outlet_prices: [] as { outlet_id: number; price: string }[],
     });
 
     const filtered = products.filter((p) =>
@@ -65,7 +63,6 @@ export default function Products({ products, categories, filter, units, outlets 
     const openCreateModal = () => {
         setEditingProduct(null);
         reset();
-        setData('outlet_prices', outlets.map(o => ({ outlet_id: o.id, price: '' })));
         setShowModal(true);
     };
 
@@ -77,10 +74,6 @@ export default function Products({ products, categories, filter, units, outlets 
             unit_id: product.unit_id || null,
             image: null,
             price: product.price.toString(),
-            outlet_prices: outlets.map(o => {
-                const existing = product.outlet_prices?.find(op => op.outlet_id === o.id);
-                return { outlet_id: o.id, price: existing ? existing.price.toString() : '' };
-            }),
         });
         setShowModal(true);
     };
@@ -420,33 +413,6 @@ export default function Products({ products, categories, filter, units, outlets 
                                 </div>
 
                             </div>
-                            <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">Outlet-wise Prices (Optional)</h4>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {outlets.map((outlet, idx) => (
-                                        <div key={outlet.id}>
-                                            <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">{outlet.name} Price</label>
-                                            <input
-                                                type="number"
-                                                value={data.outlet_prices.find(op => op.outlet_id === outlet.id)?.price || ''}
-                                                onChange={e => {
-                                                    const newOutletPrices = [...data.outlet_prices];
-                                                    const opIdx = newOutletPrices.findIndex(op => op.outlet_id === outlet.id);
-                                                    if (opIdx > -1) {
-                                                        newOutletPrices[opIdx].price = e.target.value;
-                                                    } else {
-                                                        newOutletPrices.push({ outlet_id: outlet.id, price: e.target.value });
-                                                    }
-                                                    setData('outlet_prices', newOutletPrices);
-                                                }}
-                                                className="w-full mt-1 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                                placeholder="Same as base"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
                             <div className="flex gap-2 pt-2">
                                 <button
                                     type="submit"

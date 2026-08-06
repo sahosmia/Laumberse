@@ -26,7 +26,6 @@ class StoreExpenseRequest extends FormRequest
             'payment_method' => 'required|string|max:255',
             'date' => 'required|date',
             'description' => 'nullable|string|max:500',
-            'outlet_id' => 'nullable|exists:outlets,id',
 
             // Material specific fields
             'items' => $isMaterial ? 'required|array|min:1' : 'nullable|array',

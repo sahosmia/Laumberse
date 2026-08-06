@@ -18,6 +18,10 @@ class MaterialExpenseSeeder extends Seeder
         // 2. Set the config key-value pair in settings table
         GlobalSetting::set('material_expense_category_id', $category->id);
 
+        // Create a default "Salary" category
+        $salaryCategory = ExpenseCategory::firstOrCreate(['name' => 'Salary'], ['description' => 'Expenses for employee salary']);
+        GlobalSetting::set('salary_category_id', $salaryCategory->id);
+
         // 3. Get existing units to link with materials
         $units = Unit::all();
         $kgUnit = $units->where('short_name', 'kg')->first();

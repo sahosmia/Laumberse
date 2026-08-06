@@ -56,19 +56,6 @@ export interface Unit {
     short_name: string;
 }
 
-export interface Outlet {
-    id: number;
-    name: string;
-    location: string;
-}
-
-export interface OutletProductPrice {
-    id: number;
-    outlet_id: number;
-    product_id: number;
-    price: number;
-}
-
 export interface Product {
     id: number;
     name: string;
@@ -79,7 +66,6 @@ export interface Product {
      image: string | null;
     image_url: string | null;
     price: number;
-    outlet_prices?: OutletProductPrice[];
 }
 
 export interface CustomerProductPrice {
@@ -93,7 +79,7 @@ export interface Client {
     id: number;
     name: string;
     phone: string;
-    type: 'Consumer' | 'Corporate';
+    type: 'Consumer' | 'Corporate' | 'B2B';
     address?: string;
     total_orders?: number;
     total_due?: number;
@@ -116,8 +102,6 @@ export interface Invoice {
     date: string;
     client_id: number;
     client: Client;
-    outlet_id: number;
-    outlet?: Outlet;
     subtotal: number;
     discount_amount: number;
     discount_type: 'Fixed' | 'Percentage';
@@ -159,8 +143,6 @@ export interface Expense {
     payment_method: string;
     date: string;
     description?: string;
-    outlet_id?: number;
-    outlet?: Outlet;
     payroll?: {
         employee_id: number;
         month: number;

@@ -9,7 +9,6 @@ use App\Models\Expense;
 use App\Models\Material;
 use App\Models\ExpenseCategory;
 use App\Models\GlobalSetting;
-use App\Models\Outlet;
 use App\Services\ExpenseService;
 use Inertia\Inertia;
 
@@ -18,9 +17,8 @@ class ExpenseController extends Controller
     public function index()
     {
         return Inertia::render('expenses/index', [
-            'expenses' => Expense::with(['category', 'outlet', 'materials.material.unit', 'payroll'])->orderBy('date', 'desc')->get(),
+            'expenses' => Expense::with(['category', 'materials.material.unit', 'payroll'])->orderBy('date', 'desc')->get(),
             'categories' => ExpenseCategory::all(),
-            'outlets' => Outlet::all(),
             'salary_category_id' => GlobalSetting::get('salary_category_id'),
             'materials' => Material::with('unit')->orderBy('name')->get()
         ]);
@@ -41,7 +39,7 @@ class ExpenseController extends Controller
     public function show(Expense $expense)
     {
         return Inertia::render('expenses/show', [
-            'expense' => $expense->load(['category', 'outlet', 'materials.material.unit', 'payroll.employee', 'asset.category'])
+            'expense' => $expense->load(['category', 'materials.material.unit', 'payroll.employee', 'asset.category'])
         ]);
     }
 

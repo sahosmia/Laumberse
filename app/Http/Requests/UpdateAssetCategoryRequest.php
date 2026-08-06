@@ -14,7 +14,7 @@ class UpdateAssetCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:asset_categories,name,' . $this->route('asset_category')->id,
             'description' => 'nullable|string',
         ];
     }

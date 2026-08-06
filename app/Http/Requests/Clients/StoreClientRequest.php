@@ -16,7 +16,7 @@ class StoreClientRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
-            'type' => 'required|string|in:Consumer,Corporate',
+            'type' => 'required|string|in:Consumer,Corporate,B2B',
             'address' => 'nullable|string|max:500',
             'custom_prices' => 'nullable|array',
             'custom_prices.*.product_id' => 'required|exists:products,id',

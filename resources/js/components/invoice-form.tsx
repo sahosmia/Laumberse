@@ -5,7 +5,7 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Category, Outlet, Product, Client } from '@/types';
+import { Category, Product, Client } from '@/types';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 
 export interface InvoiceItem {
@@ -19,7 +19,6 @@ export interface InvoiceItem {
 export interface Invoice {
     id?: number;
     invoice_uuid: string;
-    outlet_id: number;
     date: string;
     client_id: number | string | null;
     total: number;
@@ -46,22 +45,20 @@ interface InvoiceFormProps {
     products: Product[];
     clients: Client[];
     categories: Category[];
-    outlets: Outlet[];
     isEdit?: boolean;
+    next_invoice_uuid?: string;
 }
 
 const formatCurrency = (n: number) => `৳${n.toLocaleString("en-BD")}`;
-const generateInvoiceUuid = () => `INV-${Date.now().toString().slice(-8)}`;
 
-export default function InvoiceForm({ invoice, products, clients, categories, outlets, isEdit = false }: InvoiceFormProps) {
+export default function InvoiceForm({ invoice, products, clients, categories, isEdit = false, next_invoice_uuid }: InvoiceFormProps) {
     const [searchTerm, setSearchTerm] = useState("");
     const [showDropdown, setShowDropdown] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
     const { data, setData, post, put, processing, errors } = useForm({
-        invoice_uuid: invoice?.invoice_uuid || generateInvoiceUuid(),
-        outlet_id: invoice?.outlet_id || (outlets.length > 0 ? outlets[0].id : null) as number | null,
+        invoice_uuid: invoice?.invoice_uuid || next_invoice_uuid || '',
         date: invoice?.date || new Date().toISOString().split('T')[0],
         client_id: invoice?.client_id || null as string | number | null,
         create_new_client: false,
@@ -133,16 +130,11 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
             if (customPrice !== undefined) {
                 price = Number(customPrice);
             }
-        } else {
-            const outletPrice = product.outlet_prices?.find(op => op.outlet_id === Number(data.outlet_id))?.price;
-            if (outletPrice !== undefined) {
-                price = Number(outletPrice);
-            }
         }
 
         if (existingIdx > -1) {
             newItems[existingIdx].qty += 1;
-            newItems[existingIdx].price = price; // Update price in case outlet changed
+            newItems[existingIdx].price = price;
 
         } else {
             newItems.push({
@@ -262,7 +254,6 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
     const activeCategories = categories.filter(c => usedCategoryIds.has(c.id));
     const categoryNames = ["All", ...activeCategories.map(c => c.name)];
     const clientOptions = clients.map(c => ({ label: `${c.name} (${c.phone})`, value: c.id }));
-    const outletOptions = outlets.map(o => ({ label: o.name, value: o.id }));
 
     const selectedClient = clients.find(c => c.id == data.client_id);
     // const isCorporate = selectedClient?.type === 'Corporate';
@@ -290,8 +281,8 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                     <p className="text-xs text-neutral-400">Invoice No.</p>
                     <Input
                         value={data.invoice_uuid}
-                        onChange={e => setData('invoice_uuid', e.target.value)}
-                        className="h-8 text-sm font-bold text-neutral-700 dark:text-neutral-300 font-mono text-right"
+                        readOnly
+                        className="h-8 text-sm font-bold text-neutral-700 dark:text-neutral-300 font-mono text-right bg-neutral-100 dark:bg-neutral-800"
                     />
                     {errors.invoice_uuid && <p className="text-[10px] text-red-500">{errors.invoice_uuid}</p>}
                 </div>
@@ -346,7 +337,6 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                                 total,
                                                 paid: total,
                                                 due: 0,
-                                                outlet_id: null // Corporate clients don't use outlets
                                             }));
                                         } else {
                                             // For regular clients, clear items if it was previously corporate populated or keep it
@@ -468,7 +458,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                                                 const cp = selectedClient?.custom_prices?.find(cp => cp.product_id === p.id);
                                                                 return formatCurrency(cp ? Number(cp.custom_price) : Number(p.price));
                                                             }
-                                                            return formatCurrency(Number(p.outlet_prices?.find(op => op.outlet_id === Number(data.outlet_id))?.price ?? p.price));
+                                                            return formatCurrency(Number(p.price));
                                                         })()}
                                                     </span>
                                                 </div>
@@ -606,48 +596,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                     </div>
                 </div>
 
-                {isCorporate}
                 <div className="space-y-4">
-{(!isCorporate || (data.create_new_client && data.new_client_type === 'Consumer')) && (                        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 space-y-3">
-                            <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-2"><Package className="w-4 h-4" /> Outlet</h3>
-                            <select
-                                value={data.outlet_id}
-                                onChange={e => {
-                                    const newOutletId = e.target.value;
-                                    setData('outlet_id', newOutletId);
-
-                                    // Optionally update prices of existing items when outlet changes
-                                    const updatedItems = data.items.map((item: InvoiceItem) => {
-                                        const product = products.find(p => p.id === item.productId);
-                                        if (product) {
-                                            const outletPrice = product.outlet_prices?.find(op => op.outlet_id === Number(newOutletId))?.price;
-                                            return { ...item, price: outletPrice !== undefined ? Number(outletPrice) : Number(product.price) };
-                                        }
-                                        return item;
-                                    });
-                                    const newTotal = updatedItems.reduce((s: number, i: InvoiceItem) => s + i.price * i.qty, 0);
-                                    setData(d => ({
-                                        ...d,
-                                        outlet_id: newOutletId,
-                                        items: updatedItems,
-                                        total: newTotal,
-                                        due: newTotal - (Number(d.paid) || 0)
-                                    }));
-                                }}
-                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-transparent dark:text-neutral-100"
-                                required
-                            >
-                                <option value="" disabled>Select Outlet</option>
-                                {outlets.map(o => (
-                                    <option key={o.id} value={o.id}>{o.name}</option>
-                                ))}
-                            </select>
-                            {errors.outlet_id && <p className="text-xs text-red-500">{errors.outlet_id}</p>}
-                        </div>
-                    )}
-
-
-
                     <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 space-y-3">
                         <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-2"><Calendar className="w-4 h-4" /> Order Details</h3>
                         <input
@@ -693,17 +642,19 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                             />
                         </div>
 
-                        <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-1">
-                            <Label htmlFor="delivery_charge" className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold">Delivery Charge</Label>
-                            <Input
-                                id="delivery_charge"
-                                type="number"
-                                placeholder="Delivery Charge"
-                                value={data.delivery_charge}
-                                onChange={e => handleDeliveryChargeChange(e.target.value)}
-                                className="h-12 md:h-9 text-sm md:text-xs"
-                            />
-                        </div>
+                        {!isCorporate && (
+                            <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-1">
+                                <Label htmlFor="delivery_charge" className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold">Delivery Charge</Label>
+                                <Input
+                                    id="delivery_charge"
+                                    type="number"
+                                    placeholder="Delivery Charge"
+                                    value={data.delivery_charge}
+                                    onChange={e => handleDeliveryChargeChange(e.target.value)}
+                                    className="h-12 md:h-9 text-sm md:text-xs"
+                                />
+                            </div>
+                        )}
 
                         <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800">
                             <div className="flex gap-2 mb-3">
@@ -743,10 +694,12 @@ export default function InvoiceForm({ invoice, products, clients, categories, ou
                                     </div>
                                 );
                             })()}
-                            <div className="flex justify-between text-blue-400">
-                                <span>Delivery Charge</span>
-                                <span>{formatCurrency(Number(data.delivery_charge) || 0)}</span>
-                            </div>
+                            {!isCorporate && (
+                                <div className="flex justify-between text-blue-400">
+                                    <span>Delivery Charge</span>
+                                    <span>{formatCurrency(Number(data.delivery_charge) || 0)}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between text-emerald-400"><span>Paid</span><span>{formatCurrency(Number(data.paid) || 0)}</span></div>
                             <div className="flex justify-between text-red-400"><span>Due</span><span>{formatCurrency(data.due)}</span></div>
                             <div className="border-t border-white/10 dark:border-neutral-200 pt-2 mt-2 flex justify-between text-lg font-bold">

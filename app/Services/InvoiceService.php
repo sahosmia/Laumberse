@@ -37,11 +37,11 @@ class InvoiceService
                 }
             }
 
-            $deliveryCharge = !empty($data['delivery_charge']) ? (float)$data['delivery_charge'] : 0.00;
+            $clientModel = Client::find($clientId);
+            $deliveryCharge = (!empty($data['delivery_charge']) && $clientModel?->type !== 'Corporate') ? (float)$data['delivery_charge'] : 0.00;
 
             $invoice = Invoice::create([
                 'invoice_uuid' => $data['invoice_uuid'],
-                'outlet_id' => $data['outlet_id'],
                 'date' => $data['date'],
                 'client_id' => $clientId,
                 'total' => $data['total'],
@@ -85,12 +85,12 @@ class InvoiceService
                 $oldClient->decrement('total_due', $invoice->due);
             }
 
-            $deliveryCharge = !empty($data['delivery_charge']) ? (float)$data['delivery_charge'] : 0.00;
+            $clientModel = Client::find($data['client_id']);
+            $deliveryCharge = (!empty($data['delivery_charge']) && $clientModel?->type !== 'Corporate') ? (float)$data['delivery_charge'] : 0.00;
 
             // Update Invoice
             $invoice->update([
                 'invoice_uuid' => $data['invoice_uuid'],
-                'outlet_id' => $data['outlet_id'],
                 'date' => $data['date'],
                 'client_id' => $data['client_id'],
                 'total' => $data['total'],

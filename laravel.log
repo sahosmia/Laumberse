@@ -1,0 +1,110 @@
+
+   WARN  Unable to respect the `PHP_CLI_SERVER_WORKERS` environment variable without the `--no-reload` flag. Only creating a single server.
+
+   INFO  Server running on [http://0.0.0.0:8000].
+
+  Press Ctrl+C to stop the server
+
+  2026-08-06 19:15:23 / .......................................... ~ 500.41ms
+
+   INFO  Environment modified. Restarting server...
+
+   INFO  Server running on [http://0.0.0.0:8000].
+
+  Press Ctrl+C to stop the server
+
+  2026-08-06 19:31:54 / .......................................... ~ 500.44ms
+  2026-08-06 19:33:23 /login ....................................... ~ 0.11ms
+  2026-08-06 19:33:23 /build/assets/app-D4_8RGQL.css ............... ~ 0.12ms
+  2026-08-06 19:33:23 /build/assets/app-ZxX1NWSz.js ................ ~ 0.03ms
+  2026-08-06 19:33:23 /build/assets/login-Dh95QfY6.js .............. ~ 0.21ms
+  2026-08-06 19:33:23 /build/assets/input-error-CXua5UBe.js ........ ~ 0.36ms
+  2026-08-06 19:33:23 /build/assets/text-link-BPfaXlKX.js .......... ~ 0.46ms
+  2026-08-06 19:33:23 /build/assets/button-CihwHZ5W.js ............. ~ 0.53ms
+  2026-08-06 19:33:23 /build/assets/checkbox-Ck01ZE4_.js ........... ~ 0.66ms
+  2026-08-06 19:33:23 /build/assets/index-CyTbW9oh.js .............. ~ 0.83ms
+  2026-08-06 19:33:23 /build/assets/label-BerR_9SR.js .............. ~ 0.07ms
+  2026-08-06 19:33:23 /build/assets/auth-layout-CwdyeF6w.js ........ ~ 0.21ms
+  2026-08-06 19:33:23 /build/assets/loader-circle-oz6T1q9R.js ...... ~ 0.30ms
+  2026-08-06 19:33:23 /build/assets/utils-CuwgxiP6.js .............. ~ 0.40ms
+  2026-08-06 19:33:23 /build/assets/index-DfoCvG4_.js .............. ~ 0.52ms
+  2026-08-06 19:33:23 /build/assets/index-DgpA2FXE.js .............. ~ 0.65ms
+  2026-08-06 19:33:23 /build/assets/check-DD-oOoZo.js .............. ~ 0.04ms
+  2026-08-06 19:33:23 /build/assets/app-logo-icon-B0oAzOVW.js ...... ~ 0.16ms
+  2026-08-06 19:33:24 /build/assets/app-D4_8RGQL.css ............... ~ 0.09ms
+  2026-08-06 19:33:24 /logo3.jpeg .................................. ~ 0.03ms
+  2026-08-06 19:33:26 /login ..................................... ~ 500.78ms
+  2026-08-06 19:33:26 /dashboard ................................... ~ 0.03ms
+  2026-08-06 19:33:26 /build/assets/dashboard-DIesq2RI.js .......... ~ 0.03ms
+  2026-08-06 19:33:26 /build/assets/app-layout-CdcQRjn5.js ......... ~ 0.07ms
+  2026-08-06 19:33:26 /build/assets/index-CkiXMcQs.js .............. ~ 0.18ms
+  2026-08-06 19:33:26 /build/assets/floating-ui.react-dom-BVZHT-UB.js  ~ 0.32ms
+  2026-08-06 19:33:26 /build/assets/with-selector-BMgidMWz.js ...... ~ 0.37ms
+  2026-08-06 19:33:26 /build/assets/PieChart-BNDyoiFw.js ........... ~ 0.47ms
+  2026-08-06 19:33:26 /build/assets/circle-alert-BAUaZrq0.js ....... ~ 0.57ms
+  2026-08-06 19:33:27 /logo4.jpeg .................................. ~ 0.09ms
+  2026-08-06 19:33:29 /clients ..................................... ~ 0.10ms
+  2026-08-06 19:33:29 /build/assets/index-DPQoj0Fc.js .............. ~ 0.08ms
+  2026-08-06 19:33:29 /build/assets/searchable-select-pCZsA6_a.js .. ~ 0.24ms
+  2026-08-06 19:33:29 /build/assets/transition-CUa96IPR.js ......... ~ 0.30ms
+  2026-08-06 19:33:29 /build/assets/delete-confirmation-modal-DfehzGwY.js  ~ 0.41ms
+  2026-08-06 19:33:29 /build/assets/dialog-DZsHikgZ.js ............. ~ 0.50ms
+  2026-08-06 19:33:29 /build/assets/save-confirmation-modal-Auu7iNHV.js  ~ 0.62ms
+  2026-08-06 19:33:29 /clients ..................................... ~ 0.03ms
+  2026-08-06 19:33:29 /build/assets/plus-Bv9SSFeK.js ............... ~ 0.62ms
+  2026-08-06 19:33:29 /build/assets/search-osvNsiAs.js ............. ~ 0.76ms
+  2026-08-06 19:33:29 /build/assets/eye-DTLKRXwt.js ................ ~ 0.90ms
+  2026-08-06 19:33:29 /build/assets/pen-line-Dd_Bm1sA.js ........... ~ 1.04ms
+  2026-08-06 19:33:29 /build/assets/trash-2-C6myeF1_.js ............ ~ 0.91ms
+  2026-08-06 19:33:33 /employees ................................. ~ 500.44ms
+  2026-08-06 19:33:33 /build/assets/index-B2qCnN0E.js .............. ~ 0.09ms
+  2026-08-06 19:33:33 /build/assets/form-input-CAxNw_KH.js ......... ~ 0.25ms
+  2026-08-06 19:33:33 /build/assets/form-button-D9u56q6f.js ........ ~ 0.35ms
+  2026-08-06 19:33:33 /build/assets/user-CyGYHREo.js ............... ~ 0.46ms
+  2026-08-06 19:37:34 /login ....................................... ~ 0.13ms
+  2026-08-06 19:37:34 /build/assets/app-D4_8RGQL.css ............... ~ 0.05ms
+  2026-08-06 19:37:34 /build/assets/login-DlsQJ8kt.js .............. ~ 0.07ms
+  2026-08-06 19:37:34 /build/assets/app-RzPeUWZW.js ................ ~ 0.24ms
+  2026-08-06 19:37:34 /build/assets/input-error-hFBTgcHV.js ........ ~ 0.37ms
+  2026-08-06 19:37:34 /build/assets/text-link-A2RA0FkR.js .......... ~ 0.47ms
+  2026-08-06 19:37:34 /build/assets/button-CTLo76mO.js ............. ~ 0.58ms
+  2026-08-06 19:37:34 /build/assets/checkbox-DhmShqTq.js ........... ~ 0.76ms
+  2026-08-06 19:37:34 /build/assets/index-BVefNCTZ.js .............. ~ 0.06ms
+  2026-08-06 19:37:34 /build/assets/label-CO-LB-Jx.js .............. ~ 0.20ms
+  2026-08-06 19:37:34 /build/assets/auth-layout-CtoFtQfl.js ........ ~ 0.34ms
+  2026-08-06 19:37:34 /build/assets/loader-circle-CVSDkicm.js ...... ~ 0.47ms
+  2026-08-06 19:37:34 /build/assets/utils-OtOBnzby.js .............. ~ 0.56ms
+  2026-08-06 19:37:34 /build/assets/index-C42wOvdL.js .............. ~ 0.32ms
+  2026-08-06 19:37:34 /build/assets/index-zuM1isTL.js .............. ~ 0.47ms
+  2026-08-06 19:37:34 /build/assets/check-CEmlDNZo.js .............. ~ 0.61ms
+  2026-08-06 19:37:34 /build/assets/app-logo-icon-BE10jiw3.js ...... ~ 0.17ms
+  2026-08-06 19:37:34 /build/assets/app-D4_8RGQL.css ............... ~ 0.03ms
+  2026-08-06 19:37:34 /logo3.jpeg .................................. ~ 0.11ms
+  2026-08-06 19:37:36 /login ....................................... ~ 0.19ms
+  2026-08-06 19:37:36 /dashboard ................................... ~ 0.04ms
+  2026-08-06 19:37:36 /build/assets/dashboard-BLvm5hmP.js .......... ~ 0.07ms
+  2026-08-06 19:37:36 /build/assets/index-o1HPFy1q.js .............. ~ 0.20ms
+  2026-08-06 19:37:36 /build/assets/floating-ui.react-dom-CkrAogOW.js  ~ 0.35ms
+  2026-08-06 19:37:36 /build/assets/with-selector-BF0gDx8t.js ...... ~ 0.41ms
+  2026-08-06 19:37:36 /build/assets/circle-alert-CEWpjJby.js ....... ~ 0.37ms
+  2026-08-06 19:37:36 /build/assets/app-layout-C_CnAyUv.js ......... ~ 0.63ms
+  2026-08-06 19:37:36 /build/assets/PieChart-_dUU76Gq.js ........... ~ 0.77ms
+  2026-08-06 19:37:37 /logo4.jpeg .................................. ~ 0.10ms
+  2026-08-06 19:37:38 /clients ..................................... ~ 0.11ms
+  2026-08-06 19:37:38 /build/assets/index-C14F_PDz.js .............. ~ 0.13ms
+  2026-08-06 19:37:38 /build/assets/searchable-select-CYe3-Sec.js .. ~ 0.28ms
+  2026-08-06 19:37:38 /build/assets/transition-ArW2SEXI.js ......... ~ 0.35ms
+  2026-08-06 19:37:38 /build/assets/delete-confirmation-modal-gvND2ins.js  ~ 0.45ms
+  2026-08-06 19:37:38 /build/assets/dialog-_AEhMxxF.js ............. ~ 0.50ms
+  2026-08-06 19:37:38 /build/assets/save-confirmation-modal-BJZotsR2.js  ~ 0.64ms
+  2026-08-06 19:37:38 /build/assets/plus-DSCKNJkb.js ............... ~ 0.06ms
+  2026-08-06 19:37:38 /build/assets/search-DEK0YR14.js ............. ~ 0.20ms
+  2026-08-06 19:37:38 /build/assets/eye-B15irFoA.js ................ ~ 0.36ms
+  2026-08-06 19:37:38 /build/assets/pen-line-BODOxPtQ.js ........... ~ 0.53ms
+  2026-08-06 19:37:38 /build/assets/trash-2-DwOWFc1T.js ............ ~ 0.67ms
+  2026-08-06 19:37:38 /clients ..................................... ~ 0.17ms
+  2026-08-06 19:37:43 /employees ................................... ~ 0.20ms
+  2026-08-06 19:37:43 /build/assets/index-Bvo_NjQ9.js .............. ~ 0.07ms
+  2026-08-06 19:37:43 /build/assets/form-input-DaRP0zCZ.js ......... ~ 0.21ms
+  2026-08-06 19:37:43 /build/assets/form-button-B9ZHQ_lr.js ........ ~ 0.32ms
+  2026-08-06 19:37:43 /build/assets/user-DNJ9uVn4.js ............... ~ 0.41ms

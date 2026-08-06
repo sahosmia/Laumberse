@@ -151,6 +151,7 @@ export default function Employees({ employees }: EmployeesProps) {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 text-xs uppercase tracking-wider">
+                                    <th className="text-left px-5 py-3 font-semibold">Emp ID</th>
                                     <th className="text-left px-5 py-3 font-semibold">Name</th>
                                     <th className="text-left px-5 py-3 font-semibold">Designation</th>
                                     <th className="text-left px-5 py-3 font-semibold">Phone</th>
@@ -162,6 +163,9 @@ export default function Employees({ employees }: EmployeesProps) {
                             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                                 {filtered.map((e) => (
                                     <tr key={e.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors">
+                                        <td className="px-5 py-4 whitespace-nowrap text-xs font-mono font-bold text-neutral-500">
+                                            EMP-{String(e.id).padStart(4, '0')}
+                                        </td>
                                         <td className="px-5 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
@@ -192,7 +196,7 @@ export default function Employees({ employees }: EmployeesProps) {
                                 ))}
                                 {filtered.length === 0 && (
                                     <tr>
-                                        <td colSpan={6} className="px-5 py-10 text-center text-neutral-400 italic">No employees found</td>
+                                        <td colSpan={7} className="px-5 py-10 text-center text-neutral-400 italic">No employees found</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -210,7 +214,12 @@ export default function Employees({ employees }: EmployeesProps) {
                                         <User className="w-4 h-4" />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-neutral-900 dark:text-neutral-100 text-sm">{e.name}</h4>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-bold text-neutral-900 dark:text-neutral-100 text-sm">{e.name}</h4>
+                                            <span className="text-[10px] font-mono font-bold text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded">
+                                                EMP-{String(e.id).padStart(4, '0')}
+                                            </span>
+                                        </div>
                                         <p className="text-xs text-neutral-500 dark:text-neutral-400">{e.designation}</p>
                                     </div>
                                 </div>

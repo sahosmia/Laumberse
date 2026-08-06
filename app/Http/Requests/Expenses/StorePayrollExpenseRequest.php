@@ -23,7 +23,6 @@ class StorePayrollExpenseRequest extends FormRequest
             'payment_method' => 'required|string',
             'date' => 'required|date',
             'description' => 'nullable|string',
-            'outlet_id' => 'nullable|exists:outlets,id',
             
             // Payroll specific fields
             'employee_id' => $isPayroll ? 'required|exists:employees,id' : 'nullable',

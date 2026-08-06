@@ -7,7 +7,6 @@ use App\Http\Requests\Invoices\StoreInvoiceRequest;
 use App\Http\Requests\Invoices\UpdateInvoiceRequest;
 use App\Http\Requests\Invoices\UpdateInvoiceStatusRequest;
 use App\Models\Invoice;
-use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\Client;
 use App\Services\InvoiceService;
@@ -32,12 +31,14 @@ class InvoiceController extends Controller
 
     public function create( )
     {
+        $nextId = (\App\Models\Invoice::max('id') ?? 0) + 1;
+        $nextInvoiceUuid = str_pad($nextId, 4, '0', STR_PAD_LEFT);
+
         return Inertia::render('invoices/create', [
-            'products' => Product::with(['category', 'unit', 'outletPrices'])->get(),
+            'products' => Product::with(['category', 'unit'])->get(),
             'clients' => Client::with('customPrices')->get(),
             'categories' => \App\Models\Category::all(),
-            'outlets' => Outlet::all(),
-            // 'invoice' => CustomerProductPrice::where('customer_id', $request()->query('client_id'))->get(),
+            'next_invoice_uuid' => $nextInvoiceUuid,
         ]);
     }
 
@@ -51,10 +52,9 @@ class InvoiceController extends Controller
     {
         return Inertia::render('invoices/edit', [
             'invoice' => $invoice->load(['items.product']),
-            'products' => Product::with(['category', 'unit', 'outletPrices'])->get(),
+            'products' => Product::with(['category', 'unit'])->get(),
             'clients' => Client::with('customPrices')->get(),
             'categories' => \App\Models\Category::all(),
-            'outlets' => Outlet::all(),
         ]);
     }
 

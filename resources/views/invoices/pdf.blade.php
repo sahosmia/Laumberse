@@ -278,7 +278,7 @@
                         <td class="text-right">-{{ number_format($discountValue, 2) }}</td>
                     </tr>
                 @endif
-                @if ($invoice->delivery_charge != 0)
+                @if ($invoice->client->type !== 'Corporate' && $invoice->delivery_charge != 0)
                     <tr>
                         <td style="color: #2563eb;">Delivery Charge</td>
                         <td class="text-right">{{ number_format($invoice->delivery_charge, 2) }}</td>

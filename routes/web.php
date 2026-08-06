@@ -14,7 +14,6 @@ use App\Http\Controllers\Reports\ReportController;
 use App\Http\Controllers\Categories\CategoryController;
 use App\Http\Controllers\Expenses\ExpenseController;
 use App\Http\Controllers\MaterialController;
-use App\Http\Controllers\Outlets\OutletController;
 use App\Http\Controllers\UnitController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -37,8 +36,6 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('units', UnitController::class);
     Route::resource('materials', MaterialController::class);
 
-    Route::delete('/outlets/bulk-destroy', [OutletController::class, 'bulkDestroy'])->name('outlets.bulk-destroy');
-    Route::resource('outlets', OutletController::class);
 
     Route::resource('expenses', ExpenseController::class);
     Route::resource('expense-categories', ExpenseCategoryController::class);

@@ -173,10 +173,12 @@ export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                                     </div>
                                 );
                             })()}
-                            <div className="flex justify-between text-sm text-blue-600 font-medium">
-                                <span>Delivery Charge</span>
-                                <span>{formatCurrency(Number(invoice.delivery_charge || 0))}</span>
-                            </div>
+                            {invoice.client.type !== 'Corporate' && (
+                                <div className="flex justify-between text-sm text-blue-600 font-medium">
+                                    <span>Delivery Charge</span>
+                                    <span>{formatCurrency(Number(invoice.delivery_charge || 0))}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between text-sm text-emerald-600 font-medium">
                                 <span>Paid</span>
                                 <span>{formatCurrency(Number(invoice.paid))}</span>

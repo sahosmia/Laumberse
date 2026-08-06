@@ -24,11 +24,6 @@ const mainNavItems: NavItem[] = [
         icon: Clock,
     },
     {
-        title: 'Outlets',
-        url: route('outlets.index'),
-        icon: MapPin,
-    },
-    {
         title: 'Employees',
         url: route('employees.index'),
         icon: Users,

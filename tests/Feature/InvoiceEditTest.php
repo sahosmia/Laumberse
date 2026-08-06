@@ -2,7 +2,6 @@
 
 use App\Models\User;
 use App\Models\Invoice;
-use App\Models\Outlet;
 use App\Models\Client;
 use App\Models\Product;
 use App\Models\Category;
@@ -10,7 +9,6 @@ use App\Models\Unit;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
-    $this->outlet = Outlet::create(['name' => 'Main Outlet']);
     $this->category = Category::create(['name' => 'Services', 'slug' => 'services']);
     $this->unit = Unit::create(['name' => 'pcs', 'short_name' => 'pcs']);
     $this->product = Product::create([
@@ -22,10 +20,8 @@ beforeEach(function () {
     $this->client = Client::create(['name' => 'John Doe', 'phone' => '123456789']);
 });
 
-test('invoice can be updated successfully with a unique invoice_uuid', function () {
+test('invoice can be updated successfully with its serial-wise invoice_uuid', function () {
     $invoice = Invoice::create([
-        'invoice_uuid' => 'INV-OLD-123',
-        'outlet_id' => $this->outlet->id,
         'date' => now()->toDateString(),
         'client_id' => $this->client->id,
         'total' => 100,
@@ -35,9 +31,11 @@ test('invoice can be updated successfully with a unique invoice_uuid', function 
         'method' => 'Cash',
     ]);
 
+    // Its invoice_uuid is automatically set to "0001" (or padded ID)
+    $expectedUuid = str_pad($invoice->id, 4, '0', STR_PAD_LEFT);
+
     $response = $this->actingAs($this->user)->put(route('invoices.update', $invoice->id), [
-        'invoice_uuid' => 'INV-NEW-456',
-        'outlet_id' => $this->outlet->id,
+        'invoice_uuid' => $expectedUuid,
         'date' => now()->toDateString(),
         'client_id' => $this->client->id,
         'total' => 200,
@@ -55,16 +53,14 @@ test('invoice can be updated successfully with a unique invoice_uuid', function 
     $response->assertRedirect(route('history'));
     $this->assertDatabaseHas('invoices', [
         'id' => $invoice->id,
-        'invoice_uuid' => 'INV-NEW-456',
+        'invoice_uuid' => $expectedUuid,
         'total' => 200,
         'status' => 'Delivered',
     ]);
 });
 
-test('update fails if the modified invoice_uuid conflicts with an existing record', function () {
-    Invoice::create([
-        'invoice_uuid' => 'INV-CONFLICT',
-        'outlet_id' => $this->outlet->id,
+test('update fails if the modified invoice_uuid conflicts with another invoice', function () {
+    $invoice1 = Invoice::create([
         'date' => now()->toDateString(),
         'client_id' => $this->client->id,
         'total' => 100,
@@ -74,9 +70,7 @@ test('update fails if the modified invoice_uuid conflicts with an existing recor
         'method' => 'Cash',
     ]);
 
-    $invoice = Invoice::create([
-        'invoice_uuid' => 'INV-ORIGINAL',
-        'outlet_id' => $this->outlet->id,
+    $invoice2 = Invoice::create([
         'date' => now()->toDateString(),
         'client_id' => $this->client->id,
         'total' => 100,
@@ -86,9 +80,11 @@ test('update fails if the modified invoice_uuid conflicts with an existing recor
         'method' => 'Cash',
     ]);
 
-    $response = $this->actingAs($this->user)->put(route('invoices.update', $invoice->id), [
-        'invoice_uuid' => 'INV-CONFLICT',
-        'outlet_id' => $this->outlet->id,
+    $expectedUuid1 = str_pad($invoice1->id, 4, '0', STR_PAD_LEFT);
+
+    // Try to update invoice2's uuid to match invoice1's uuid
+    $response = $this->actingAs($this->user)->put(route('invoices.update', $invoice2->id), [
+        'invoice_uuid' => $expectedUuid1,
         'date' => now()->toDateString(),
         'client_id' => $this->client->id,
         'total' => 200,
@@ -104,41 +100,4 @@ test('update fails if the modified invoice_uuid conflicts with an existing recor
     ]);
 
     $response->assertSessionHasErrors(['invoice_uuid']);
-});
-
-test('validation allows saving if the invoice_uuid remains unchanged during an edit', function () {
-    $invoice = Invoice::create([
-        'invoice_uuid' => 'INV-STAY-SAME',
-        'outlet_id' => $this->outlet->id,
-        'date' => now()->toDateString(),
-        'client_id' => $this->client->id,
-        'total' => 100,
-        'paid' => 100,
-        'due' => 0,
-        'status' => 'Processing',
-        'method' => 'Cash',
-    ]);
-
-    $response = $this->actingAs($this->user)->put(route('invoices.update', $invoice->id), [
-        'invoice_uuid' => 'INV-STAY-SAME',
-        'outlet_id' => $this->outlet->id,
-        'date' => now()->toDateString(),
-        'client_id' => $this->client->id,
-        'total' => 200,
-        'paid' => 200,
-        'due' => 0,
-        'status' => 'Processing',
-        'method' => 'Cash',
-        'discount_type' => 'Fixed',
-        'discount_amount' => 0,
-        'items' => [
-            ['productId' => $this->product->id, 'qty' => 2, 'price' => 100]
-        ]
-    ]);
-
-    $response->assertRedirect(route('history'));
-    $this->assertDatabaseHas('invoices', [
-        'id' => $invoice->id,
-        'invoice_uuid' => 'INV-STAY-SAME',
-    ]);
 });

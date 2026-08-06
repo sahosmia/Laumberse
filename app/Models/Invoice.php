@@ -8,7 +8,6 @@ class Invoice extends Model
 {
     protected $fillable = [
         'invoice_uuid',
-        'outlet_id',
         'date',
         'client_id',
         'total',
@@ -22,9 +21,18 @@ class Invoice extends Model
         'delivery_charge',
     ];
 
-    public function outlet()
+    protected static function booted()
     {
-        return $this->belongsTo(Outlet::class);
+        static::creating(function ($invoice) {
+            if (empty($invoice->invoice_uuid) || str_starts_with($invoice->invoice_uuid, 'INV-')) {
+                $invoice->invoice_uuid = 'temp_' . uniqid();
+            }
+        });
+
+        static::created(function ($invoice) {
+            $invoice->invoice_uuid = str_pad($invoice->id, 4, '0', STR_PAD_LEFT);
+            $invoice->saveQuietly();
+        });
     }
 
     public function client()

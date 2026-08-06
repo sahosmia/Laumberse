@@ -14,7 +14,7 @@ interface InvoiceItem {
 interface Invoice {
     id: string;
     date: string;
-    client: { name: string; phone: string; address: string | null };
+    client: { name: string; phone: string; address: string | null; type?: string };
     total: number;
     paid: number;
     due: number;
@@ -134,7 +134,7 @@ export default function Print({ invoice }: PrintProps) {
                                 </div>
                             );
                         })() : null}
-                        {invoice.delivery_charge && Number(invoice.delivery_charge) > 0 ? (
+                        {invoice.client.type !== 'Corporate' && invoice.delivery_charge && Number(invoice.delivery_charge) > 0 ? (
                             <div className="flex justify-between text-lg text-blue-600">
                                 <span className="font-medium">Delivery Charge</span>
                                 <span className="font-bold">{formatCurrency(Number(invoice.delivery_charge))}</span>

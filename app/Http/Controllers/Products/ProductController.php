@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Products\StoreProductRequest;
 use App\Http\Requests\Products\UpdateProductRequest;
 use App\Models\Category;
-use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\Unit;
 use Illuminate\Http\RedirectResponse;
@@ -24,7 +23,6 @@ class ProductController extends Controller
             ->with([
                 'category:id,name',
                 'unit:id,name',
-                'outletPrices.outlet:id,name',
             ])
             ->latest()
             ->get();
@@ -36,10 +34,6 @@ class ProductController extends Controller
                 ->get(),
 
             'units' => Unit::query()
-                ->select('id', 'name')
-                ->get(),
-
-            'outlets' => Outlet::query()
                 ->select('id', 'name')
                 ->get(),
         ]);
@@ -57,17 +51,8 @@ class ProductController extends Controller
                 $data['image'] = $request->file('image')->store('products', 'public');
             }
 
-            // Outlet Prices
-            $outletPrices = $this->filterOutletPrices($data['outlet_prices'] ?? []);
-            unset($data['outlet_prices']);
-
             // Create Product
             $product = Product::create($data);
-
-            // Create Outlet Prices
-            if (!empty($outletPrices)) {
-                $product->outletPrices()->createMany($outletPrices);
-            }
 
             DB::commit();
 
@@ -108,19 +93,8 @@ class ProductController extends Controller
                 unset($data['image']);
             }
 
-            // Outlet Prices
-            $outletPrices = $this->filterOutletPrices($data['outlet_prices'] ?? []);
-            unset($data['outlet_prices']);
-
             // Update Product
             $product->update($data);
-
-            // Refresh Outlet Prices
-            $product->outletPrices()->delete();
-
-            if (!empty($outletPrices)) {
-                $product->outletPrices()->createMany($outletPrices);
-            }
 
             DB::commit();
 
@@ -146,9 +120,6 @@ class ProductController extends Controller
             if ($product->image && Storage::disk('public')->exists($product->image)) {
                 Storage::disk('public')->delete($product->image);
             }
-
-            // Delete Outlet Prices
-            $product->outletPrices()->delete();
 
             // Delete Product
             $product->delete();
@@ -185,8 +156,6 @@ class ProductController extends Controller
                     if ($product->image && Storage::disk('public')->exists($product->image)) {
                         Storage::disk('public')->delete($product->image);
                     }
-
-                    $product->outletPrices()->delete();
                 }
 
                 Product::query()->delete();
@@ -206,8 +175,6 @@ class ProductController extends Controller
                 if ($product->image && Storage::disk('public')->exists($product->image)) {
                     Storage::disk('public')->delete($product->image);
                 }
-
-                $product->outletPrices()->delete();
             }
 
             Product::whereIn('id', $ids)->delete();
@@ -226,18 +193,5 @@ class ProductController extends Controller
                 ->back()
                 ->with('error', 'Failed to delete products.');
         }
-    }
-
-    /**
-     * Filter valid outlet prices
-     */
-    private function filterOutletPrices(array $outletPrices): array
-    {
-        return array_values(array_filter($outletPrices, function ($item) {
-
-            return isset($item['price']) &&
-                $item['price'] !== null &&
-                $item['price'] !== '';
-        }));
     }
 }

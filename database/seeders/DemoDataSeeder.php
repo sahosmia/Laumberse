@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Client;
 use App\Models\Invoice;
-use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\InvoiceItem;
@@ -15,9 +14,6 @@ class DemoDataSeeder extends Seeder
 {
     public function run(): void
     {
-        // Get or create an outlet to map invoices to
-        $outlet = Outlet::first() ?? Outlet::create(['name' => 'Main Outlet', 'location' => 'Dhaka']);
-
         // Check if products exist; if not, create a baseline matching your main list
         if (Product::count() === 0) {
             $categories = ['Gents Item', 'Ladies Item', 'Kids Item', 'Household Item', 'Others Item'];
@@ -126,7 +122,6 @@ class DemoDataSeeder extends Seeder
 
                 $invoice = Invoice::create([
                     'invoice_uuid' => $invoiceId,
-                    'outlet_id' => $outlet->id,
                     'date' => date('Y-m-d', strtotime("-" . rand(0, 60) . " days")),
                     'client_id' => $client->id,
                     'total' => $total,
