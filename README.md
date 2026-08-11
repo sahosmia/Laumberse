@@ -1,6 +1,6 @@
 # Shop & Client Management System
 
-An advanced, production-ready, enterprise-grade Shop & Client Management application. This system streamlines client relations, handles corporate pricing structures, automates payroll and material expenses, facilitates outlet management, and handles complex invoicing.
+An advanced, production-ready, enterprise-grade Shop & Client Management application. This system streamlines client relations, handles corporate pricing structures, automates payroll and material expenses, and handles complex invoicing.
 
 ---
 
@@ -18,8 +18,8 @@ The application is built on a modern, high-performance tech stack using a **Modu
 ## 🚀 Key System Features
 
 1. **Client & Pricing Matrix Management:**
-   - Supports two client types: **Consumers** (utilizing standard base pricing per outlet) and **Corporate Clients** (using custom customer-product pricing matrices).
-   - Dynamic invoice rendering that automatically switches price priorities and hides outlet selects when corporate accounts are selected.
+   - Supports two client types: **Consumers** (utilizing standard base pricing) and **Corporate Clients** (using custom customer-product pricing matrices).
+   - Dynamic invoice rendering that automatically switches price priorities when corporate accounts are selected.
    - Dynamic, client-modal inline customization of the pricing matrix with `SearchableSelect` components.
 
 2. **Unified Expense & Auxiliary Flow:**
@@ -72,7 +72,7 @@ touch database/database.sqlite
 ```
 
 ### 5. Run Migrations & Seeders
-Run all database migrations and populate the database with default categories, settings, outlets, assets, and users:
+Run all database migrations and populate the database with default categories, settings, assets, and users:
 ```bash
 php artisan migrate:fresh --seed
 ```

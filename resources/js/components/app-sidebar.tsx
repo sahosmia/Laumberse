@@ -2,113 +2,109 @@ import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { type NavItem } from '@/types';
+import { type NavGroup } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, Home, FilePlus, Clock, Users, BarChart3, Package, Tag, MapPin, Receipt, Wallet, Settings } from 'lucide-react';
+import { BookOpen, Home, FilePlus, Clock, Users, UserCog, BarChart3, Package, Receipt, Wallet } from 'lucide-react';
 import AppLogo from './app-logo';
 
-const mainNavItems: NavItem[] = [
+const navGroups: NavGroup[] = [
     {
-        title: 'Dashboard',
-        url: route('dashboard'),
-        icon: Home,
-    },
-    {
-        title: 'Create Invoice',
-        url: route('create-invoice'),
-        icon: FilePlus,
-    },
-    {
-        title: 'Invoice History',
-        url: route('history'),
-        icon: Clock,
-    },
-    {
-        title: 'Outlets',
-        url: route('outlets.index'),
-        icon: MapPin,
-    },
-    {
-        title: 'Employees',
-        url: route('employees.index'),
-        icon: Users,
-    },
-    {
-        title: 'Payroll Ledger',
-        url: route('payrolls.index'),
-        icon: BookOpen,
-    },
-    {
-        title: 'Clients',
-        url: route('clients.index'),
-        icon: Users,
-    },
-
-    {
-        title: 'Expenses',
-        url: '#',
-        icon: Receipt,
+        title: 'Overview',
         items: [
             {
-                title: 'All Expenses',
-                url: route('expenses.index'),
+                title: 'Dashboard',
+                url: route('dashboard'),
+                icon: Home,
             },
             {
-                title: 'Categories',
-                url: route('expense-categories.index'),
+                title: 'Create Invoice',
+                url: route('create-invoice'),
+                icon: FilePlus,
+            },
+            {
+                title: 'Invoice History',
+                url: route('history'),
+                icon: Clock,
+            },
+            {
+                title: 'Clients',
+                url: route('clients.index'),
+                icon: Users,
             },
 
+            {
+                title: 'Employees',
+                url: route('employees.index'),
+                icon: UserCog,
+            },
+            {
+                title: 'Payroll Ledger',
+                url: route('payrolls.index'),
+                icon: BookOpen,
+            },
 
             {
-                title: 'Materials List',
-                url: route('materials.index'),
-            }
+                title: 'Products',
+                url: '#',
+                icon: Package,
+                items: [
+                    {
+                        title: 'All Products',
+                        url: route('products.index'),
+                    },
+                    {
+                        title: 'Categories',
+                        url: route('categories.index'),
+                    },
+                    {
+                        title: 'Units',
+                        url: route('units.index'),
+                    },
+                ],
+            },
+            {
+                title: 'Expenses',
+                url: '#',
+                icon: Receipt,
+                items: [
+                    {
+                        title: 'All Expenses',
+                        url: route('expenses.index'),
+                    },
+                    {
+                        title: 'Categories',
+                        url: route('expense-categories.index'),
+                    },
+                    {
+                        title: 'Materials List',
+                        url: route('materials.index'),
+                    },
+                ],
+            },
+            {
+                title: 'Assets',
+                url: '#',
+                icon: Wallet,
+                items: [
+                    {
+                        title: 'All Assets',
+                        url: route('manage-assets.index'),
+                    },
+                    {
+                        title: 'Categories',
+                        url: route('asset-categories.index'),
+                    },
+                ],
+            },
+      
+            {
+                title: 'Reports',
+                url: route('reports'),
+                icon: BarChart3,
+            },
         ],
     },
-
-    {
-        title: 'Manage Assets',
-        url: '#',
-        icon: Wallet,
-        items: [
-            {
-                title: 'All Assets',
-                url: route('manage-assets.index'),
-            },
-            {
-                title: 'Categories',
-                url: route('asset-categories.index'),
-            },
-        ],
-    },
-    {
-        title: 'Products',
-        url: '#',
-        icon: Package,
-        items: [
-            {
-                title: 'All Products',
-                url: route('products.index'),
-            },
-            {
-                title: 'Categories',
-                url: route('categories.index'),
-            },
-            {
-                title: 'Units',
-                url: route('units.index'),
-            },
-        ],
-    },
-    {
-        title: 'Reports',
-        url: route('reports'),
-        icon: BarChart3,
-    },
-
 ];
-
-
 
 export function AppSidebar() {
     return (
@@ -126,7 +122,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain groups={navGroups} />
             </SidebarContent>
 
             <SidebarFooter>

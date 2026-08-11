@@ -2,46 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Assets\CreateManageAssetAction;
 use App\Http\Requests\ManageAssets\StoreManageAssetRequest;
 use App\Http\Requests\ManageAssets\UpdateManageAssetRequest;
 use App\Models\AssetCategory;
-use App\Models\Expense;
-use App\Models\ExpenseCategory;
 use App\Models\ManageAsset;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ManageAssetController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $manageAssets = ManageAsset::with('category')
+            ->when($request->search, fn($q, $s) => $q->where(function ($q) use ($s) {
+                $q->where('name', 'like', "%{$s}%")
+                    ->orWhere('description', 'like', "%{$s}%")
+                    ->orWhereHas('category', fn($q) => $q->where('name', 'like', "%{$s}%"));
+            }))
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
         return Inertia::render('manage-assets/index', [
-            'manageAssets' => ManageAsset::with('category')->orderBy('purchase_date', 'desc')->get(),
+            'manageAssets' => $manageAssets,
             'categories' => AssetCategory::orderBy('name')->get(),
+            'filters' => ['search' => $request->search],
         ]);
     }
 
-    public function store(StoreManageAssetRequest $request)
+    public function store(StoreManageAssetRequest $request, CreateManageAssetAction $action)
     {
-        DB::transaction(function () use ($request) {
-            $asset = ManageAsset::create($request->validated());
-
-            if ($request->is_new_purchase) {
-                $category = ExpenseCategory::firstOrCreate(
-                    ['name' => 'Asset Purchase'],
-                    ['description' => 'Expenses related to new asset purchases']
-                );
-
-                Expense::create([
-                    'expense_category_id' => $category->id,
-                    'manage_asset_id' => $asset->id,
-                    'amount' => $asset->cost,
-                    'payment_method' => $request->payment_method,
-                    'date' => $asset->purchase_date,
-                    'description' => "Purchase of asset: {$asset->name}",
-                ]);
-            }
-        });
+        $action($request->validated());
 
         return redirect()->back()->with('success', 'ManageAsset created successfully.');
     }

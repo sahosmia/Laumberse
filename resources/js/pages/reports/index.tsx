@@ -1,8 +1,10 @@
 import { Head } from '@inertiajs/react';
-import { FileText, TrendingUp, Check, AlertCircle, DollarSign } from 'lucide-react';
+import { FileText, TrendingUp, Check, DollarSign } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { formatCurrency } from '@/lib/format';
+import type { ReportsColorKey, ReportsProps, ReportsStatCardProps } from '@/types/pages/reports';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -11,20 +13,8 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const formatCurrency = (n: number) => `৳${n.toLocaleString("en-BD")}`;
-
-type ColorKey = "blue" | "green" | "red" | "amber" | "purple";
-
-interface StatCardProps {
-    icon: React.ElementType;
-    label: string;
-    value: string;
-    sub?: string;
-    color?: ColorKey;
-}
-
-function StatCard({ icon: Icon, label, value, sub, color = "blue" }: StatCardProps) {
-    const colorMap: Record<ColorKey, string> = {
+function StatCard({ icon: Icon, label, value, sub, color = "blue" }: ReportsStatCardProps) {
+    const colorMap: Record<ReportsColorKey, string> = {
       blue: "from-blue-500 to-blue-600",
       green: "from-emerald-500 to-emerald-600",
       red: "from-red-500 to-red-600",
@@ -47,28 +37,8 @@ function StatCard({ icon: Icon, label, value, sub, color = "blue" }: StatCardPro
     );
 }
 
-interface MonthlyData {
-    month: string;
-    revenue: number;
-    paid: number;
-    due: number;
-    cost: number;
-}
-
-interface CategorySplit {
-    name: string;
-    value: number;
-    fill: string;
-}
-
-interface ReportsProps {
-    monthlyData: MonthlyData[];
-    categorySplit: CategorySplit[];
-    totalServices: number;
-}
-
 export default function Reports({ monthlyData, categorySplit, totalServices }: ReportsProps) {
-    const currentMonth = monthlyData[monthlyData.length - 1] || { revenue: 0, paid: 0, due: 0, cost: 0 };
+    const currentMonth = monthlyData[monthlyData.length - 1] || { revenue: 0, paid: 0, cost: 0 };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -79,17 +49,16 @@ export default function Reports({ monthlyData, categorySplit, totalServices }: R
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">Monthly business performance</p>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <StatCard icon={FileText} label="Total Services" value={totalServices.toString()} color="blue" />
                     <StatCard icon={TrendingUp} label="Revenue" value={formatCurrency(currentMonth.revenue)} color="purple" />
                     <StatCard icon={Check} label="Collected" value={formatCurrency(currentMonth.paid)} color="green" />
-                    <StatCard icon={AlertCircle} label="Outstanding" value={formatCurrency(currentMonth.due)} color="red" />
                     <StatCard icon={DollarSign} label="Profit" value={formatCurrency(currentMonth.revenue - currentMonth.cost)} color="amber" sub={`Estimated Cost: ${formatCurrency(currentMonth.cost)}`} />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 min-w-0 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5">
-                        <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-4">Monthly Revenue vs Paid vs Due</h3>
+                        <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-4">Monthly Revenue vs Paid</h3>
                         <ResponsiveContainer width="100%" height={280}>
                             <BarChart data={monthlyData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -99,7 +68,6 @@ export default function Reports({ monthlyData, categorySplit, totalServices }: R
                                 <Legend wrapperStyle={{ fontSize: 11 }} />
                                 <Bar dataKey="revenue" fill="#6366f1" name="Revenue" radius={[4, 4, 0, 0]} />
                                 <Bar dataKey="paid" fill="#10b981" name="Paid" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="due" fill="#ef4444" name="Due" radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -136,7 +104,6 @@ export default function Reports({ monthlyData, categorySplit, totalServices }: R
                                     <th className="text-left px-5 py-2.5 font-semibold">Month</th>
                                     <th className="text-right px-3 py-2.5 font-semibold">Revenue</th>
                                     <th className="text-right px-3 py-2.5 font-semibold">Paid</th>
-                                    <th className="text-right px-3 py-2.5 font-semibold">Due</th>
                                     <th className="text-right px-3 py-2.5 font-semibold">Cost</th>
                                     <th className="text-right px-5 py-2.5 font-semibold">Profit</th>
                                 </tr>
@@ -147,7 +114,6 @@ export default function Reports({ monthlyData, categorySplit, totalServices }: R
                                         <td className="px-5 py-3 font-semibold text-neutral-800 dark:text-neutral-200">{m.month}</td>
                                         <td className="px-3 py-3 text-right font-medium">{formatCurrency(m.revenue)}</td>
                                         <td className="px-3 py-3 text-right text-emerald-600">{formatCurrency(m.paid)}</td>
-                                        <td className="px-3 py-3 text-right text-red-500">{formatCurrency(m.due)}</td>
                                         <td className="px-3 py-3 text-right text-neutral-500">{formatCurrency(m.cost)}</td>
                                         <td className="px-5 py-3 text-right font-bold text-violet-600">{formatCurrency(m.revenue - m.cost)}</td>
                                     </tr>

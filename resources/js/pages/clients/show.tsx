@@ -2,27 +2,14 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import { User, Phone, MapPin, Briefcase, CreditCard, ShoppingBag, ArrowLeft, History, Settings, Tag, Edit3, Trash2 } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, Client, Invoice, InvoiceItem } from '@/types';
+import { type BreadcrumbItem } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { CLIENT_TYPE_STYLES, type ClientType } from '@/constants/status';
+import { formatCurrency } from '@/lib/format';
+import type { ClientShowProps } from '@/types/pages/clients';
 
-interface CustomPrice {
-    id: number;
-    customer_id: number;
-    product_id: number;
-    custom_price: number;
-    product?: {
-        name: string;
-    };
-}
 
-interface ClientShowProps {
-    client: Client & {
-        invoices: (Invoice & { items: InvoiceItem[] })[];
-        custom_prices: CustomPrice[];
-    };
-}
-
-const formatCurrency = (n: number) => `৳${n.toLocaleString("en-BD")}`;
+const typeBadgeClass = (type: ClientType) => CLIENT_TYPE_STYLES[type] ?? CLIENT_TYPE_STYLES.Consumer;
 
 export default function ClientShow({ client }: ClientShowProps) {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -64,7 +51,7 @@ export default function ClientShow({ client }: ClientShowProps) {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                         <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${client.type === 'Corporate' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30'}`}>
+                         <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${typeBadgeClass(client.type)}`}>
                             {client.type}
                         </div>
                     </div>
@@ -153,7 +140,7 @@ export default function ClientShow({ client }: ClientShowProps) {
                                             <th className="text-left px-6 py-3">Date</th>
                                             <th className="text-right px-6 py-3">Amount</th>
                                             <th className="text-right px-6 py-3">Paid</th>
-                                            <th className="text-right px-6 py-3">Due</th>
+                                            <th className="text-center px-6 py-3">Payment</th>
                                             <th className="text-center px-6 py-3">Status</th>
                                             <th className="text-center px-6 py-3">Actions</th>
                                         </tr>
@@ -169,9 +156,11 @@ export default function ClientShow({ client }: ClientShowProps) {
                                                 <td className="px-6 py-4 text-neutral-500 text-xs">{inv.date}</td>
                                                 <td className="px-6 py-4 text-right font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(Number(inv.total))}</td>
                                                 <td className="px-6 py-4 text-right text-emerald-600 font-medium">{formatCurrency(Number(inv.paid))}</td>
-                                                <td className="px-6 py-4 text-right">
-                                                    <span className={`font-medium ${Number(inv.due) > 0 ? "text-red-500" : "text-neutral-400"}`}>
-                                                        {formatCurrency(Number(inv.due))}
+                                                <td className="px-6 py-4 text-center">
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${inv.payment_status === 'Paid'
+                                                        ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                                                        : 'bg-red-50 text-red-600 border-red-200'}`}>
+                                                        {inv.payment_status}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-center">

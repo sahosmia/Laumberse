@@ -1,17 +1,17 @@
 import { Head, useForm } from '@inertiajs/react';
 import { useState } from "react";
-import { Plus, Trash2, Edit3, X, Tag, Search } from "lucide-react";
+import { Plus, Tag, Search } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, ExpenseCategory } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
-
-interface ExpenseCategoriesProps {
-    categories: ExpenseCategory[];
-}
+import { Modal } from '@/components/ui/modal';
+import { Pagination } from '@/components/ui/pagination';
+import { TableRowActions } from '@/components/table-row-actions';
+import { useDebouncedSearch } from '@/hooks/use-debounced-search';
+import type { ExpenseCategoriesProps } from '@/types/pages/expenses';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -24,39 +24,18 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-import { useEffect } from "react";
-
-export default function ExpenseCategories({ categories }: ExpenseCategoriesProps) {
-    const [search, setSearch] = useState("");
+export default function ExpenseCategories({ categories, filters }: ExpenseCategoriesProps) {
+    const [search, setSearch] = useState(filters.search || "");
     const [showModal, setShowModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState<ExpenseCategory | null>(null);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [deleteId, setDeleteId] = useState<number | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
-    useEffect(() => {
-        if (showModal) {
-            document.body.style.overflow = 'hidden';
-            document.documentElement.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        }
-        return () => {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        };
-    }, [showModal]);
-
-    const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
+    const { data, setData, post, put, reset, errors, processing } = useForm({
         name: '',
         description: '',
     });
 
-    const filtered = categories.filter((c) =>
-        c.name.toLowerCase().includes(search.toLowerCase()) ||
-        (c.description && c.description.toLowerCase().includes(search.toLowerCase()))
-    );
+    useDebouncedSearch('expense-categories.index', search);
 
     const openCreateModal = () => {
         setEditingCategory(null);
@@ -102,19 +81,6 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
         }
     };
 
-    const handleDelete = (id: number) => {
-        setDeleteId(id);
-        setShowDeleteModal(true);
-    };
-
-    const confirmDelete = () => {
-        if (deleteId) {
-            destroy(route('expense-categories.destroy', deleteId), {
-                onSuccess: () => setShowDeleteModal(false),
-            });
-        }
-    };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Expense Categories" />
@@ -151,7 +117,7 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                                {filtered.length === 0 ? (
+                                {categories.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={3} className="px-5 py-10 text-center text-neutral-400">
                                             <Tag className="w-10 h-10 mx-auto mb-2 opacity-20" />
@@ -159,7 +125,7 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
                                         </td>
                                     </tr>
                                 ) : (
-                                    filtered.map((category) => (
+                                    categories.data.map((category) => (
                                         <tr key={category.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30 transition-colors">
                                             <td className="px-5 py-4">
                                                 <div className="font-medium text-neutral-900 dark:text-neutral-100">{category.name}</div>
@@ -168,13 +134,13 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
                                                 {category.description || '-'}
                                             </td>
                                             <td className="px-5 py-4 text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <Button variant="ghost" size="icon" onClick={() => openEditModal(category)}>
-                                                        <Edit3 className="w-4 h-4 text-neutral-500" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(category.id)}>
-                                                        <Trash2 className="w-4 h-4 text-red-500" />
-                                                    </Button>
+                                                <div className="flex justify-end">
+                                                    <TableRowActions
+                                                        id={category.id}
+                                                        label={category.name}
+                                                        edit={{ onClick: () => openEditModal(category) }}
+                                                        deleteRoute="expense-categories.destroy"
+                                                    />
                                                 </div>
                                             </td>
                                         </tr>
@@ -184,16 +150,9 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
                         </table>
                     </div>
                 </div>
-            </div>
 
-            <DeleteConfirmationModal
-                isOpen={showDeleteModal}
-                onClose={() => setShowDeleteModal(false)}
-                onConfirm={confirmDelete}
-                title="Delete Category"
-                description="Are you sure you want to delete this expense category? This action cannot be undone."
-                isProcessing={processing}
-            />
+                <Pagination links={categories.links} />
+            </div>
 
             <SaveConfirmationModal
                 isOpen={showSaveConfirm}
@@ -204,67 +163,48 @@ export default function ExpenseCategories({ categories }: ExpenseCategoriesProps
                 isProcessing={processing}
             />
 
-            {/* Category Modal */}
-            {showModal && (
-                <div 
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-                    onClick={() => setShowModal(false)}
-                >
-                    <div 
-                        className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-6"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
-                                {editingCategory ? 'Edit Category' : 'Add Category'}
-                            </h3>
-                            <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg">
-                                <X className="w-5 h-5 text-neutral-400" />
-                            </button>
-                        </div>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-1">
-                                <Label htmlFor="name">Category Name</Label>
-                                <Input
-                                    id="name"
-                                    value={data.name}
-                                    onChange={e => setData('name', e.target.value)}
-                                    placeholder="Enter category name"
-                                    required
-                                />
-                                {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
-                            </div>
-                            <div className="space-y-1">
-                                <Label htmlFor="description">Description</Label>
-                                <Input
-                                    id="description"
-                                    value={data.description}
-                                    onChange={e => setData('description', e.target.value)}
-                                    placeholder="Enter description (optional)"
-                                />
-                                {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
-                            </div>
-                            <div className="flex gap-2 pt-2">
-                                <Button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="flex-1"
-                                >
-                                    {editingCategory ? 'Update' : 'Save'} Category
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setShowModal(false)}
-                                    className="flex-1"
-                                >
-                                    Cancel
-                                </Button>
-                            </div>
-                        </form>
+            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingCategory ? 'Edit Category' : 'Add Category'}>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-1">
+                        <Label htmlFor="name">Category Name</Label>
+                        <Input
+                            id="name"
+                            value={data.name}
+                            onChange={e => setData('name', e.target.value)}
+                            placeholder="Enter category name"
+                            required
+                        />
+                        {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
                     </div>
-                </div>
-            )}
+                    <div className="space-y-1">
+                        <Label htmlFor="description">Description</Label>
+                        <Input
+                            id="description"
+                            value={data.description}
+                            onChange={e => setData('description', e.target.value)}
+                            placeholder="Enter description (optional)"
+                        />
+                        {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                        <Button
+                            type="submit"
+                            disabled={processing}
+                            className="flex-1"
+                        >
+                            {editingCategory ? 'Update' : 'Save'} Category
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setShowModal(false)}
+                            className="flex-1"
+                        >
+                            Cancel
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </AppLayout>
     );
 }

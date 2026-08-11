@@ -1,29 +1,10 @@
 import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-
-interface Payroll {
-    id: number;
-    employee_id: number;
-    employee?: {
-        id: number;
-        name: string;
-    };
-    expense_id?: number;
-    month: number;
-    year: number;
-    base_salary: number;
-    bonus: number;
-    deduction: number;
-    net_salary: number;
-    paid_amount: number;
-    status: 'pending' | 'partial' | 'completed';
-    deduction_note?: string;
-}
-
-interface PayrollsProps {
-    payrolls: Payroll[];
-}
+import { Pagination } from '@/components/ui/pagination';
+import { PAYROLL_STATUS_STYLES, type PayrollStatus } from '@/constants/status';
+import { formatCurrency } from '@/lib/format';
+import type { PayrollsProps } from '@/types/pages/payrolls';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -32,16 +13,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const formatCurrency = (n: number | string) => `৳${Number(n).toLocaleString("en-BD")}`;
 
 export default function PayrollLedger({ payrolls }: PayrollsProps) {
-    const getStatusStyle = (status: string) => {
-        switch (status) {
-            case 'completed': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
-            case 'partial': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
-            default: return 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400';
-        }
-    };
+    const getStatusStyle = (status: PayrollStatus) => PAYROLL_STATUS_STYLES[status] ?? PAYROLL_STATUS_STYLES.pending;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -69,7 +43,7 @@ export default function PayrollLedger({ payrolls }: PayrollsProps) {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                                {payrolls.map((p) => (
+                                {payrolls.data.map((p) => (
                                     <tr key={p.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors">
                                         <td className="px-5 py-4 whitespace-nowrap font-medium text-neutral-900 dark:text-neutral-100">
                                             {p.employee?.name}
@@ -94,7 +68,7 @@ export default function PayrollLedger({ payrolls }: PayrollsProps) {
                                         </td>
                                     </tr>
                                 ))}
-                                {payrolls.length === 0 && (
+                                {payrolls.data.length === 0 && (
                                     <tr>
                                         <td colSpan={8} className="px-5 py-10 text-center text-neutral-400 italic">No payroll records found</td>
                                     </tr>
@@ -106,7 +80,7 @@ export default function PayrollLedger({ payrolls }: PayrollsProps) {
 
                 {/* Mobile view */}
                 <div className="block md:hidden space-y-4">
-                    {payrolls.map((p) => (
+                    {payrolls.data.map((p) => (
                         <div key={p.id} className="bg-white dark:bg-neutral-900 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 space-y-3">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -150,12 +124,14 @@ export default function PayrollLedger({ payrolls }: PayrollsProps) {
                             </div>
                         </div>
                     ))}
-                    {payrolls.length === 0 && (
+                    {payrolls.data.length === 0 && (
                         <div className="p-8 text-center bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 text-neutral-400 italic">
                             No payroll records found
                         </div>
                     )}
                 </div>
+
+                <Pagination links={payrolls.links} />
             </div>
         </AppLayout>
     );

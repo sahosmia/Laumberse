@@ -2,9 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ClientType;
+use App\Enums\InvoiceStatus;
 use App\Models\Client;
 use App\Models\Invoice;
-use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\InvoiceItem;
@@ -15,9 +16,6 @@ class DemoDataSeeder extends Seeder
 {
     public function run(): void
     {
-        // Get or create an outlet to map invoices to
-        $outlet = Outlet::first() ?? Outlet::create(['name' => 'Main Outlet', 'location' => 'Dhaka']);
-
         // Check if products exist; if not, create a baseline matching your main list
         if (Product::count() === 0) {
             $categories = ['Gents Item', 'Ladies Item', 'Kids Item', 'Household Item', 'Others Item'];
@@ -76,7 +74,7 @@ class DemoDataSeeder extends Seeder
             'name' => 'Global Logistics Corp',
             'phone' => '01555666777',
             'address' => 'Gulshan 2, Dhaka',
-            'type' => 'Corporate'
+            'type' => ClientType::Corporate->value
         ]);
 
         // Pre-configure some products for the corporate client
@@ -126,13 +124,12 @@ class DemoDataSeeder extends Seeder
 
                 $invoice = Invoice::create([
                     'invoice_uuid' => $invoiceId,
-                    'outlet_id' => $outlet->id,
                     'date' => date('Y-m-d', strtotime("-" . rand(0, 60) . " days")),
                     'client_id' => $client->id,
                     'total' => $total,
                     'paid' => $paid,
                     'due' => $due,
-                    'status' => ($due > 0) ? 'Processing' : 'Delivered',
+                    'status' => ($due > 0) ? InvoiceStatus::Processing->value : InvoiceStatus::Delivered->value,
                     'method' => ['Cash', 'Bkash', 'Bank'][rand(0, 2)],
                 ]);
 

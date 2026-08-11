@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('phone')->nullable();
             $table->string('email')->nullable();
+             $table->string('designation')->nullable();
             $table->decimal('base_salary', 15, 2);
             $table->boolean('is_active')->default(true);
             $table->timestamps();

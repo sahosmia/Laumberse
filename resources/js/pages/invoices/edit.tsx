@@ -1,17 +1,10 @@
 import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, Category, Product, Client, Outlet, Invoice } from '@/types';
+import { type BreadcrumbItem } from '@/types';
 import InvoiceForm from '@/components/invoice-form';
+import type { EditInvoiceProps } from '@/types/pages/invoices';
 
-interface EditInvoiceProps {
-    invoice: Invoice;
-    products: Product[];
-    clients: Client[];
-    categories: Category[];
-    outlets: Outlet[];
-}
-
-export default function EditInvoice({ invoice, products, clients, categories, outlets }: EditInvoiceProps) {
+export default function EditInvoice({ invoice, products, clients, categories }: EditInvoiceProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Invoices',
@@ -31,7 +24,6 @@ export default function EditInvoice({ invoice, products, clients, categories, ou
                 products={products}
                 clients={clients}
                 categories={categories}
-                outlets={outlets}
                 isEdit={true}
             />
         </AppLayout>

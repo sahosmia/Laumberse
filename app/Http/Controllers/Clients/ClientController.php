@@ -2,39 +2,38 @@
 
 namespace App\Http\Controllers\Clients;
 
+use App\Actions\Clients\CreateClientAction;
+use App\Actions\Clients\UpdateClientAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Clients\StoreClientRequest;
 use App\Http\Requests\Clients\UpdateClientRequest;
 use App\Models\Client;
-use App\Models\CustomerProductPrice;
 use App\Models\Product;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ClientController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-
+        $clients = Client::with('customPrices')
+            ->when($request->search, fn($q, $s) => $q->where(function ($q) use ($s) {
+                $q->where('name', 'like', "%{$s}%")->orWhere('phone', 'like', "%{$s}%");
+            }))
+            ->orderBy('created_at', 'desc')
+            ->paginate(15)
+            ->withQueryString();
 
         return Inertia::render('clients/index', [
-            'clients' => Client::with('customPrices')->orderBy('created_at', 'desc')->get(),
+            'clients' => $clients,
             'products' => Product::all(),
+            'filters' => ['search' => $request->search],
         ]);
     }
 
-    public function store(StoreClientRequest $request)
+    public function store(StoreClientRequest $request, CreateClientAction $action)
     {
-        DB::transaction(function () use ($request) {
-            $validated = $request->validated();
-            $client = Client::create($validated);
-
-            if ($validated['type'] === 'Corporate' && !empty($validated['custom_prices'])) {
-                foreach ($validated['custom_prices'] as $priceData) {
-                    $client->customPrices()->create($priceData);
-                }
-            }
-        });
+        $action($request->validated());
 
         return redirect()->back()->with('success', 'Client created successfully.');
     }
@@ -46,23 +45,9 @@ class ClientController extends Controller
         ]);
     }
 
-    public function update(UpdateClientRequest $request, Client $client)
+    public function update(UpdateClientRequest $request, Client $client, UpdateClientAction $action)
     {
-        DB::transaction(function () use ($request, $client) {
-            $validated = $request->validated();
-            $client->update($validated);
-
-            if ($validated['type'] === 'Corporate') {
-                $client->customPrices()->delete();
-                if (!empty($validated['custom_prices'])) {
-                    foreach ($validated['custom_prices'] as $priceData) {
-                        $client->customPrices()->create($priceData);
-                    }
-                }
-            } else {
-                $client->customPrices()->delete();
-            }
-        });
+        $action($client, $request->validated());
 
         return redirect()->back()->with('success', 'Client updated successfully.');
     }

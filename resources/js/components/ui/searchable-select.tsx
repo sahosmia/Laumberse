@@ -47,9 +47,22 @@ export function SearchableSelect({
         }
     };
 
+    const handleFocus = () => {
+        // On focus the browser auto-selects the full displayed text, so a single
+        // Backspace would wipe out the whole value instead of one character.
+        // Collapse the selection to the end right after focus to prevent that.
+        requestAnimationFrame(() => {
+            const el = inputRef.current;
+            if (el) {
+                const len = el.value.length;
+                el.setSelectionRange(len, len);
+            }
+        });
+    };
+
     return (
         <div className={cn('w-full', className)}>
-            <Combobox value={value} onChange={handleChange} disabled={disabled} onClose={() => setQuery('')}>
+            <Combobox value={value} onChange={handleChange} disabled={disabled} onClose={() => setQuery('')} immediate>
                 <div className="relative mt-1">
                     <div className="relative w-full cursor-default overflow-hidden rounded-md border border-input bg-background text-left focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 sm:text-sm">
                         <ComboboxInput
@@ -60,6 +73,7 @@ export function SearchableSelect({
                             )}
                             displayValue={(val: string | number) => options.find((o) => o.value == val)?.label || ''}
                             onChange={(event) => setQuery(event.target.value)}
+                            onFocus={handleFocus}
                             placeholder={placeholder}
                         />
                         <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2">

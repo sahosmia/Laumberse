@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\AssetStatus;
 use App\Models\AssetCategory;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
@@ -25,7 +26,7 @@ class ManageAssetSeeder extends Seeder
             'description' => 'Industrial grade washing machine',
             'purchase_date' => '2023-01-15',
             'cost' => 85000,
-            'status' => 'Active',
+            'status' => AssetStatus::Active->value,
             'asset_category_id' => $machinery->id,
         ]);
 
@@ -34,7 +35,7 @@ class ManageAssetSeeder extends Seeder
             'description' => 'Oak wood desk',
             'purchase_date' => '2023-02-10',
             'cost' => 15000,
-            'status' => 'Active',
+            'status' => AssetStatus::Active->value,
             'asset_category_id' => $furniture->id,
         ]);
 
@@ -49,7 +50,7 @@ class ManageAssetSeeder extends Seeder
             'description' => 'MacBook Pro M2 16GB',
             'purchase_date' => date('Y-m-d'),
             'cost' => 245000,
-            'status' => 'Active',
+            'status' => AssetStatus::Active->value,
             'asset_category_id' => $electronics->id,
         ]);
 
@@ -67,7 +68,7 @@ class ManageAssetSeeder extends Seeder
             'description' => 'High back mesh chair',
             'purchase_date' => '2024-05-20',
             'cost' => 12500,
-            'status' => 'Maintenance',
+            'status' => AssetStatus::Maintenance->value,
             'asset_category_id' => $furniture->id,
         ]);
     }

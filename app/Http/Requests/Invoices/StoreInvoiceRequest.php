@@ -2,7 +2,11 @@
 
 namespace App\Http\Requests\Invoices;
 
+use App\Enums\ClientType;
+use App\Enums\DiscountType;
+use App\Enums\InvoiceStatus;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreInvoiceRequest extends FormRequest
 {
@@ -14,40 +18,22 @@ class StoreInvoiceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'invoice_uuid' => 'required|string|unique:invoices,invoice_uuid',
-            'outlet_id' => [
-                'nullable',
-                'exists:outlets,id',
-                function ($attribute, $value, $fail) {
-                    $isNewClient = $this->input('create_new_client');
-                    if ($isNewClient) {
-                        $type = $this->input('new_client_type');
-                    } else {
-                        $client = \App\Models\Client::find($this->input('client_id'));
-                        $type = $client?->type;
-                    }
-
-                    if ($type !== 'Corporate' && empty($value)) {
-                        $fail('The outlet field is required for consumer clients.');
-                    }
-                },
-            ],
             'date' => 'required|date',
             'client_id' => 'required_without:create_new_client|required_if:create_new_client,false|nullable|exists:clients,id',
             'create_new_client' => 'boolean',
             'new_client_name' => 'required_if:create_new_client,true|nullable|string|max:255',
             'new_client_phone' => 'required_if:create_new_client,true|nullable|string|max:255',
             'new_client_address' => 'nullable|string|max:255',
-            'new_client_type' => 'required_if:create_new_client,true|nullable|string|in:Consumer,Corporate',
+            'new_client_type' => ['required_if:create_new_client,true', 'nullable', 'string', Rule::enum(ClientType::class)],
 
             'total' => 'required|numeric|min:0',
-            'paid' => 'required|numeric|min:0',
+            'paid' => 'nullable|numeric|min:0',
             'due' => 'required|numeric',
-            'status' => 'required|string|in:Processing,In House,Delivered',
+            'status' => ['required', 'string', Rule::in(InvoiceStatus::formValues())],
             'method' => 'required|string|in:Cash,Bkash,Bank',
             'remarks' => 'nullable|string',
-            'discount_type' => 'required|string|in:Fixed,Percentage',
-            'discount_amount' => 'required|numeric|min:0',
+            'discount_type' => ['required', 'string', Rule::enum(DiscountType::class)],
+            'discount_amount' => 'nullable|numeric|min:0',
             'delivery_charge' => 'nullable|numeric|min:0',
             'items' => 'required|array|min:1',
             'items.*.productId' => 'required|exists:products,id',

@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Invoices;
 
+use App\Enums\InvoiceStatus;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateInvoiceStatusRequest extends FormRequest
 {
@@ -20,7 +22,7 @@ class UpdateInvoiceStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => 'required|string|in:Pending,Delivered,Cancelled,Processing,In House',
+            'status' => ['required', 'string', Rule::enum(InvoiceStatus::class)],
         ];
     }
 }

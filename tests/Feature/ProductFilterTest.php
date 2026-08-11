@@ -21,7 +21,7 @@ test('it can see products', function () {
     }
 
     $response->assertInertia(fn (Assert $page) => $page
-        ->has('products', 1)
-        ->where('products.0.name', 'Product 1')
+        ->has('products.data', 1)
+        ->where('products.data.0.name', 'Product 1')
     );
 });

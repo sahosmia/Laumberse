@@ -1,15 +1,16 @@
 import { Head, useForm } from '@inertiajs/react';
-import { useState, useEffect } from "react";
-import { Search, Plus, Trash2, Edit3, X, Wallet, AlertCircle, Clock, Tag, CreditCard } from "lucide-react";
+import { useState } from "react";
+import { Search, Plus, Wallet, AlertCircle, Clock, Tag, CreditCard } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, ManageAsset, AssetCategory } from '@/types';
-import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { type BreadcrumbItem, ManageAsset } from '@/types';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
-
-interface ManageAssetsProps {
-    manageAssets: ManageAsset[];
-    categories: AssetCategory[];
-}
+import { Modal } from '@/components/ui/modal';
+import { Pagination } from '@/components/ui/pagination';
+import { TableRowActions } from '@/components/table-row-actions';
+import { ASSET_STATUSES, ASSET_STATUS_STYLES, type AssetStatus } from '@/constants/status';
+import { formatCurrency } from '@/lib/format';
+import { useDebouncedSearch } from '@/hooks/use-debounced-search';
+import type { ManageAssetsProps } from '@/types/pages/manage-assets';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -18,46 +19,25 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const formatCurrency = (n: number) => `৳${n.toLocaleString("en-BD")}`;
 
-export default function ManageAssets({ manageAssets, categories }: ManageAssetsProps) {
-    const [search, setSearch] = useState("");
+export default function ManageAssets({ manageAssets, categories, filters }: ManageAssetsProps) {
+    const [search, setSearch] = useState(filters.search || "");
     const [showModal, setShowModal] = useState(false);
     const [editingAsset, setEditingAsset] = useState<ManageAsset | null>(null);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [deleteId, setDeleteId] = useState<number | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
-    useEffect(() => {
-        if (showModal || showDeleteModal || showSaveConfirm) {
-            document.body.style.overflow = 'hidden';
-            document.documentElement.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        }
-        return () => {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        };
-    }, [showModal, showDeleteModal, showSaveConfirm]);
-
-    const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
+    const { data, setData, post, put, reset, errors, processing } = useForm({
         name: '',
         description: '',
         purchase_date: new Date().toISOString().split('T')[0],
         cost: '' as string | number,
-        status: 'Active',
+        status: 'Active' as AssetStatus,
         asset_category_id: '' as string | number,
         is_new_purchase: false,
         payment_method: 'Cash',
     });
 
-    const filtered = manageAssets.filter((a) =>
-        a.name.toLowerCase().includes(search.toLowerCase()) ||
-        (a.description?.toLowerCase() || "").includes(search.toLowerCase()) ||
-        (a.category?.name.toLowerCase() || "").includes(search.toLowerCase())
-    );
+    useDebouncedSearch('manage-assets.index', search);
 
     const openCreateModal = () => {
         setEditingAsset(null);
@@ -108,27 +88,7 @@ export default function ManageAssets({ manageAssets, categories }: ManageAssetsP
         }
     };
 
-    const handleDelete = (id: number) => {
-        setDeleteId(id);
-        setShowDeleteModal(true);
-    };
-
-    const confirmDelete = () => {
-        if (deleteId) {
-            destroy(route('manage-assets.destroy', deleteId), {
-                onSuccess: () => setShowDeleteModal(false),
-            });
-        }
-    };
-
-    const getStatusStyle = (status: string) => {
-        switch (status) {
-            case 'Active': return 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400';
-            case 'Maintenance': return 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400';
-            case 'Disposed': return 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
-            default: return 'bg-neutral-100 text-neutral-600';
-        }
-    };
+    const getStatusStyle = (status: AssetStatus) => ASSET_STATUS_STYLES[status] ?? 'bg-neutral-100 text-neutral-600';
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -159,11 +119,15 @@ export default function ManageAssets({ manageAssets, categories }: ManageAssetsP
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filtered.map((a) => (
+                    {manageAssets.data.map((a) => (
                         <div key={a.id} className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 group relative overflow-hidden transition-all hover:shadow-xl">
-                            <div className="absolute top-4 right-4 flex gap-1">
-                                <button onClick={() => openEditModal(a)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600"><Edit3 className="w-3.5 h-3.5" /></button>
-                                <button onClick={() => handleDelete(a.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
+                            <div className="absolute top-4 right-4">
+                                <TableRowActions
+                                    id={a.id}
+                                    label={a.name}
+                                    edit={{ onClick: () => openEditModal(a) }}
+                                    deleteRoute="manage-assets.destroy"
+                                />
                             </div>
                             <div className="flex items-start gap-4 mb-4">
                                 <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
@@ -204,23 +168,16 @@ export default function ManageAssets({ manageAssets, categories }: ManageAssetsP
                             </div>
                         </div>
                     ))}
-                    {filtered.length === 0 && (
+                    {manageAssets.data.length === 0 && (
                         <div className="col-span-full py-20 text-center">
                             <AlertCircle className="w-12 h-12 text-neutral-200 dark:text-neutral-800 mx-auto mb-3" />
                             <p className="text-neutral-400">No assets found matching your search</p>
                         </div>
                     )}
                 </div>
-            </div>
 
-            <DeleteConfirmationModal
-                isOpen={showDeleteModal}
-                onClose={() => setShowDeleteModal(false)}
-                onConfirm={confirmDelete}
-                title="Delete Asset"
-                description="Are you sure you want to delete this asset? This action cannot be undone."
-                isProcessing={processing}
-            />
+                <Pagination links={manageAssets.links} />
+            </div>
 
             <SaveConfirmationModal
                 isOpen={showSaveConfirm}
@@ -231,21 +188,8 @@ export default function ManageAssets({ manageAssets, categories }: ManageAssetsP
                 isProcessing={processing}
             />
 
-            {/* Asset Modal */}
-            {showModal && (
-                <div 
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-                    onClick={() => setShowModal(false)}
-                >
-                    <div 
-                        className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-lg w-full p-6"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{editingAsset ? 'Edit Asset' : 'New Asset'}</h3>
-                            <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"><X className="w-5 h-5 text-neutral-400" /></button>
-                        </div>
-                        <form onSubmit={handleSubmit} className="space-y-4">
+            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingAsset ? 'Edit Asset' : 'New Asset'} size="lg">
+                <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label htmlFor="name" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Asset Name</label>
@@ -308,12 +252,12 @@ export default function ManageAssets({ manageAssets, categories }: ManageAssetsP
                                     <select
                                         id="status"
                                         value={data.status}
-                                        onChange={e => setData('status', e.target.value)}
+                                        onChange={e => setData('status', e.target.value as AssetStatus)}
                                         className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
                                     >
-                                        <option value="Active">Active</option>
-                                        <option value="Maintenance">Maintenance</option>
-                                        <option value="Disposed">Disposed</option>
+                                        {ASSET_STATUSES.map(s => (
+                                            <option key={s} value={s}>{s}</option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
@@ -389,10 +333,8 @@ export default function ManageAssets({ manageAssets, categories }: ManageAssetsP
                                     Cancel
                                 </button>
                             </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+                </form>
+            </Modal>
         </AppLayout>
     );
 }

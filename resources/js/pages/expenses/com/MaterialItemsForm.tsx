@@ -2,21 +2,7 @@ import { useState } from "react";
 import { Plus, Trash2, Edit3, Check } from "lucide-react";
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
-import { Material } from '@/types';
-
-interface MaterialItem {
-    material_id: string | number;
-    quantity: number | '';
-    unit_price: number | '';
-    isSaved?: boolean;
-}
-
-interface MaterialItemsFormProps {
-    items: MaterialItem[];
-    materials: Material[];
-    errors: Record<string, string>;
-    onChange: (items: MaterialItem[]) => void;
-}
+import type { MaterialItem, MaterialItemsFormProps } from '@/types/pages/expenses';
 
 export function MaterialItemsForm({ items, materials, errors, onChange }: MaterialItemsFormProps) {
     const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);

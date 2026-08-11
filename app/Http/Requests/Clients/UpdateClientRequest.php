@@ -2,25 +2,6 @@
 
 namespace App\Http\Requests\Clients;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class UpdateClientRequest extends FormRequest
+class UpdateClientRequest extends StoreClientRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
-
-    public function rules(): array
-    {
-        return [
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'type' => 'required|string|in:Consumer,Corporate',
-            'address' => 'nullable|string|max:500',
-            'custom_prices' => 'nullable|array',
-            'custom_prices.*.product_id' => 'required|exists:products,id',
-            'custom_prices.*.custom_price' => 'required|numeric|min:0',
-        ];
-    }
 }

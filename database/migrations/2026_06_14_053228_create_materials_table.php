@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('materials', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name')->unique();
             $table->foreignId('unit_id')->nullable()->constrained()->onDelete('set null');
             $table->timestamps();
         });

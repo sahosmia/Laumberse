@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<'input'>>(({ className, type, ...props }, ref) => {
+const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<'input'>>(({ className, type, onWheel, ...props }, ref) => {
     return (
         <input
             type={type}
@@ -11,6 +11,10 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<'input'>>(
                 className,
             )}
             ref={ref}
+            // Prevent the browser's default number-input behavior of changing the value
+            // on mouse-wheel scroll, which can silently corrupt values (price, qty, paid, etc.)
+            // when the user scrolls the page while the field happens to be focused.
+            onWheel={type === 'number' ? (e) => { e.currentTarget.blur(); onWheel?.(e); } : onWheel}
             {...props}
         />
     );

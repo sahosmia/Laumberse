@@ -6,17 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { useState } from 'react';
-
-interface Category {
-    id: number;
-    name: string;
-    slug: string;
-    description: string | null;
-}
-
-interface FormProps {
-    category?: Category;
-}
+import type { ProductCategory as Category, ProductCategoryFormProps as FormProps } from '@/types/pages/products';
 
 export default function Form({ category }: FormProps) {
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);

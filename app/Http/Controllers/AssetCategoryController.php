@@ -10,10 +10,18 @@ use Inertia\Inertia;
 
 class AssetCategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $categories = AssetCategory::when($request->search, fn($q, $s) => $q->where(function ($q) use ($s) {
+                $q->where('name', 'like', "%{$s}%")->orWhere('description', 'like', "%{$s}%");
+            }))
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
         return Inertia::render('manage-assets/categories/index', [
-            'categories' => AssetCategory::latest()->get(),
+            'categories' => $categories,
+            'filters' => ['search' => $request->search],
         ]);
     }
 

@@ -16,7 +16,8 @@ class GlobalSettingController extends Controller
             'settings' => [
                 'salary_category_id' => GlobalSetting::get('salary_category_id'),
                 'material_expense_category_id' => GlobalSetting::get('material_expense_category_id'),
-
+                'business_transportation_category_id' => GlobalSetting::get('business_transportation_category_id'),
+                'delivery_transportation_category_id' => GlobalSetting::get('delivery_transportation_category_id'),
             ],
             'expense_categories' => ExpenseCategory::all(),
         ]);
@@ -26,14 +27,9 @@ class GlobalSettingController extends Controller
     {
         $validated = $request->validated();
 
-        GlobalSetting::updateOrCreate(
-            ['key' => 'salary_category_id'],
-            ['value' => $validated['salary_category_id']]
-        );
-        GlobalSetting::updateOrCreate(
-            ['key' => 'material_expense_category_id'],
-            ['value' => $validated['material_expense_category_id']]
-        );
+        foreach ($validated as $key => $value) {
+            GlobalSetting::updateOrCreate(['key' => $key], ['value' => $value]);
+        }
 
         return redirect()->back()->with('success', 'Settings updated successfully');
     }

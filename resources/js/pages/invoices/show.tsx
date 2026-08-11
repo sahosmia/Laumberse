@@ -1,48 +1,26 @@
-import { Head, Link } from '@inertiajs/react';
-import { Printer, ArrowLeft, Download, CreditCard, Calendar, User, Package, Edit3 } from 'lucide-react';
-import { useEffect } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
+import { Printer, ArrowLeft, Download, CreditCard, Calendar, User, Package, Edit3, CircleCheck, CircleDollarSign } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-
-interface InvoiceItem {
-    id: number;
-    product: {
-        name: string;
-        image_url?: string | null;
-    };
-    qty: number;
-    price: number;
-}
-
-interface Invoice {
-    id: string;
-    date: string;
-    client: { name: string; phone: string; address: string | null };
-    total: number;
-    paid: number;
-    due: number;
-    status: string;
-    method: string;
-    remarks: string | null;
-    discount_type: string;
-    discount_amount: number;
-    delivery_charge?: number | string | null;
-    items: InvoiceItem[];
-}
-
-interface InvoiceDetailProps {
-    invoice: Invoice;
-}
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
+import { formatCurrency } from '@/lib/format';
+import type { InvoiceDetailProps } from '@/types/pages/invoices';
+import type { PaymentStatus } from '@/constants/status';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Invoice History', href: '/invoices' },
     { title: 'Invoice Detail', href: '#' },
 ];
 
-const formatCurrency = (n: number) => `৳${n.toLocaleString("en-BD")}`;
 
 export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
+    const [togglingPayment, setTogglingPayment] = useState(false);
+    const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
+    const isPaid = invoice.payment_status === 'Paid';
+    const nextPaymentStatus: PaymentStatus = isPaid ? 'Unpaid' : 'Paid';
+
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         if (params.has('print')) {
@@ -52,6 +30,19 @@ export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
 
     const handlePrint = () => {
         window.open(route('invoices.print', invoice.id), '_blank');
+    };
+
+    const confirmTogglePayment = () => {
+        setTogglingPayment(true);
+        router.patch(route('invoices.update-payment-status', invoice.id), {
+            payment_status: nextPaymentStatus,
+        }, {
+            preserveScroll: true,
+            onFinish: () => {
+                setTogglingPayment(false);
+                setShowPaymentConfirm(false);
+            },
+        });
     };
 
     return (
@@ -65,6 +56,15 @@ export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                         </Link>
                     </Button>
                     <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            disabled={togglingPayment}
+                            onClick={() => setShowPaymentConfirm(true)}
+                            className={isPaid ? 'text-emerald-600 border-emerald-200 hover:text-emerald-700' : 'text-red-600 border-red-200 hover:text-red-700'}
+                        >
+                            {isPaid ? <CircleCheck className="w-4 h-4 mr-2" /> : <CircleDollarSign className="w-4 h-4 mr-2" />}
+                            {isPaid ? 'Paid' : 'Mark as Paid'}
+                        </Button>
                         <Button variant="outline" asChild>
                             <Link href={route('invoices.edit', invoice.id)}>
                                 <Edit3 className="w-4 h-4 mr-2" /> Edit
@@ -113,6 +113,12 @@ export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                                 <p className="text-sm"><span className="text-neutral-500">Date:</span> <span className="font-medium">{invoice.date}</span></p>
                                 <p className="text-sm"><span className="text-neutral-500">Status:</span> <span className="font-medium">{invoice.status}</span></p>
                                 <p className="text-sm"><span className="text-neutral-500">Method:</span> <span className="font-medium">{invoice.method}</span></p>
+                                <p className="text-sm">
+                                    <span className="text-neutral-500">Payment:</span>{' '}
+                                    <span className={`font-medium ${isPaid ? 'text-emerald-600' : 'text-red-500'}`}>
+                                        {invoice.payment_status}{isPaid && invoice.payment_date ? ` on ${invoice.payment_date}` : ''}
+                                    </span>
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -173,17 +179,19 @@ export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                                     </div>
                                 );
                             })()}
-                            <div className="flex justify-between text-sm text-blue-600 font-medium">
-                                <span>Delivery Charge</span>
-                                <span>{formatCurrency(Number(invoice.delivery_charge || 0))}</span>
-                            </div>
+                            {invoice.client.type !== 'Corporate' && (
+                                <div className="flex justify-between text-sm text-blue-600 font-medium">
+                                    <span>Delivery Charge</span>
+                                    <span>{formatCurrency(Number(invoice.delivery_charge || 0))}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between text-sm text-emerald-600 font-medium">
                                 <span>Paid</span>
                                 <span>{formatCurrency(Number(invoice.paid))}</span>
                             </div>
-                            <div className="flex justify-between text-sm text-red-500 font-medium border-b border-neutral-100 dark:border-neutral-800 pb-3">
-                                <span>Due</span>
-                                <span>{formatCurrency(Number(invoice.due))}</span>
+                            <div className={`flex justify-between text-sm font-medium border-b border-neutral-100 dark:border-neutral-800 pb-3 ${isPaid ? 'text-emerald-600' : 'text-red-500'}`}>
+                                <span>Payment Status</span>
+                                <span>{invoice.payment_status}</span>
                             </div>
                             <div className="flex justify-between text-xl font-bold pt-1 text-blue-600">
                                 <span>Total</span>
@@ -208,6 +216,16 @@ export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                     }
                 `}} />
             </div>
+
+            <SaveConfirmationModal
+                isOpen={showPaymentConfirm}
+                onClose={() => setShowPaymentConfirm(false)}
+                onConfirm={confirmTogglePayment}
+                title={`Mark as ${nextPaymentStatus}`}
+                description={`Currently paid ${formatCurrency(Number(invoice.paid))}, due ${formatCurrency(Number(invoice.total) - Number(invoice.paid))}. Marking as ${nextPaymentStatus} will set paid to ${formatCurrency(nextPaymentStatus === 'Paid' ? Number(invoice.total) : 0)} and due to ${formatCurrency(nextPaymentStatus === 'Paid' ? 0 : Number(invoice.total))}.`}
+                confirmText={`Mark as ${nextPaymentStatus}`}
+                isProcessing={togglingPayment}
+            />
         </AppLayout>
     );
 }

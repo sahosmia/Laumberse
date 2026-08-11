@@ -1,33 +1,5 @@
 import { SearchableSelect } from '@/components/ui/searchable-select';
-
-interface EligibleEmployee {
-    id: number;
-    name: string;
-    base_salary: number;
-    already_paid: number;
-    bonus: number;
-    deduction: number;
-    net_salary: number;
-    status: string;
-}
-
-interface PayrollFormProps {
-    data: {
-        month: number;
-        year: number;
-        employee_id: string | number;
-        bonus: number | '';
-        deduction: number | '';
-        deduction_note: string;
-    };
-    // Alignment with Inertia's useForm signature without using any
-    setData: (key: string, value: string | number | boolean | null | undefined) => void;
-    errors: Record<string, string | undefined>;
-    eligibleEmployees: EligibleEmployee[];
-    selectedEmployee: EligibleEmployee | null;
-    netSalary: number;
-    formatCurrency: (n: number | string) => string;
-}
+import type { PayrollFormProps } from '@/types/pages/expenses';
 
 export function PayrollForm({
     data,

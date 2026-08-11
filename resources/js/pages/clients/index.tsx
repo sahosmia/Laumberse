@@ -1,16 +1,17 @@
-import { Head, Link, useForm } from '@inertiajs/react';
-import { useState, useEffect } from "react";
-import { Search, Plus, Trash2, Edit3, X, Settings2, PackagePlus, Eye } from "lucide-react";
+import { Head, useForm } from '@inertiajs/react';
+import { useState } from "react";
+import { Search, Plus, Settings2, PackagePlus, Trash2 } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { SearchableSelect } from '@/components/ui/searchable-select';
-import { type BreadcrumbItem, Client, Product } from '@/types';
-import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { type BreadcrumbItem, Client } from '@/types';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
-
-interface ClientsProps {
-    clients: Client[];
-    products: Product[];
-}
+import { Modal } from '@/components/ui/modal';
+import { Pagination } from '@/components/ui/pagination';
+import { TableRowActions } from '@/components/table-row-actions';
+import { CLIENT_TYPES, CLIENT_TYPE_STYLES, type ClientType } from '@/constants/status';
+import { formatCurrency } from '@/lib/format';
+import { useDebouncedSearch } from '@/hooks/use-debounced-search';
+import type { ClientsProps } from '@/types/pages/clients';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -19,42 +20,25 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const formatCurrency = (n: number) => `৳${n.toLocaleString("en-BD")}`;
 
-export default function Clients({ clients, products }: ClientsProps) {
-    const [search, setSearch] = useState("");
+const typeBadgeClass = (type: ClientType) => CLIENT_TYPE_STYLES[type] ?? CLIENT_TYPE_STYLES.Consumer;
+
+export default function Clients({ clients, products, filters }: ClientsProps) {
+    const [search, setSearch] = useState(filters.search || "");
     const [showModal, setShowModal] = useState(false);
     const [editingClient, setEditingClient] = useState<Client | null>(null);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [deleteId, setDeleteId] = useState<number | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
-    useEffect(() => {
-        if (showModal) {
-            document.body.style.overflow = 'hidden';
-            document.documentElement.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        }
-        return () => {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        };
-    }, [showModal]);
-
-    const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
+    const { data, setData, post, put, reset, errors, processing } = useForm({
         name: '',
         phone: '',
-        type: 'Consumer',
+        type: 'Consumer' as ClientType,
         address: '',
         custom_prices: [] as { product_id: number; custom_price: string | number }[],
     });
 
-    const filtered = clients.filter((c) =>
-        c.name.toLowerCase().includes(search.toLowerCase()) || c.phone.includes(search)
-    );
+    useDebouncedSearch('clients.index', search);
 
     const openCreateModal = () => {
         setEditingClient(null);
@@ -117,19 +101,6 @@ const confirmSave = () => {
     }
 };
 
-    const handleDelete = (id: number) => {
-        setDeleteId(id);
-        setShowDeleteModal(true);
-    };
-
-    const confirmDelete = () => {
-        if (deleteId) {
-            destroy(route('clients.destroy', deleteId), {
-                onSuccess: () => setShowDeleteModal(false),
-            });
-        }
-    };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Clients" />
@@ -137,7 +108,7 @@ const confirmSave = () => {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Clients</h1>
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400">{clients.length} registered clients</p>
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">{clients.total} registered clients</p>
                     </div>
                     <button
                         onClick={openCreateModal}
@@ -159,18 +130,22 @@ const confirmSave = () => {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filtered.map((c) => (
+                    {clients.data.map((c) => (
                         <div key={c.id} className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 hover:shadow-lg transition-shadow duration-300 relative group">
-                            <div className="absolute top-4 right-4 flex gap-1 z-10">
-                                <Link href={route('clients.show', c.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600"><Eye className="w-3.5 h-3.5" /></Link>
-                                <button onClick={() => openEditModal(c)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600"><Edit3 className="w-3.5 h-3.5" /></button>
-                                <button onClick={() => handleDelete(c.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
+                            <div className="absolute top-4 right-4 z-10">
+                                <TableRowActions
+                                    id={c.id}
+                                    label={c.name}
+                                    view={{ href: route('clients.show', c.id) }}
+                                    edit={{ onClick: () => openEditModal(c) }}
+                                    deleteRoute="clients.destroy"
+                                />
                             </div>
                             <div className="flex items-start justify-between mb-3">
                                 <div className="pr-16">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <h4 className="font-bold text-neutral-900 dark:text-neutral-100 text-sm sm:text-base break-words">{c.name}</h4>
-                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase ${c.type === 'Corporate' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'}`}>
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase ${typeBadgeClass(c.type)}`}>
                                             {c.type}
                                         </span>
                                     </div>
@@ -198,16 +173,9 @@ const confirmSave = () => {
                         </div>
                     ))}
                 </div>
-            </div>
 
-            <DeleteConfirmationModal
-                isOpen={showDeleteModal}
-                onClose={() => setShowDeleteModal(false)}
-                onConfirm={confirmDelete}
-                title="Delete Client"
-                description="Are you sure you want to delete this client? This action cannot be undone."
-                isProcessing={processing}
-            />
+                <Pagination links={clients.links} />
+            </div>
 
             <SaveConfirmationModal
                 isOpen={showSaveConfirm}
@@ -218,33 +186,8 @@ const confirmSave = () => {
                 isProcessing={processing}
             />
 
-           {/* Client Modal */}
-{showModal && (
-    <div 
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in"
-        onClick={() => setShowModal(false)}
-    >
-        <div 
-            className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-xl w-full p-6 max-h-[90vh] overflow-y-auto transform transition-all"
-            onClick={e => e.stopPropagation()}
-        >
-
-            {/* Modal Header */}
-            <div className="flex justify-between items-center mb-6 border-b border-neutral-100 dark:border-neutral-800 pb-4">
-                <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
-                    {editingClient ? 'Edit Client' : 'New Client'}
-                </h3>
-                <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors"
-                >
-                    <X className="w-5 h-5" />
-                </button>
-            </div>
-
-            {/* Modal Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingClient ? 'Edit Client' : 'New Client'} size="xl">
+                <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Name Input */}
                 <div>
                     <label htmlFor="client_name" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Name</label>
@@ -283,11 +226,12 @@ const confirmSave = () => {
                             id="client_type"
                             value={data.type}
                             disabled={processing}
-                            onChange={e => setData('type', e.target.value as any)}
+                            onChange={e => setData('type', e.target.value as ClientType)}
                             className="w-full mt-1 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-white dark:bg-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60 transition-all"
                         >
-                            <option value="Consumer" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">Consumer</option>
-                            <option value="Corporate" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">Corporate</option>
+                            {CLIENT_TYPES.map(t => (
+                                <option key={t} value={t} className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">{t}</option>
+                            ))}
                         </select>
                         {errors.type && <p className="text-xs text-red-500 mt-1 font-medium">{errors.type}</p>}
                     </div>
@@ -455,10 +399,8 @@ const confirmSave = () => {
                         )}
                     </button>
                 </div>
-            </form>
-        </div>
-    </div>
-)}
+                </form>
+            </Modal>
         </AppLayout>
     );
 }

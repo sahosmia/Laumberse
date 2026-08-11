@@ -1,14 +1,12 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Calendar, Tag, CreditCard, Store, User, Package, Briefcase } from "lucide-react";
+import { ArrowLeft, Calendar, Tag, CreditCard, User, Package, Briefcase } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, Expense, SharedData } from '@/types';
+import { type BreadcrumbItem, SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
+import { formatCurrency as baseFormatCurrency } from '@/lib/format';
+import type { ExpenseShowProps } from '@/types/pages/expenses';
 
-interface ExpenseShowProps {
-    expense: Expense;
-}
-
-const formatCurrency = (n: number | string) => `৳${Number(n).toLocaleString("en-BD", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const formatCurrency = (n: number | string) => baseFormatCurrency(n, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function ExpenseShow({ expense }: ExpenseShowProps) {
     const { settings } = usePage<SharedData>().props;
@@ -61,12 +59,6 @@ export default function ExpenseShow({ expense }: ExpenseShowProps) {
                                         <CreditCard className="w-3 h-3" /> Method
                                     </span>
                                     <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">{expense.payment_method}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <span className="text-[10px] font-bold text-neutral-400 uppercase flex items-center gap-1.5">
-                                        <Store className="w-3 h-3" /> Outlet
-                                    </span>
-                                    <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">{expense.outlet?.name || 'Main Shop'}</p>
                                 </div>
                             </div>
                         </div>

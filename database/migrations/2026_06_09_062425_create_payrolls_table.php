@@ -22,7 +22,7 @@ return new class extends Migration
             $table->decimal('deduction', 15, 2)->default(0);
             $table->decimal('net_salary', 15, 2);
             $table->decimal('paid_amount', 15, 2)->default(0);
-            $table->string('status')->default('pending'); // pending, partial, completed
+            $table->enum('status', ['pending', 'partial', 'completed'])->default('pending');
             $table->text('deduction_note')->nullable();
             $table->timestamps();
         });

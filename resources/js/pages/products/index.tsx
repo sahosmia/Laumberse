@@ -1,19 +1,17 @@
 import { Head, useForm, router } from '@inertiajs/react';
-import { useState, useEffect } from "react";
-import { Search, Plus, Trash2, Edit3, X } from "lucide-react";
+import { useState } from "react";
+import { Search, Plus, Trash2 } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, Category, Unit, Outlet, Product } from '@/types';
+import { type BreadcrumbItem, Product } from '@/types';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
-
-interface ProductsProps {
-    products: Product[];
-    categories: Category[];
-    units: Unit[];
-    outlets: Outlet[];
-    filter?: string;
-}
+import { Modal } from '@/components/ui/modal';
+import { Pagination } from '@/components/ui/pagination';
+import { TableRowActions } from '@/components/table-row-actions';
+import { formatCurrency } from '@/lib/format';
+import { useDebouncedSearch } from '@/hooks/use-debounced-search';
+import type { ProductsProps } from '@/types/pages/products';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -22,50 +20,29 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const formatCurrency = (n: number) => `৳${n.toLocaleString("en-BD")}`;
 
-export default function Products({ products, categories, filter, units, outlets }: ProductsProps) {
-    const [search, setSearch] = useState("");
+export default function Products({ products, categories, units, filters }: ProductsProps) {
+    const [search, setSearch] = useState(filters.search || "");
     const [showModal, setShowModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [deleteId, setDeleteId] = useState<number | null>(null);
     const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
-    useEffect(() => {
-        if (showModal) {
-            document.body.style.overflow = 'hidden';
-            document.documentElement.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        }
-        return () => {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        };
-    }, [showModal]);
-
-    const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
+    const { data, setData, post, put, reset, errors, processing } = useForm({
         name: '',
         category_id: null as number | null,
         unit_id: null as number | null,
                 image: null as File | null,
 
         price: '',
-        outlet_prices: [] as { outlet_id: number; price: string }[],
     });
 
-    const filtered = products.filter((p) =>
-        p.name.toLowerCase().includes(search.toLowerCase()) || p.id.toString().includes(search)
-    );
+    useDebouncedSearch('products.index', search);
 
     const openCreateModal = () => {
         setEditingProduct(null);
         reset();
-        setData('outlet_prices', outlets.map(o => ({ outlet_id: o.id, price: '' })));
         setShowModal(true);
     };
 
@@ -77,10 +54,6 @@ export default function Products({ products, categories, filter, units, outlets 
             unit_id: product.unit_id || null,
             image: null,
             price: product.price.toString(),
-            outlet_prices: outlets.map(o => {
-                const existing = product.outlet_prices?.find(op => op.outlet_id === o.id);
-                return { outlet_id: o.id, price: existing ? existing.price.toString() : '' };
-            }),
         });
         setShowModal(true);
     };
@@ -113,19 +86,6 @@ export default function Products({ products, categories, filter, units, outlets 
         }
     };
 
-    const handleDelete = (id: number) => {
-        setDeleteId(id);
-        setShowDeleteModal(true);
-    };
-
-    const confirmDelete = () => {
-        if (deleteId) {
-            destroy(route('products.destroy', deleteId), {
-                onSuccess: () => setShowDeleteModal(false),
-            });
-        }
-    };
-
     const handleBulkDelete = () => {
         setShowBulkDeleteModal(true);
     };
@@ -141,10 +101,10 @@ export default function Products({ products, categories, filter, units, outlets 
     };
 
     const toggleSelectAll = () => {
-        if (selectedIds.length === filtered.length) {
+        if (selectedIds.length === products.data.length) {
             setSelectedIds([]);
         } else {
-            setSelectedIds(filtered.map(p => p.id));
+            setSelectedIds(products.data.map(p => p.id));
         }
     };
 
@@ -162,7 +122,7 @@ export default function Products({ products, categories, filter, units, outlets 
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Products</h1>
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400">{products.length} items</p>
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">{products.total} items</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <button
@@ -201,7 +161,7 @@ export default function Products({ products, categories, filter, units, outlets 
                                     <th className="px-5 py-3 text-center">
                                         <input
                                             type="checkbox"
-                                            checked={selectedIds.length === filtered.length && filtered.length > 0}
+                                            checked={selectedIds.length === products.data.length && products.data.length > 0}
                                             onChange={toggleSelectAll}
                                             className="rounded border-neutral-300 dark:border-neutral-700 text-blue-600 focus:ring-blue-500"
                                         />
@@ -214,7 +174,7 @@ export default function Products({ products, categories, filter, units, outlets 
                                 </tr>
                             </thead>
                             <tbody>
-                                {filtered.map((p) => (
+                                {products.data.map((p) => (
                                     <tr key={p.id} className={`border-b border-neutral-50 dark:border-neutral-800 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30 transition-colors ${selectedIds.includes(p.id) ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
                                         <td className="px-5 py-3 text-center">
                                             <input
@@ -246,9 +206,13 @@ export default function Products({ products, categories, filter, units, outlets 
                                         </td>
                                         <td className="px-3 py-3 text-right font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(Number(p.price))}</td>
                                         <td className="px-3 py-3">
-                                            <div className="flex items-center justify-center gap-1">
-                                                <button onClick={() => openEditModal(p)} className="p-1.5 text-neutral-400 hover:text-blue-600"><Edit3 className="w-4 h-4" /></button>
-                                                <button onClick={() => handleDelete(p.id)} className="p-1.5 text-neutral-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                                            <div className="flex items-center justify-center">
+                                                <TableRowActions
+                                                    id={p.id}
+                                                    label={p.name}
+                                                    edit={{ onClick: () => openEditModal(p) }}
+                                                    deleteRoute="products.destroy"
+                                                />
                                             </div>
                                         </td>
                                     </tr>
@@ -259,7 +223,7 @@ export default function Products({ products, categories, filter, units, outlets 
 
                     {/* Mobile Card Layout */}
                     <div className="md:hidden divide-y divide-neutral-100 dark:divide-neutral-800">
-                        {filtered.map((p) => (
+                        {products.data.map((p) => (
                             <div key={p.id} className={`p-4 space-y-3 bg-white dark:bg-neutral-900 ${selectedIds.includes(p.id) ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
@@ -289,29 +253,20 @@ export default function Products({ products, categories, filter, units, outlets 
                                         <p className="font-bold text-neutral-900 dark:text-neutral-100 truncate">{p.name}</p>
                                         <p className="text-sm font-bold text-blue-600">{formatCurrency(Number(p.price))}</p>
                                     </div>
-                                    <div className="flex flex-col gap-1">
-                                        <button onClick={() => openEditModal(p)} className="p-2 bg-neutral-50 dark:bg-neutral-800 text-neutral-400 hover:text-blue-600 rounded-lg border border-neutral-100 dark:border-neutral-700/50">
-                                            <Edit3 className="w-4 h-4" />
-                                        </button>
-                                        <button onClick={() => handleDelete(p.id)} className="p-2 bg-red-50 dark:bg-red-900/10 text-red-400 hover:text-red-600 rounded-lg border border-red-100 dark:border-red-800/50">
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
+                                    <TableRowActions
+                                        id={p.id}
+                                        label={p.name}
+                                        edit={{ onClick: () => openEditModal(p) }}
+                                        deleteRoute="products.destroy"
+                                    />
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
-            </div>
 
-            <DeleteConfirmationModal
-                isOpen={showDeleteModal}
-                onClose={() => setShowDeleteModal(false)}
-                onConfirm={confirmDelete}
-                title="Delete Product"
-                description="Are you sure you want to delete this product? This action cannot be undone."
-                isProcessing={processing}
-            />
+                <Pagination links={products.links} />
+            </div>
 
             <DeleteConfirmationModal
                 isOpen={showBulkDeleteModal}
@@ -333,21 +288,8 @@ export default function Products({ products, categories, filter, units, outlets 
                 isProcessing={processing}
             />
 
-            {/* Product Modal */}
-            {showModal && (
-                <div 
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-                    onClick={() => setShowModal(false)}
-                >
-                    <div 
-                        className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{editingProduct ? 'Edit Product' : 'New Product'}</h3>
-                            <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"><X className="w-5 h-5 text-gray-400" /></button>
-                        </div>
-                        <form onSubmit={handleSubmit} className="space-y-4">
+            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingProduct ? 'Edit Product' : 'New Product'}>
+                <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
                                 <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Product Image</label>
                                 <div className="mt-1 flex items-center gap-4">
@@ -420,32 +362,6 @@ export default function Products({ products, categories, filter, units, outlets 
                                 </div>
 
                             </div>
-                            <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">Outlet-wise Prices (Optional)</h4>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {outlets.map((outlet, idx) => (
-                                        <div key={outlet.id}>
-                                            <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">{outlet.name} Price</label>
-                                            <input
-                                                type="number"
-                                                value={data.outlet_prices.find(op => op.outlet_id === outlet.id)?.price || ''}
-                                                onChange={e => {
-                                                    const newOutletPrices = [...data.outlet_prices];
-                                                    const opIdx = newOutletPrices.findIndex(op => op.outlet_id === outlet.id);
-                                                    if (opIdx > -1) {
-                                                        newOutletPrices[opIdx].price = e.target.value;
-                                                    } else {
-                                                        newOutletPrices.push({ outlet_id: outlet.id, price: e.target.value });
-                                                    }
-                                                    setData('outlet_prices', newOutletPrices);
-                                                }}
-                                                className="w-full mt-1 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                                placeholder="Same as base"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
 
                             <div className="flex gap-2 pt-2">
                                 <button
@@ -463,10 +379,8 @@ export default function Products({ products, categories, filter, units, outlets 
                                     Cancel
                                 </button>
                             </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+                </form>
+            </Modal>
         </AppLayout>
     );
 }

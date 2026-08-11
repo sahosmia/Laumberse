@@ -18,7 +18,7 @@ return new class extends Migration
             $table->date('purchase_date');
             $table->decimal('cost', 15, 2);
             $table->text('description')->nullable();
-            $table->string('status');
+            $table->enum('status', ['Active', 'Maintenance', 'Disposed']);
             $table->timestamps();
         });
     }

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Employees;
 
+use App\Actions\Employees\GetEligibleEmployeesForPayrollAction;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
-use App\Models\Payroll;
 use App\Http\Requests\Employees\StoreEmployeeRequest;
 use App\Http\Requests\Employees\UpdateEmployeeRequest;
 use App\Http\Requests\Employees\GetEligibleForPayrollRequest;
@@ -13,10 +13,18 @@ use Inertia\Inertia;
 
 class EmployeeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $employees = Employee::when($request->search, fn($q, $s) => $q->where(function ($q) use ($s) {
+                $q->where('name', 'like', "%{$s}%")->orWhere('designation', 'like', "%{$s}%");
+            }))
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
         return Inertia::render('employees/index', [
-            'employees' => Employee::all()
+            'employees' => $employees,
+            'filters' => ['search' => $request->search],
         ]);
     }
 
@@ -44,36 +52,10 @@ class EmployeeController extends Controller
         return redirect()->back()->with('success', 'Employee deleted successfully');
     }
 
-    public function getEligibleForPayroll(GetEligibleForPayrollRequest $request)
+    public function getEligibleForPayroll(GetEligibleForPayrollRequest $request, GetEligibleEmployeesForPayrollAction $action)
     {
-        $month = $request->validated()['month'];
-        $year = $request->validated()['year'];
+        $validated = $request->validated();
 
-        $employees = Employee::where('is_active', true)
-            ->whereDoesntHave('payrolls', function ($query) use ($month, $year) {
-                $query->where('month', $month)
-                    ->where('year', $year)
-                    ->where('status', 'completed');
-            })
-            ->get()
-            ->map(function ($employee) use ($month, $year) {
-                $payroll = Payroll::where('employee_id', $employee->id)
-                    ->where('month', $month)
-                    ->where('year', $year)
-                    ->first();
-
-                return [
-                    'id' => $employee->id,
-                    'name' => $employee->name,
-                    'base_salary' => $employee->base_salary,
-                    'already_paid' => $payroll ? $payroll->paid_amount : 0,
-                    'bonus' => $payroll ? $payroll->bonus : 0,
-                    'deduction' => $payroll ? $payroll->deduction : 0,
-                    'net_salary' => $payroll ? $payroll->net_salary : $employee->base_salary,
-                    'status' => $payroll ? $payroll->status : 'pending',
-                ];
-            });
-
-        return response()->json($employees);
+        return response()->json($action($validated['month'], $validated['year']));
     }
 }

@@ -1,32 +1,18 @@
-import { Head, useForm, Link, usePage } from '@inertiajs/react';
+import { Head, useForm, Link, usePage, router } from '@inertiajs/react';
 import { useState, useEffect } from "react";
-import { Search, Plus, Trash2, Edit3, X, Tag } from "lucide-react";
+import { Search, Plus, Tag } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, Expense, ExpenseCategory, Outlet, SharedData, Material } from '@/types';
-import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { type BreadcrumbItem, Expense, SharedData } from '@/types';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
-import { SearchableSelect } from '@/components/ui/searchable-select';
+import { Modal } from '@/components/ui/modal';
 import axios from 'axios';
 import { MaterialItemsForm } from './com/MaterialItemsForm';
 import { PayrollForm } from './com/PayrollForm';
-
-interface ExpensesProps {
-    expenses: Expense[];
-    categories: ExpenseCategory[];
-    outlets: Outlet[];
-    materials: Material[];
-}
-
-interface EligibleEmployee {
-    id: number;
-    name: string;
-    base_salary: number;
-    already_paid: number;
-    bonus: number;
-    deduction: number;
-    net_salary: number;
-    status: string;
-}
+import { Pagination } from '@/components/ui/pagination';
+import { TableRowActions } from '@/components/table-row-actions';
+import { formatCurrency } from '@/lib/format';
+import { useDebouncedSearch } from '@/hooks/use-debounced-search';
+import type { EligibleEmployee, ExpensesProps } from '@/types/pages/expenses';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -35,34 +21,17 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const formatCurrency = (n: number | string) => `৳${Number(n).toLocaleString("en-BD")}`;
 
-export default function Expenses({ expenses, categories, outlets, materials }: ExpensesProps) {
+export default function Expenses({ expenses, categories, materials, filters }: ExpensesProps) {
 
-    const [search, setSearch] = useState("");
+    const [search, setSearch] = useState(filters.search || "");
     const [showModal, setShowModal] = useState(false);
     const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [deleteId, setDeleteId] = useState<number | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
     const [day, setDay] = useState(new Date().getDate());
     const [month, setMonth] = useState(new Date().getMonth() + 1);
     const [year, setYear] = useState(new Date().getFullYear());
-
-    useEffect(() => {
-        if (showModal) {
-            document.body.style.overflow = 'hidden';
-            document.documentElement.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        }
-        return () => {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        };
-    }, [showModal]);
 
     useEffect(() => {
         const formattedDay = String(day || 1).padStart(2, '0');
@@ -74,13 +43,12 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
     const salaryCategoryId = settings.salary_category_id;
     const materialExpenseCategoryId = settings.material_expense_category_id;
 
-    const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
+    const { data, setData, post, put, reset, errors, processing } = useForm({
         expense_category_id: '' as string | number,
         amount: '' as string | number,
         payment_method: 'Cash',
         date: new Date().toISOString().split('T')[0],
         description: '',
-        outlet_id: '' as string | number,
         // Payroll fields
         employee_id: '' as string | number,
         month: new Date().getMonth() + 1,
@@ -97,12 +65,6 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
 
     const isPayroll = Number(data.expense_category_id) === Number(salaryCategoryId);
     const isMaterial = Number(data.expense_category_id) === Number(materialExpenseCategoryId);
-
-    useEffect(() => {
-        if (isMaterial || isPayroll) {
-            setData('outlet_id', '');
-        }
-    }, [isMaterial, isPayroll]);
 
     useEffect(() => {
         if (isPayroll && data.month && data.year) {
@@ -155,10 +117,15 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
         ? Math.round(((Number(selectedEmployee.base_salary) + Number(data.bonus) - Number(data.deduction)) + Number.EPSILON) * 100) / 100
         : 0;
 
-    const filtered = expenses.filter((e) =>
-        e.description?.toLowerCase().includes(search.toLowerCase()) ||
-        e.category?.name.toLowerCase().includes(search.toLowerCase())
-    );
+    useEffect(() => {
+        if (!isPayroll) return;
+
+        if (Number(data.amount) !== netSalary) {
+            setData('amount', netSalary);
+        }
+    }, [isPayroll, netSalary]);
+
+    useDebouncedSearch('expenses.index', search);
 
     const openCreateModal = () => {
         setEditingExpense(null);
@@ -185,7 +152,6 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
             payment_method: expense.payment_method,
             date: expense.date,
             description: expense.description || '',
-            outlet_id: expense.outlet_id || '',
             employee_id: expense.payroll?.employee_id || '',
             month: expense.payroll?.month || new Date().getMonth() + 1,
             year: expense.payroll?.year || new Date().getFullYear(),
@@ -229,24 +195,6 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
             });
         }
     };
-
-    const handleDelete = (id: number) => {
-        setDeleteId(id);
-        setShowDeleteModal(true);
-    };
-
-    const confirmDelete = () => {
-        if (deleteId) {
-            destroy(route('expenses.destroy', deleteId), {
-                onSuccess: () => setShowDeleteModal(false),
-            });
-        }
-    };
-
-
-    ;
-
-
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -293,13 +241,12 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                     <th className="text-left px-5 py-3 font-semibold">Category</th>
                                     <th className="text-left px-5 py-3 font-semibold">Description</th>
                                     <th className="text-left px-5 py-3 font-semibold">Method</th>
-                                    <th className="text-left px-5 py-3 font-semibold">Outlet</th>
                                     <th className="text-right px-5 py-3 font-semibold">Amount</th>
                                     <th className="text-center px-5 py-3 font-semibold">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                                {filtered.map((e) => (
+                                {expenses.data.map((e) => (
                                     <tr key={e.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors">
                                         <td className="px-5 py-4 whitespace-nowrap text-neutral-600 dark:text-neutral-400">{e.date}</td>
                                         <td className="px-5 py-4">
@@ -309,42 +256,32 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                         </td>
                                         <td className="px-5 py-4 text-neutral-900 dark:text-neutral-100">{e.description || '-'}</td>
                                         <td className="px-5 py-4 text-neutral-600 dark:text-neutral-400">{e.payment_method}</td>
-                                        <td className="px-5 py-4 text-neutral-600 dark:text-neutral-400">{e.outlet?.name || 'Main Shop'}</td>
                                         <td className="px-5 py-4 text-right font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(Number(e.amount))}</td>
                                         <td className="px-5 py-4 text-center">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <Link href={route('expenses.show', e.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600 transition-colors">
-                                                    <Search className="w-4 h-4" />
-                                                </Link>
-                                                <button onClick={() => openEditModal(e)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600 transition-colors">
-                                                    <Edit3 className="w-4 h-4" />
-                                                </button>
-                                                <button onClick={() => handleDelete(e.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-red-600 transition-colors">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                            <div className="flex items-center justify-center">
+                                                <TableRowActions
+                                                    id={e.id}
+                                                    label={e.description || 'expense'}
+                                                    view={{ href: route('expenses.show', e.id) }}
+                                                    edit={{ onClick: () => openEditModal(e) }}
+                                                    deleteRoute="expenses.destroy"
+                                                />
                                             </div>
                                         </td>
                                     </tr>
                                 ))}
-                                {filtered.length === 0 && (
+                                {expenses.data.length === 0 && (
                                     <tr>
-                                        <td colSpan={7} className="px-5 py-10 text-center text-neutral-400 italic">No expenses found</td>
+                                        <td colSpan={6} className="px-5 py-10 text-center text-neutral-400 italic">No expenses found</td>
                                     </tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
                 </div>
-            </div>
 
-            <DeleteConfirmationModal
-                isOpen={showDeleteModal}
-                onClose={() => setShowDeleteModal(false)}
-                onConfirm={confirmDelete}
-                title="Delete Expense"
-                description="Are you sure you want to delete this expense? This action cannot be undone."
-                isProcessing={processing}
-            />
+                <Pagination links={expenses.links} />
+            </div>
 
             <SaveConfirmationModal
                 isOpen={showSaveConfirm}
@@ -355,21 +292,8 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                 isProcessing={processing}
             />
 
-            {/* Expense Modal */}
-            {showModal && (
-                <div 
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-                    onClick={() => setShowModal(false)}
-                >
-                    <div 
-                        className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] p-6 overflow-y-auto"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{editingExpense ? 'Edit Expense' : 'New Expense'}</h3>
-                            <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"><X className="w-5 h-5 text-neutral-400" /></button>
-                        </div>
-                        <form onSubmit={handleSubmit} className="space-y-4">
+            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingExpense ? 'Edit Expense' : 'New Expense'} size="xl">
+                <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label htmlFor="expense_category_id" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Category</label>
@@ -505,21 +429,6 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                     </select>
                                 </div>
                             </div>
-                            {(!isMaterial && !isPayroll) && (
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Outlet (Optional)</label>
-                                    <select
-                                        value={data.outlet_id}
-                                        onChange={e => setData('outlet_id', e.target.value)}
-                                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-transparent dark:text-neutral-100"
-                                    >
-                                        <option value="">Main Shop</option>
-                                        {outlets.map(o => (
-                                            <option key={o.id} value={o.id}>{o.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
                             <div className="space-y-1">
                                 <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Description</label>
                                 <textarea
@@ -546,11 +455,8 @@ export default function Expenses({ expenses, categories, outlets, materials }: E
                                     Cancel
                                 </button>
                             </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
+                </form>
+            </Modal>
         </AppLayout>
     );
 }

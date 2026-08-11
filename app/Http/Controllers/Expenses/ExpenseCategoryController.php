@@ -10,10 +10,17 @@ use Illuminate\Http\Request;
 
 class ExpenseCategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $categories = ExpenseCategory::latest()->get();
-        return inertia('expenses/categories/index', compact('categories'));
+        $categories = ExpenseCategory::when($request->search, fn($q, $s) => $q->where(function ($q) use ($s) {
+                $q->where('name', 'like', "%{$s}%")->orWhere('description', 'like', "%{$s}%");
+            }))
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+        $filters = ['search' => $request->search];
+
+        return inertia('expenses/categories/index', compact('categories', 'filters'));
     }
     public function store(StoreExpenseCategoryRequest $request)
     {

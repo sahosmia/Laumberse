@@ -9,20 +9,29 @@ use App\Models\Expense;
 use App\Models\Material;
 use App\Models\ExpenseCategory;
 use App\Models\GlobalSetting;
-use App\Models\Outlet;
 use App\Services\ExpenseService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ExpenseController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $expenses = Expense::with(['category', 'materials.material.unit', 'payroll'])
+            ->when($request->search, fn($q, $s) => $q->where(function ($q) use ($s) {
+                $q->where('description', 'like', "%{$s}%")
+                    ->orWhereHas('category', fn($q) => $q->where('name', 'like', "%{$s}%"));
+            }))
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
         return Inertia::render('expenses/index', [
-            'expenses' => Expense::with(['category', 'outlet', 'materials.material.unit', 'payroll'])->orderBy('date', 'desc')->get(),
+            'expenses' => $expenses,
             'categories' => ExpenseCategory::all(),
-            'outlets' => Outlet::all(),
             'salary_category_id' => GlobalSetting::get('salary_category_id'),
-            'materials' => Material::with('unit')->orderBy('name')->get()
+            'materials' => Material::with('unit')->orderBy('name')->get(),
+            'filters' => ['search' => $request->search],
         ]);
     }
 
@@ -41,7 +50,7 @@ class ExpenseController extends Controller
     public function show(Expense $expense)
     {
         return Inertia::render('expenses/show', [
-            'expense' => $expense->load(['category', 'outlet', 'materials.material.unit', 'payroll.employee', 'asset.category'])
+            'expense' => $expense->load(['category', 'materials.material.unit', 'payroll.employee', 'asset.category'])
         ]);
     }
 

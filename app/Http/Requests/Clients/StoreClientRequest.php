@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Clients;
 
+use App\Enums\ClientType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreClientRequest extends FormRequest
 {
@@ -16,7 +18,7 @@ class StoreClientRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
-            'type' => 'required|string|in:Consumer,Corporate',
+            'type' => ['required', 'string', Rule::enum(ClientType::class)],
             'address' => 'nullable|string|max:500',
             'custom_prices' => 'nullable|array',
             'custom_prices.*.product_id' => 'required|exists:products,id',

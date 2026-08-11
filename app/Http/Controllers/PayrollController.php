@@ -10,10 +10,7 @@ class PayrollController extends Controller
 {
     public function index()
     {
-        $payrolls = Payroll::with(['employee', 'expense'])
-            ->orderBy('year', 'desc')
-            ->orderBy('month', 'desc')
-            ->get();
+        $payrolls = Payroll::with(['employee', 'expense'])->latest()->paginate(15);
 
         return Inertia::render('payrolls/index', [
             'payrolls' => $payrolls

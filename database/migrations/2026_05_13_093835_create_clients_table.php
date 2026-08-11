@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('phone');
-             $table->string('type')->default('Consumer');
+             $table->enum('type', ['Consumer', 'Corporate', 'B2B'])->default('Consumer');
             $table->string('address')->nullable();
             $table->integer('total_orders')->default(0);
             $table->decimal('total_due', 10, 2)->default(0);

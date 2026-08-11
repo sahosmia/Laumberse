@@ -2,19 +2,16 @@
 
 use App\Models\User;
 use App\Models\Invoice;
-use App\Models\Outlet;
 use App\Models\Client;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
-    $this->outlet = Outlet::create(['name' => 'Main Outlet']);
     $this->client = Client::create(['name' => 'John Doe', 'phone' => '123456789']);
 });
 
 test('invoice status can be updated inline', function () {
     $invoice = Invoice::create([
         'invoice_uuid' => 'INV-STATUS-TEST',
-        'outlet_id' => $this->outlet->id,
         'date' => now()->toDateString(),
         'client_id' => $this->client->id,
         'total' => 100,
@@ -38,7 +35,6 @@ test('invoice status can be updated inline', function () {
 test('invoice status update fails with invalid status', function () {
     $invoice = Invoice::create([
         'invoice_uuid' => 'INV-STATUS-FAIL',
-        'outlet_id' => $this->outlet->id,
         'date' => now()->toDateString(),
         'client_id' => $this->client->id,
         'total' => 100,

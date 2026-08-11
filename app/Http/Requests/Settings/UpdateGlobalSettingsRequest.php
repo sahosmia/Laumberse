@@ -22,6 +22,8 @@ class UpdateGlobalSettingsRequest extends FormRequest
         return [
             'salary_category_id' => 'required|exists:expense_categories,id',
             'material_expense_category_id' => 'required|exists:expense_categories,id',
+            'business_transportation_category_id' => 'required|exists:expense_categories,id',
+            'delivery_transportation_category_id' => 'required|exists:expense_categories,id',
         ];
     }
 }

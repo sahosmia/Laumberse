@@ -8,7 +8,6 @@ class Invoice extends Model
 {
     protected $fillable = [
         'invoice_uuid',
-        'outlet_id',
         'date',
         'client_id',
         'total',
@@ -20,12 +19,9 @@ class Invoice extends Model
         'discount_type',
         'discount_amount',
         'delivery_charge',
+        'payment_status',
+        'payment_date',
     ];
-
-    public function outlet()
-    {
-        return $this->belongsTo(Outlet::class);
-    }
 
     public function client()
     {

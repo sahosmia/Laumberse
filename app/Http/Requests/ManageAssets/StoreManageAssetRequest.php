@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\ManageAssets;
 
+use App\Enums\AssetStatus;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreManageAssetRequest extends FormRequest
 {
@@ -14,7 +16,7 @@ class StoreManageAssetRequest extends FormRequest
             'description' => 'nullable|string',
             'purchase_date' => 'required|date',
             'cost' => 'required|numeric|min:0',
-            'status' => 'required|string|max:100',
+            'status' => ['required', 'string', Rule::enum(AssetStatus::class)],
             'asset_category_id' => 'required|exists:asset_categories,id',
             'is_new_purchase' => 'nullable|boolean',
             'payment_method' => 'required_if:is_new_purchase,true|string|max:100',

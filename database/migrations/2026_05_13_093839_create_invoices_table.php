@@ -14,15 +14,17 @@ return new class extends Migration
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
             $table->string('invoice_uuid')->unique();
-            $table->foreignId('outlet_id')->nullable()->constrained()->onDelete('cascade');
             $table->date('date');
             $table->foreignId('client_id')->constrained()->onDelete('cascade');
-             $table->string('discount_type')->default('Fixed'); // Fixed, Percentage
+             $table->enum('discount_type', ['Fixed', 'Percentage'])->default('Fixed');
             $table->decimal('discount_amount', 10, 2)->default(0);
+            $table->decimal('delivery_charge', 10, 2)->default(0.00);
             $table->decimal('total', 10, 2);
             $table->decimal('paid', 10, 2);
             $table->decimal('due', 10, 2);
-            $table->string('status');
+            $table->enum('payment_status', ['Paid', 'Unpaid'])->default('Unpaid');
+            $table->date('payment_date')->nullable();
+            $table->enum('status', ['Pending', 'Processing', 'In House', 'Delivered', 'Cancelled']);
             $table->string('method');
             $table->text('remarks')->nullable();
             $table->timestamps();

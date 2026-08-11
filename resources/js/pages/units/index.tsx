@@ -1,22 +1,16 @@
 import { Head, useForm } from '@inertiajs/react';
-import { useState, useEffect } from "react";
-import { Search, Plus, Trash2, Edit3, X } from "lucide-react";
+import { useState } from "react";
+import { Search, Plus } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
-import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { type BreadcrumbItem, Unit } from '@/types';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
+import { Modal } from '@/components/ui/modal';
 import { FormInput } from '@/components/ui/form-input';
 import { FormButton } from '@/components/ui/form-button';
-
-interface Unit {
-    id: number;
-    name: string;
-    short_name: string;
-}
-
-interface UnitsProps {
-    units: Unit[];
-}
+import { Pagination } from '@/components/ui/pagination';
+import { TableRowActions } from '@/components/table-row-actions';
+import { useDebouncedSearch } from '@/hooks/use-debounced-search';
+import type { UnitsProps } from '@/types/pages/units';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -25,36 +19,18 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Units({ units }: UnitsProps) {
-    const [search, setSearch] = useState("");
+export default function Units({ units, filters }: UnitsProps) {
+    const [search, setSearch] = useState(filters.search || "");
     const [showModal, setShowModal] = useState(false);
     const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [deleteId, setDeleteId] = useState<number | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
-    useEffect(() => {
-        if (showModal) {
-            document.body.style.overflow = 'hidden';
-            document.documentElement.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        }
-        return () => {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        };
-    }, [showModal]);
-
-    const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
+    const { data, setData, post, put, reset, errors, processing } = useForm({
         name: '',
         short_name: '',
     });
 
-    const filtered = units.filter((u) =>
-        u.name.toLowerCase().includes(search.toLowerCase()) || u.short_name.toLowerCase().includes(search.toLowerCase())
-    );
+    useDebouncedSearch('units.index', search);
 
     const openCreateModal = () => {
         setEditingUnit(null);
@@ -99,19 +75,6 @@ export default function Units({ units }: UnitsProps) {
         }
     };
 
-    const handleDelete = (id: number) => {
-        setDeleteId(id);
-        setShowDeleteModal(true);
-    };
-
-    const confirmDelete = () => {
-        if (deleteId) {
-            destroy(route('units.destroy', deleteId), {
-                onSuccess: () => setShowDeleteModal(false),
-            });
-        }
-    };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Units" />
@@ -119,7 +82,7 @@ export default function Units({ units }: UnitsProps) {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Product Units</h1>
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400">{units.length} units defined</p>
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">{units.total} units defined</p>
                     </div>
                     <FormButton
                         onClick={openCreateModal}
@@ -151,14 +114,18 @@ export default function Units({ units }: UnitsProps) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filtered.map((u) => (
+                                {units.data.map((u) => (
                                     <tr key={u.id} className="border-b border-neutral-50 dark:border-neutral-800 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30 transition-colors">
                                         <td className="px-5 py-3 font-medium text-neutral-800 dark:text-neutral-200">{u.name}</td>
                                         <td className="px-3 py-3 text-neutral-600 dark:text-neutral-400 font-mono">{u.short_name}</td>
                                         <td className="px-3 py-3">
-                                            <div className="flex items-center justify-center gap-1">
-                                                <button onClick={() => openEditModal(u)} className="p-1.5 text-neutral-400 hover:text-blue-600 min-h-12 md:min-h-10 min-w-12 md:min-w-10 flex items-center justify-center"><Edit3 className="w-4 h-4" /></button>
-                                                <button onClick={() => handleDelete(u.id)} className="p-1.5 text-neutral-400 hover:text-red-600 min-h-12 md:min-h-10 min-w-12 md:min-w-10 flex items-center justify-center"><Trash2 className="w-4 h-4" /></button>
+                                            <div className="flex items-center justify-center">
+                                                <TableRowActions
+                                                    id={u.id}
+                                                    label={u.name}
+                                                    edit={{ onClick: () => openEditModal(u) }}
+                                                    deleteRoute="units.destroy"
+                                                />
                                             </div>
                                         </td>
                                     </tr>
@@ -167,16 +134,9 @@ export default function Units({ units }: UnitsProps) {
                         </table>
                     </div>
                 </div>
-            </div>
 
-            <DeleteConfirmationModal
-                isOpen={showDeleteModal}
-                onClose={() => setShowDeleteModal(false)}
-                onConfirm={confirmDelete}
-                title="Delete Unit"
-                description="Are you sure you want to delete this unit? This action cannot be undone."
-                isProcessing={processing}
-            />
+                <Pagination links={units.links} />
+            </div>
 
             <SaveConfirmationModal
                 isOpen={showSaveConfirm}
@@ -187,58 +147,43 @@ export default function Units({ units }: UnitsProps) {
                 isProcessing={processing}
             />
 
-            {/* Unit Modal */}
-            {showModal && (
-                <div 
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-                    onClick={() => setShowModal(false)}
-                >
-                    <div 
-                        className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-6"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{editingUnit ? 'Edit Unit' : 'New Unit'}</h3>
-                            <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg min-h-12 min-w-12 flex items-center justify-center"><X className="w-5 h-5 text-gray-400" /></button>
-                        </div>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <FormInput
-                                label="Unit Name"
-                                value={data.name}
-                                onChange={e => setData('name', e.target.value)}
-                                placeholder="e.g. Kilogram"
-                                required
-                                error={errors.name}
-                            />
-                            <FormInput
-                                label="Short Name"
-                                value={data.short_name}
-                                onChange={e => setData('short_name', e.target.value)}
-                                placeholder="e.g. kg"
-                                required
-                                error={errors.short_name}
-                            />
-                            <div className="flex gap-2 pt-2">
-                                <FormButton
-                                    type="submit"
-                                    loading={processing}
-                                    className="flex-1"
-                                >
-                                    {editingUnit ? 'Update Unit' : 'Save Unit'}
-                                </FormButton>
-                                <FormButton
-                                    type="button"
-                                    onClick={() => setShowModal(false)}
-                                    variant="secondary"
-                                    className="flex-1"
-                                >
-                                    Cancel
-                                </FormButton>
-                            </div>
-                        </form>
+            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingUnit ? 'Edit Unit' : 'New Unit'}>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <FormInput
+                        label="Unit Name"
+                        value={data.name}
+                        onChange={e => setData('name', e.target.value)}
+                        placeholder="e.g. Kilogram"
+                        required
+                        error={errors.name}
+                    />
+                    <FormInput
+                        label="Short Name"
+                        value={data.short_name}
+                        onChange={e => setData('short_name', e.target.value)}
+                        placeholder="e.g. kg"
+                        required
+                        error={errors.short_name}
+                    />
+                    <div className="flex gap-2 pt-2">
+                        <FormButton
+                            type="submit"
+                            loading={processing}
+                            className="flex-1"
+                        >
+                            {editingUnit ? 'Update Unit' : 'Save Unit'}
+                        </FormButton>
+                        <FormButton
+                            type="button"
+                            onClick={() => setShowModal(false)}
+                            variant="secondary"
+                            className="flex-1"
+                        >
+                            Cancel
+                        </FormButton>
                     </div>
-                </div>
-            )}
+                </form>
+            </Modal>
         </AppLayout>
     );
 }

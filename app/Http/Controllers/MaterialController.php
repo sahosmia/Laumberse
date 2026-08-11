@@ -6,15 +6,23 @@ use App\Http\Requests\Materials\StoreMaterialRequest;
 use App\Http\Requests\Materials\UpdateMaterialRequest;
 use App\Models\Material;
 use App\Models\Unit;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class MaterialController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $materials = Material::with('unit')
+            ->when($request->search, fn($q, $s) => $q->where('name', 'like', "%{$s}%"))
+            ->orderBy('name')
+            ->paginate(15)
+            ->withQueryString();
+
         return Inertia::render('materials/index', [
-            'materials' => Material::with('unit')->orderBy('name')->get(),
+            'materials' => $materials,
             'units' => Unit::orderBy('name')->get(),
+            'filters' => ['search' => $request->search],
         ]);
     }
 

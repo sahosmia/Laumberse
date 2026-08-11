@@ -6,38 +6,45 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Invoices\StoreInvoiceRequest;
 use App\Http\Requests\Invoices\UpdateInvoiceRequest;
 use App\Http\Requests\Invoices\UpdateInvoiceStatusRequest;
+use App\Http\Requests\Invoices\UpdatePaymentStatusRequest;
+use App\Models\Category;
 use App\Models\Invoice;
-use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\Client;
 use App\Services\InvoiceService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class InvoiceController extends Controller
 {
-    protected $invoiceService;
-
-    public function __construct(InvoiceService $invoiceService)
+    public function __construct(protected InvoiceService $invoiceService)
     {
-        $this->invoiceService = $invoiceService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $invoices = Invoice::with('client')
+            ->when($request->search, fn($q, $s) => $q->where(function ($q) use ($s) {
+                $q->where('invoice_uuid', 'like', "%{$s}%")
+                    ->orWhereHas('client', fn($q) => $q->where('name', 'like', "%{$s}%"));
+            }))
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
         return Inertia::render('invoices/index', [
-            'invoices' => Invoice::with('client')->orderBy('date', 'desc')->get(),
+            'invoices' => $invoices,
+            'filters' => ['search' => $request->search],
         ]);
     }
 
     public function create( )
     {
         return Inertia::render('invoices/create', [
-            'products' => Product::with(['category', 'unit', 'outletPrices'])->get(),
+            'products' => Product::with(['category', 'unit'])->get(),
             'clients' => Client::with('customPrices')->get(),
-            'categories' => \App\Models\Category::all(),
-            'outlets' => Outlet::all(),
-            // 'invoice' => CustomerProductPrice::where('customer_id', $request()->query('client_id'))->get(),
+            'categories' => Category::all(),
         ]);
     }
 
@@ -51,10 +58,9 @@ class InvoiceController extends Controller
     {
         return Inertia::render('invoices/edit', [
             'invoice' => $invoice->load(['items.product']),
-            'products' => Product::with(['category', 'unit', 'outletPrices'])->get(),
+            'products' => Product::with(['category', 'unit'])->get(),
             'clients' => Client::with('customPrices')->get(),
-            'categories' => \App\Models\Category::all(),
-            'outlets' => Outlet::all(),
+            'categories' => Category::all(),
         ]);
     }
 
@@ -84,6 +90,12 @@ class InvoiceController extends Controller
         $invoice->update(['status' => $validated['status']]);
 
         return redirect()->back()->with('success', 'Invoice status updated successfully.');
+    }
+
+    public function updatePaymentStatus(UpdatePaymentStatusRequest $request, Invoice $invoice)
+    {
+        $this->invoiceService->updatePaymentStatus($invoice, $request->validated()['payment_status']);
+        return redirect()->back()->with('success', 'Payment status updated successfully.');
     }
 
      public function print(Invoice $invoice)

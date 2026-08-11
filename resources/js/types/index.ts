@@ -1,5 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 import type { Config } from 'ziggy-js';
+import type { AssetStatus, ClientType, DiscountType, InvoiceStatus, PaymentStatus } from '@/constants/status';
 
 
 export interface SharedData {
@@ -56,19 +57,6 @@ export interface Unit {
     short_name: string;
 }
 
-export interface Outlet {
-    id: number;
-    name: string;
-    location: string;
-}
-
-export interface OutletProductPrice {
-    id: number;
-    outlet_id: number;
-    product_id: number;
-    price: number;
-}
-
 export interface Product {
     id: number;
     name: string;
@@ -79,7 +67,6 @@ export interface Product {
      image: string | null;
     image_url: string | null;
     price: number;
-    outlet_prices?: OutletProductPrice[];
 }
 
 export interface CustomerProductPrice {
@@ -93,7 +80,7 @@ export interface Client {
     id: number;
     name: string;
     phone: string;
-    type: 'Consumer' | 'Corporate';
+    type: ClientType;
     address?: string;
     total_orders?: number;
     total_due?: number;
@@ -116,15 +103,15 @@ export interface Invoice {
     date: string;
     client_id: number;
     client: Client;
-    outlet_id: number;
-    outlet?: Outlet;
     subtotal: number;
     discount_amount: number;
-    discount_type: 'Fixed' | 'Percentage';
+    discount_type: DiscountType;
     total: number;
     paid: number;
     due: number;
-    status: 'Pending' | 'Processing' | 'In House' | 'Delivered' | 'Cancelled';
+    status: InvoiceStatus;
+    payment_status: PaymentStatus;
+    payment_date: string | null;
     items?: InvoiceItem[];
 }
 
@@ -159,8 +146,6 @@ export interface Expense {
     payment_method: string;
     date: string;
     description?: string;
-    outlet_id?: number;
-    outlet?: Outlet;
     payroll?: {
         employee_id: number;
         month: number;
@@ -172,6 +157,16 @@ export interface Expense {
     materials?: ExpenseMaterial[];
 }
 
+
+export interface Employee {
+    id: number;
+    name: string;
+    phone: string;
+    email?: string | null;
+    designation: string;
+    base_salary: number;
+    is_active: boolean;
+}
 
 export interface AssetCategory {
     id: number;
@@ -185,7 +180,7 @@ export interface ManageAsset {
     description?: string;
     purchase_date: string;
     cost: number;
-    status: string;
+    status: AssetStatus;
     asset_category_id: number;
     category?: AssetCategory;
 }

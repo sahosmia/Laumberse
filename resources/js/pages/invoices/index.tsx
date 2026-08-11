@@ -1,13 +1,18 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from "react";
-import { Plus, Search, Eye, Trash2, Printer, Edit } from "lucide-react";
+import { Plus, Search, Trash2, Printer, CircleDollarSign, CircleCheck } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, Invoice } from '@/types';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
-
-interface InvoiceHistoryProps {
-    invoices: Invoice[];
-}
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
+import { Pagination } from '@/components/ui/pagination';
+import type { Paginated } from '@/types/pagination';
+import { TableRowActions } from '@/components/table-row-actions';
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { INVOICE_STATUSES, INVOICE_STATUS_STYLES, PAYMENT_STATUS_STYLES, type InvoiceStatus, type PaymentStatus } from '@/constants/status';
+import { formatCurrency } from '@/lib/format';
+import { useDebouncedSearch } from '@/hooks/use-debounced-search';
+import type { InvoiceHistoryProps } from '@/types/pages/invoices';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -16,12 +21,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const formatCurrency = (n: number) => `৳${n.toLocaleString("en-BD")}`;
 
 function StatusSelect({ invoice }: { invoice: Invoice }) {
     const [loading, setLoading] = useState(false);
 
-    const handleStatusChange = (newStatus: string) => {
+    const handleStatusChange = (newStatus: InvoiceStatus) => {
         if (newStatus === invoice.status) return;
         setLoading(true);
         router.patch(route('invoices.update-status', invoice.id), { status: newStatus }, {
@@ -30,58 +34,73 @@ function StatusSelect({ invoice }: { invoice: Invoice }) {
         });
     };
 
-    const map: Record<string, string> = {
-        Pending: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800",
-        Processing: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800",
-        "In House": "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800",
-        Delivered: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800",
-        Cancelled: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800",
-    };
-
     return (
         <div className="relative inline-block">
             <select
                 value={invoice.status}
                 disabled={loading}
-                onChange={(e) => handleStatusChange(e.target.value)}
-                className={`appearance-none cursor-pointer inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border focus:outline-none transition-opacity ${loading ? 'opacity-50' : ''} ${map[invoice.status] || "bg-neutral-100 text-neutral-600 border-neutral-200"}`}
+                onChange={(e) => handleStatusChange(e.target.value as InvoiceStatus)}
+                className={`appearance-none cursor-pointer inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border focus:outline-none transition-opacity ${loading ? 'opacity-50' : ''} ${INVOICE_STATUS_STYLES[invoice.status] || "bg-neutral-100 text-neutral-600 border-neutral-200"}`}
             >
-                <option value="Pending">Pending</option>
-                <option value="Processing">Processing</option>
-                <option value="In House">In House</option>
-                <option value="Delivered">Delivered</option>
-                <option value="Cancelled">Cancelled</option>
+                {INVOICE_STATUSES.map(s => (
+                    <option key={s} value={s}>{s}</option>
+                ))}
             </select>
         </div>
     );
 }
 
-export default function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
-    const [search, setSearch] = useState("");
+function PaymentStatusToggle({ invoice }: { invoice: Invoice }) {
+    const [loading, setLoading] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const isPaid = invoice.payment_status === 'Paid';
+    const nextStatus: PaymentStatus = isPaid ? 'Unpaid' : 'Paid';
+
+    const handleConfirm = () => {
+        setLoading(true);
+        router.patch(route('invoices.update-payment-status', invoice.id), {
+            payment_status: nextStatus,
+        }, {
+            onFinish: () => {
+                setLoading(false);
+                setShowConfirm(false);
+            },
+            preserveScroll: true,
+        });
+    };
+
+    return (
+        <>
+            <button
+                type="button"
+                onClick={() => setShowConfirm(true)}
+                disabled={loading}
+                title={isPaid && invoice.payment_date ? `Paid on ${invoice.payment_date}` : 'Mark as Paid'}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border transition-opacity ${loading ? 'opacity-50' : ''} ${PAYMENT_STATUS_STYLES[invoice.payment_status]}`}
+            >
+                {isPaid ? <CircleCheck className="w-3.5 h-3.5" /> : <CircleDollarSign className="w-3.5 h-3.5" />}
+                {isPaid ? 'Paid' : 'Unpaid'}
+            </button>
+            <SaveConfirmationModal
+                isOpen={showConfirm}
+                onClose={() => setShowConfirm(false)}
+                onConfirm={handleConfirm}
+                title={`Mark as ${nextStatus}`}
+                description={`Currently paid ${formatCurrency(Number(invoice.paid))}, due ${formatCurrency(Number(invoice.due))}. Marking as ${nextStatus} will set paid to ${formatCurrency(nextStatus === 'Paid' ? Number(invoice.total) : 0)} and due to ${formatCurrency(nextStatus === 'Paid' ? 0 : Number(invoice.total))}.`}
+                confirmText={`Mark as ${nextStatus}`}
+                isProcessing={loading}
+            />
+        </>
+    );
+}
+
+export default function InvoiceHistory({ invoices, filters }: InvoiceHistoryProps) {
+    const [search, setSearch] = useState(filters.search || "");
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
-        const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [deleteId, setDeleteId] = useState<number | null>(null);
     const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
     const [processing, setProcessing] = useState(false);
 
-    const filtered = invoices.filter((inv) =>
-        inv.client.name.toLowerCase().includes(search.toLowerCase()) || inv.invoice_uuid.toLowerCase().includes(search.toLowerCase())
-    );
-
-     const handleDelete = (id: number) => {
-        setDeleteId(id);
-        setShowDeleteModal(true);
-    };
-
-    const confirmDelete = () => {
-        if (deleteId) {
-            setProcessing(true);
-            router.delete(route('invoices.destroy', deleteId), {
-                onSuccess: () => setShowDeleteModal(false),
-                onFinish: () => setProcessing(false),
-            });
-        }
-    };
+    useDebouncedSearch('history', search);
 
     const handleBulkDelete = () => {
         setShowBulkDeleteModal(true);
@@ -100,10 +119,10 @@ export default function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
     };
 
     const toggleSelectAll = () => {
-        if (selectedIds.length === filtered.length) {
+        if (selectedIds.length === invoices.data.length) {
             setSelectedIds([]);
         } else {
-            setSelectedIds(filtered.map(i => i.id));
+            setSelectedIds(invoices.data.map(i => i.id));
         }
     };
 
@@ -121,15 +140,6 @@ export default function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="History" />
             <div className="p-4 space-y-4">
-                 <DeleteConfirmationModal
-                    isOpen={showDeleteModal}
-                    onClose={() => setShowDeleteModal(false)}
-                    onConfirm={confirmDelete}
-                    title="Delete Invoice"
-                    description="Are you sure you want to delete this invoice? This action cannot be undone."
-                    isProcessing={processing}
-                />
-
                 <DeleteConfirmationModal
                     isOpen={showBulkDeleteModal}
                     onClose={() => setShowBulkDeleteModal(false)}
@@ -184,7 +194,7 @@ export default function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
                                     <th className="px-5 py-3 text-center">
                                         <input
                                             type="checkbox"
-                                            checked={selectedIds.length === filtered.length && filtered.length > 0}
+                                            checked={selectedIds.length === invoices.data.length && invoices.data.length > 0}
                                             onChange={toggleSelectAll}
                                             className="rounded border-neutral-300 dark:border-neutral-700 text-blue-600 focus:ring-blue-500"
                                         />
@@ -194,13 +204,13 @@ export default function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
                                     <th className="text-left px-3 py-3 font-semibold">Client</th>
                                     <th className="text-right px-3 py-3 font-semibold">Total</th>
                                     <th className="text-right px-3 py-3 font-semibold">Paid</th>
-                                    <th className="text-right px-3 py-3 font-semibold">Due</th>
+                                    <th className="text-center px-3 py-3 font-semibold">Payment</th>
                                     <th className="text-center px-3 py-3 font-semibold">Status</th>
                                     <th className="text-center px-3 py-3 font-semibold">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {filtered.map((inv) => (
+                                {invoices.data.map((inv) => (
                                     <tr key={inv.id} className={`border-b border-neutral-50 dark:border-neutral-800 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30 transition-colors ${selectedIds.includes(inv.id) ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
                                         <td className="px-5 py-3 text-center">
                                             <input
@@ -212,22 +222,25 @@ export default function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
                                         </td>
                                         <td className="px-3 py-3 font-mono text-xs font-semibold text-blue-600">{inv.invoice_uuid}</td>
                                         <td className="px-3 py-3 text-neutral-600 dark:text-neutral-400">{inv.date}</td>
-                                        <td className="px-3 py-3 font-medium text-neutral-800 dark:text-neutral-200">{inv.client.name}</td>
+                                        <td className="px-3 py-3 font-medium text-neutral-800 dark:text-neutral-200">{inv.client?.name || '—'}</td>
                                         <td className="px-3 py-3 text-right font-semibold text-neutral-900 dark:text-neutral-100">{formatCurrency(Number(inv.total))}</td>
                                         <td className="px-3 py-3 text-right text-emerald-600 font-medium">{formatCurrency(Number(inv.paid))}</td>
-                                        <td className="px-3 py-3 text-right">
-                                            <span className={`font-medium ${Number(inv.due) > 0 ? "text-red-500" : "text-neutral-400"}`}>{formatCurrency(Number(inv.due))}</span>
-                                        </td>
+                                        <td className="px-3 py-3 text-center"><PaymentStatusToggle invoice={inv} /></td>
                                         <td className="px-3 py-3 text-center"><StatusSelect invoice={inv} /></td>
                                         <td className="px-3 py-3">
-                                            <div className="flex items-center justify-center gap-1">
-                                                <Link href={route('invoices.show', inv.id)} className="p-1.5 text-neutral-400 hover:text-blue-600"><Eye className="w-4 h-4" /></Link>
-                                                <Link href={route('invoices.edit', inv.id)} className="p-1.5 text-neutral-400 hover:text-amber-500"><Edit className="w-4 h-4" /></Link>
-                                                <button onClick={() => handlePrint(inv)} className=" px-2 py-1.5 text-sm text-neutral-400 hover:text-emerald-500">
-                                                    <Printer className="w-4 h-4 " />
-                                                </button>
-
-                                                <button onClick={() => handleDelete(inv.id)} className="p-1.5 text-neutral-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                                            <div className="flex items-center justify-center">
+                                                <TableRowActions
+                                                    id={inv.id}
+                                                    label={`invoice ${inv.invoice_uuid}`}
+                                                    view={{ href: route('invoices.show', inv.id) }}
+                                                    edit={{ href: route('invoices.edit', inv.id) }}
+                                                    deleteRoute="invoices.destroy"
+                                                    customActions={
+                                                        <DropdownMenuItem onSelect={() => handlePrint(inv)}>
+                                                            <Printer className="w-4 h-4 mr-2" /> Print
+                                                        </DropdownMenuItem>
+                                                    }
+                                                />
                                             </div>
                                         </td>
                                     </tr>
@@ -238,7 +251,7 @@ export default function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
 
                     {/* Mobile Card Layout */}
                     <div className="md:hidden divide-y divide-neutral-100 dark:divide-neutral-800">
-                        {filtered.map((inv) => (
+                        {invoices.data.map((inv) => (
                             <div key={inv.id} className={`p-4 space-y-3 bg-white dark:bg-neutral-900 ${selectedIds.includes(inv.id) ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
@@ -254,38 +267,37 @@ export default function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
                                 </div>
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <p className="font-medium text-neutral-900 dark:text-neutral-100">{inv.client.name}</p>
+                                        <p className="font-medium text-neutral-900 dark:text-neutral-100">{inv.client?.name || '—'}</p>
                                         <p className="text-xs text-neutral-500 dark:text-neutral-400">{inv.date}</p>
                                     </div>
                                     <div className="text-right">
                                         <p className="font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(Number(inv.total))}</p>
-                                        <p className="text-[10px] text-red-500 font-medium">Due: {formatCurrency(Number(inv.due))}</p>
+                                        <p className="text-xs text-emerald-600 font-medium">Paid: {formatCurrency(Number(inv.paid))}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-50 dark:border-neutral-800/50">
-                                    <Link href={route('invoices.show', inv.id)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 rounded-lg">
-                                        <Eye className="w-3.5 h-3.5" /> View
-                                    </Link>
-                                    <Link href={route('invoices.edit', inv.id)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-lg">
-                                        <Edit className="w-3.5 h-3.5" /> Edit
-                                    </Link>
-                                    <button
-                                        onClick={() => handlePrint(inv)}
-                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-lg"
-                                    >
-                                        <Printer className="w-3.5 h-3.5" /> Print
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(inv.id)}
-                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg"
-                                    >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
+                                <div className="flex items-center justify-between pt-2 border-t border-neutral-50 dark:border-neutral-800/50">
+                                    <PaymentStatusToggle invoice={inv} />
+                                </div>
+                                <div className="flex items-center justify-end pt-2 border-t border-neutral-50 dark:border-neutral-800/50">
+                                    <TableRowActions
+                                        id={inv.id}
+                                        label={`invoice ${inv.invoice_uuid}`}
+                                        view={{ href: route('invoices.show', inv.id) }}
+                                        edit={{ href: route('invoices.edit', inv.id) }}
+                                        deleteRoute="invoices.destroy"
+                                        customActions={
+                                            <DropdownMenuItem onSelect={() => handlePrint(inv)}>
+                                                <Printer className="w-4 h-4 mr-2" /> Print
+                                            </DropdownMenuItem>
+                                        }
+                                    />
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
+
+                <Pagination links={invoices.links} />
             </div>
         </AppLayout>
     );

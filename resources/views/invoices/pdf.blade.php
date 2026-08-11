@@ -215,6 +215,7 @@
                     <div><strong>Date:</strong> {{ $invoice->date }}</div>
                     <div><strong>Status:</strong> {{ $invoice->status }}</div>
                     <div><strong>Method:</strong> {{ $invoice->method }}</div>
+                    <div><strong>Payment:</strong> <span style="color: {{ $invoice->payment_status === 'Paid' ? '#059669' : '#dc2626' }};">{{ $invoice->payment_status }}</span></div>
                 </td>
             </tr>
         </table>
@@ -278,7 +279,7 @@
                         <td class="text-right">-{{ number_format($discountValue, 2) }}</td>
                     </tr>
                 @endif
-                @if ($invoice->delivery_charge != 0)
+                @if ($invoice->delivery_charge != 0 && $invoice->client->type !== 'Corporate')
                     <tr>
                         <td style="color: #2563eb;">Delivery Charge</td>
                         <td class="text-right">{{ number_format($invoice->delivery_charge, 2) }}</td>
@@ -289,8 +290,8 @@
                     <td class="text-right">{{ number_format($invoice->paid, 2) }}</td>
                 </tr>
                 <tr>
-                    <td style="color: #dc2626;">Due</td>
-                    <td class="text-right">{{ number_format($invoice->due, 2) }}</td>
+                    <td style="color: {{ $invoice->payment_status === 'Paid' ? '#059669' : '#dc2626' }};">Payment Status</td>
+                    <td class="text-right">{{ $invoice->payment_status }}</td>
                 </tr>
                 <tr class="total-row">
                     <td>Total</td>

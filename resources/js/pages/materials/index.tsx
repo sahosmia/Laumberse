@@ -1,15 +1,14 @@
 import { Head, useForm } from '@inertiajs/react';
-import { useState, useEffect } from "react";
-import { Search, Plus, Trash2, Edit3, X } from "lucide-react";
+import { useState } from "react";
+import { Search, Plus } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, Material, Unit } from '@/types';
-import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { type BreadcrumbItem, Material } from '@/types';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
-
-interface MaterialsProps {
-    materials: Material[];
-    units: Unit[];
-}
+import { Modal } from '@/components/ui/modal';
+import { Pagination } from '@/components/ui/pagination';
+import { TableRowActions } from '@/components/table-row-actions';
+import { useDebouncedSearch } from '@/hooks/use-debounced-search';
+import type { MaterialsProps } from '@/types/pages/materials';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -18,36 +17,18 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Materials({ materials, units }: MaterialsProps) {
-    const [search, setSearch] = useState("");
+export default function Materials({ materials, units, filters }: MaterialsProps) {
+    const [search, setSearch] = useState(filters.search || "");
     const [showModal, setShowModal] = useState(false);
     const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [deleteId, setDeleteId] = useState<number | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
-    useEffect(() => {
-        if (showModal) {
-            document.body.style.overflow = 'hidden';
-            document.documentElement.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        }
-        return () => {
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        };
-    }, [showModal]);
-
-    const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
+    const { data, setData, post, put, reset, errors, processing } = useForm({
         name: '',
         unit_id: '' as string | number,
     });
 
-    const filtered = materials.filter((m) =>
-        m.name.toLowerCase().includes(search.toLowerCase())
-    );
+    useDebouncedSearch('materials.index', search);
 
     const openCreateModal = () => {
         setEditingMaterial(null);
@@ -92,19 +73,6 @@ export default function Materials({ materials, units }: MaterialsProps) {
         }
     };
 
-    const handleDelete = (id: number) => {
-        setDeleteId(id);
-        setShowDeleteModal(true);
-    };
-
-    const confirmDelete = () => {
-        if (deleteId) {
-            destroy(route('materials.destroy', deleteId), {
-                onSuccess: () => setShowDeleteModal(false),
-            });
-        }
-    };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Materials" />
@@ -145,25 +113,25 @@ export default function Materials({ materials, units }: MaterialsProps) {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                                {filtered.map((m) => (
+                                {materials.data.map((m) => (
                                     <tr key={m.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors">
                                         <td className="px-5 py-4 font-medium text-neutral-900 dark:text-neutral-100">{m.name}</td>
                                         <td className="px-5 py-4 text-neutral-600 dark:text-neutral-400">
                                             {m.unit ? `${m.unit.name} (${m.unit.short_name})` : <span className="text-neutral-400 italic">None</span>}
                                         </td>
                                         <td className="px-5 py-4 text-center">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <button onClick={() => openEditModal(m)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-blue-600 transition-colors">
-                                                    <Edit3 className="w-4 h-4" />
-                                                </button>
-                                                <button onClick={() => handleDelete(m.id)} className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-500 hover:text-red-600 transition-colors">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                            <div className="flex items-center justify-center">
+                                                <TableRowActions
+                                                    id={m.id}
+                                                    label={m.name}
+                                                    edit={{ onClick: () => openEditModal(m) }}
+                                                    deleteRoute="materials.destroy"
+                                                />
                                             </div>
                                         </td>
                                     </tr>
                                 ))}
-                                {filtered.length === 0 && (
+                                {materials.data.length === 0 && (
                                     <tr>
                                         <td colSpan={3} className="px-5 py-10 text-center text-neutral-400 italic">No materials found</td>
                                     </tr>
@@ -175,7 +143,7 @@ export default function Materials({ materials, units }: MaterialsProps) {
 
                 {/* Mobile view */}
                 <div className="block md:hidden space-y-4">
-                    {filtered.map((m) => (
+                    {materials.data.map((m) => (
                         <div key={m.id} className="bg-white dark:bg-neutral-900 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 space-y-3">
                             <div className="flex items-start justify-between">
                                 <div>
@@ -185,32 +153,25 @@ export default function Materials({ materials, units }: MaterialsProps) {
                                     </p>
                                 </div>
                             </div>
-                            <div className="border-t border-neutral-100 dark:border-neutral-800 pt-2.5 flex justify-end gap-2">
-                                <button onClick={() => openEditModal(m)} className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-blue-600 transition-colors">
-                                    <Edit3 className="w-3.5 h-3.5" /> Edit
-                                </button>
-                                <button onClick={() => handleDelete(m.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-red-600 transition-colors">
-                                    <Trash2 className="w-3.5 h-3.5" /> Delete
-                                </button>
+                            <div className="border-t border-neutral-100 dark:border-neutral-800 pt-2.5 flex justify-end">
+                                <TableRowActions
+                                    id={m.id}
+                                    label={m.name}
+                                    edit={{ onClick: () => openEditModal(m) }}
+                                    deleteRoute="materials.destroy"
+                                />
                             </div>
                         </div>
                     ))}
-                    {filtered.length === 0 && (
+                    {materials.data.length === 0 && (
                         <div className="p-8 text-center bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 text-neutral-400 italic">
                             No materials found
                         </div>
                     )}
                 </div>
-            </div>
 
-            <DeleteConfirmationModal
-                isOpen={showDeleteModal}
-                onClose={() => setShowDeleteModal(false)}
-                onConfirm={confirmDelete}
-                title="Delete Material"
-                description="Are you sure you want to delete this material? This action cannot be undone."
-                isProcessing={processing}
-            />
+                <Pagination links={materials.links} />
+            </div>
 
             <SaveConfirmationModal
                 isOpen={showSaveConfirm}
@@ -221,70 +182,55 @@ export default function Materials({ materials, units }: MaterialsProps) {
                 isProcessing={processing}
             />
 
-            {/* Material Modal */}
-            {showModal && (
-                <div 
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-                    onClick={() => setShowModal(false)}
-                >
-                    <div 
-                        className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full p-6"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{editingMaterial ? 'Edit Material' : 'New Material'}</h3>
-                            <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"><X className="w-5 h-5 text-neutral-400" /></button>
-                        </div>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-1">
-                                <label htmlFor="name" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Material Name</label>
-                                <input
-                                    id="name"
-                                    type="text"
-                                    value={data.name}
-                                    onChange={e => setData('name', e.target.value)}
-                                    className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
-                                    required
-                                    placeholder="e.g. Fabric A"
-                                />
-                                {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
-                            </div>
-                            <div className="space-y-1">
-                                <label htmlFor="unit_id" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Unit</label>
-                                <select
-                                    id="unit_id"
-                                    value={data.unit_id}
-                                    onChange={e => setData('unit_id', e.target.value)}
-                                    className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100 dark:bg-neutral-900"
-                                >
-                                    <option value="">Select Unit</option>
-                                    {units.map(u => (
-                                        <option key={u.id} value={u.id}>{u.name} ({u.short_name})</option>
-                                    ))}
-                                </select>
-                                {errors.unit_id && <p className="text-xs text-red-500">{errors.unit_id}</p>}
-                            </div>
-
-                            <div className="flex gap-2 pt-2">
-                                <button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
-                                >
-                                    {editingMaterial ? 'Update Material' : 'Save Material'}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowModal(false)}
-                                    className="flex-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 py-2.5 rounded-xl text-sm font-semibold"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
+            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingMaterial ? 'Edit Material' : 'New Material'}>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-1">
+                        <label htmlFor="name" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Material Name</label>
+                        <input
+                            id="name"
+                            type="text"
+                            value={data.name}
+                            onChange={e => setData('name', e.target.value)}
+                            className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100"
+                            required
+                            placeholder="e.g. Fabric A"
+                        />
+                        {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
                     </div>
-                </div>
-            )}
+                    <div className="space-y-1">
+                        <label htmlFor="unit_id" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Unit</label>
+                        <select
+                            id="unit_id"
+                            value={data.unit_id}
+                            onChange={e => setData('unit_id', e.target.value)}
+                            className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm bg-transparent dark:text-neutral-100 dark:bg-neutral-900"
+                        >
+                            <option value="">Select Unit</option>
+                            {units.map(u => (
+                                <option key={u.id} value={u.id}>{u.name} ({u.short_name})</option>
+                            ))}
+                        </select>
+                        {errors.unit_id && <p className="text-xs text-red-500">{errors.unit_id}</p>}
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+                        >
+                            {editingMaterial ? 'Update Material' : 'Save Material'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowModal(false)}
+                            className="flex-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 py-2.5 rounded-xl text-sm font-semibold"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </Modal>
 
         </AppLayout>
     );

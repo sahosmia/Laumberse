@@ -20,7 +20,6 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->foreignId('manage_asset_id')->nullable()->constrained('manage_assets')->onDelete('set null');
 
-            $table->foreignId('outlet_id')->nullable()->constrained()->onDelete('set null');
             $table->timestamps();
         });
     }
