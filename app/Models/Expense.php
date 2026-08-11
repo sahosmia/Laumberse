@@ -17,6 +17,13 @@ class Expense extends Model
         'description',
     ];
 
+    protected $appends = ['unique_id'];
+
+    public function getUniqueIdAttribute()
+    {
+        return 'EXP-' . str_pad((string) $this->id, 4, '0', STR_PAD_LEFT);
+    }
+
     public function category()
     {
         return $this->belongsTo(ExpenseCategory::class, 'expense_category_id');

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Category, Product, Client } from '@/types';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
+import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 import { CLIENT_TYPES, DISCOUNT_TYPES, INVOICE_FORM_STATUSES, type ClientType, type DiscountType, type InvoiceStatus } from '@/constants/status';
 import { formatCurrency } from '@/lib/format';
 
@@ -74,6 +75,8 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
     const [showDropdown, setShowDropdown] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+    const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+    const [itemIndexToDelete, setItemIndexToDelete] = useState<number | null>(null);
     const [highlightedIndex, setHighlightedIndex] = useState(0);
     const productOptionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -119,13 +122,12 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
         : selectedClient?.type === 'Corporate';
 
     const handleDeliveryChargeChange = (val: string) => {
-        const { total } = computeInvoiceTotals({ items: data.items, paid: 0, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: val, isCorporate });
+        const { total, due } = computeInvoiceTotals({ items: data.items, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: val, isCorporate });
         setData(d => ({
             ...d,
             delivery_charge: val,
             total,
-            paid: total,
-            due: 0
+            due,
         }));
     };
 
@@ -135,7 +137,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
 
         let price = Number(product.price);
 
-        if (selectedClient?.type === 'Corporate') {
+        if (!data.create_new_client && selectedClient?.type === 'Corporate') {
             const customPrice = selectedClient.custom_prices?.find(cp => cp.product_id === product.id)?.custom_price;
             if (customPrice !== undefined) {
                 price = Number(customPrice);
@@ -157,13 +159,12 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
         }
 
 
-        const { total } = computeInvoiceTotals({ items: newItems, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate });
+        const { total, due } = computeInvoiceTotals({ items: newItems, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate });
         setData(d => ({
             ...d,
             items: newItems,
             total,
-            paid: total,
-            due: 0
+            due,
         }));
 
         setSearchTerm("");
@@ -202,13 +203,12 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
         let newItems = [...data.items];
         newItems[idx].qty = newQty;
 
-        const { total } = computeInvoiceTotals({ items: newItems, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate });
+        const { total, due } = computeInvoiceTotals({ items: newItems, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate });
         setData(d => ({
             ...d,
             items: newItems,
             total,
-            paid: total,
-            due: 0
+            due,
         }));
     };
 
@@ -216,26 +216,29 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
         let newItems = [...data.items];
         newItems[idx].price = newPrice;
 
-        const { total } = computeInvoiceTotals({ items: newItems, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate });
+        const { total, due } = computeInvoiceTotals({ items: newItems, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate });
         setData(d => ({
             ...d,
             items: newItems,
             total,
-            paid: total,
-            due: 0
+            due,
         }));
     };
 
     const removeItem = (idx: number) => {
         const newItems = data.items.filter((_, i) => i !== idx);
-        const { total } = computeInvoiceTotals({ items: newItems, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate });
+        const { total, due } = computeInvoiceTotals({ items: newItems, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate });
         setData(d => ({
             ...d,
             items: newItems,
             total,
-            paid: total,
-            due: 0
+            due,
         }));
+    };
+
+    const handleRemoveClick = (idx: number) => {
+        setItemIndexToDelete(idx);
+        setIsConfirmingDelete(true);
     };
 
     const handlePaidChange = (val: string) => {
@@ -248,24 +251,22 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
     };
 
     const handleDiscountTypeChange = (type: DiscountType) => {
-        const { total } = computeInvoiceTotals({ items: data.items, paid: data.paid, discountType: type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate });
+        const { total, due } = computeInvoiceTotals({ items: data.items, paid: data.paid, discountType: type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate });
         setData(d => ({
             ...d,
             discount_type: type,
             total,
-            paid: total,
-            due: 0
+            due,
         }));
     };
 
     const handleDiscountAmountChange = (val: string) => {
-        const { total } = computeInvoiceTotals({ items: data.items, paid: data.paid, discountType: data.discount_type, discountAmount: val, deliveryCharge: data.delivery_charge, isCorporate });
+        const { total, due } = computeInvoiceTotals({ items: data.items, paid: data.paid, discountType: data.discount_type, discountAmount: val, deliveryCharge: data.delivery_charge, isCorporate });
         setData(d => ({
             ...d,
             discount_amount: val,
             total,
-            paid: total,
-            due: 0
+            due,
         }));
     };
 
@@ -314,6 +315,23 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                 description="Are you sure you want to save these changes to the invoice?"
                 isProcessing={processing}
             />
+            <DeleteConfirmationModal
+                isOpen={isConfirmingDelete}
+                onClose={() => {
+                    setIsConfirmingDelete(false);
+                    setItemIndexToDelete(null);
+                }}
+                onConfirm={() => {
+                    if (itemIndexToDelete !== null) {
+                        removeItem(itemIndexToDelete);
+                    }
+                    setIsConfirmingDelete(false);
+                    setItemIndexToDelete(null);
+                }}
+                title="Remove Product"
+                description="Are you sure you want to remove this product from the invoice?"
+                confirmText="Remove"
+            />
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
@@ -341,7 +359,19 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                         <Checkbox
                                             id="create_new_client"
                                             checked={data.create_new_client}
-                                            onCheckedChange={(checked) => setData('create_new_client', !!checked)}
+                                            onCheckedChange={(checked) => {
+                                                const isNew = !!checked;
+                                                const { total, due } = computeInvoiceTotals({ items: [], paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: isNew ? '' : data.delivery_charge, isCorporate: isNew ? data.new_client_type === 'Corporate' : false });
+                                                setData(d => ({
+                                                    ...d,
+                                                    create_new_client: isNew,
+                                                    client_id: null,
+                                                    items: [],
+                                                    delivery_charge: isNew ? '' : d.delivery_charge,
+                                                    total,
+                                                    due,
+                                                }));
+                                            }}
                                         />
                                         <Label htmlFor="create_new_client" className="text-xs font-medium cursor-pointer">New Client</Label>
                                     </div>
@@ -369,26 +399,24 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                                     };
                                                 }).filter(Boolean) as InvoiceItem[];
 
-                                                const { total } = computeInvoiceTotals({ items: corporateItems, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: 0, isCorporate: true });
+                                                const { total, due } = computeInvoiceTotals({ items: corporateItems, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: 0, isCorporate: true });
                                                 setData(d => ({
                                                     ...d,
                                                     client_id: val,
                                                     items: corporateItems,
                                                     delivery_charge: '',
                                                     total,
-                                                    paid: total,
-                                                    due: 0,
+                                                    due,
                                                 }));
                                             } else {
 
-                                                const { total } = computeInvoiceTotals({ items: [], paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate: false });
+                                                const { total, due } = computeInvoiceTotals({ items: [], paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate: false });
                                                 setData(d => ({
                                                     ...d,
                                                     client_id: val,
                                                     items: [],
                                                     total,
-                                                    paid: total,
-                                                    due: 0
+                                                    due,
                                                 }));
                                             }
                                         }}
@@ -433,14 +461,13 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                                     const newType = e.target.value as ClientType;
                                                     const newIsCorporate = newType === 'Corporate';
                                                     const newDeliveryCharge = newIsCorporate ? '' : data.delivery_charge;
-                                                    const { total } = computeInvoiceTotals({ items: data.items, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: newDeliveryCharge, isCorporate: newIsCorporate });
+                                                    const { total, due } = computeInvoiceTotals({ items: data.items, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: newDeliveryCharge, isCorporate: newIsCorporate });
                                                     setData(d => ({
                                                         ...d,
                                                         new_client_type: newType,
                                                         delivery_charge: newDeliveryCharge,
                                                         total,
-                                                        paid: total,
-                                                        due: 0
+                                                        due,
                                                     }));
                                                 }}
                                                 className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-9 text-sm md:text-xs bg-transparent dark:text-neutral-100"
@@ -511,7 +538,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-sm font-bold text-blue-600">
                                                                 {(() => {
-                                                                    if (isCorporate) {
+                                                                    if (isCorporate && !data.create_new_client) {
                                                                         const cp = selectedClient?.custom_prices?.find(cp => cp.product_id === p.id);
                                                                         return formatCurrency(cp ? Number(cp.custom_price) : Number(p.price));
                                                                     }
@@ -572,7 +599,17 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                                         <td className="px-3 py-3 text-center">
                                                             <div className="flex items-center justify-center gap-1">
                                                                 <button type="button" onClick={() => updateQty(idx, item.qty - 1)} className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">−</button>
-                                                                <span className="w-8 font-semibold text-neutral-800 dark:text-neutral-200">{item.qty}</span>
+                                                                <Input
+                                                                    type="number"
+                                                                    min="1"
+                                                                    value={item.qty}
+                                                                    onChange={e => {
+                                                                        const val = e.target.value;
+                                                                        const num = val === '' ? 1 : Math.max(1, parseInt(val, 10));
+                                                                        updateQty(idx, num);
+                                                                    }}
+                                                                    className="w-12 h-8 text-center font-semibold text-neutral-800 dark:text-neutral-200 bg-transparent p-0 focus-visible:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                />
                                                                 <button type="button" onClick={() => updateQty(idx, item.qty + 1)} className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">+</button>
                                                             </div>
                                                         </td>
@@ -586,7 +623,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                                         </td>
                                                         <td className="px-3 py-3 text-right font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(item.price * item.qty)}</td>
                                                         <td className="px-3 py-3 text-center">
-                                                            <button type="button" onClick={() => removeItem(idx)} className="p-1.5 text-red-400 hover:text-red-600">
+                                                            <button type="button" onClick={() => handleRemoveClick(idx)} className="p-1.5 text-red-400 hover:text-red-600">
                                                                 <Trash2 className="w-4 h-4" />
                                                             </button>
                                                         </td>
@@ -616,7 +653,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                                             <p className="text-xs text-neutral-500 font-mono">Item #{idx + 1}</p>
                                                         </div>
                                                     </div>
-                                                    <button type="button" onClick={() => removeItem(idx)} className="p-2 text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                                                    <button type="button" onClick={() => handleRemoveClick(idx)} className="p-2 text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 </div>
@@ -626,7 +663,17 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                                         <label className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Quantity</label>
                                                         <div className="flex items-center gap-3 bg-neutral-50 dark:bg-neutral-800/50 p-1.5 rounded-xl w-fit">
                                                             <button type="button" onClick={() => updateQty(idx, item.qty - 1)} className="w-12 h-12 rounded-lg bg-white dark:bg-neutral-800 shadow-sm border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 flex items-center justify-center">−</button>
-                                                            <span className="w-8 text-center font-bold text-neutral-900 dark:text-neutral-100">{item.qty}</span>
+                                                            <Input
+                                                                type="number"
+                                                                min="1"
+                                                                value={item.qty}
+                                                                onChange={e => {
+                                                                    const val = e.target.value;
+                                                                    const num = val === '' ? 1 : Math.max(1, parseInt(val, 10));
+                                                                    updateQty(idx, num);
+                                                                }}
+                                                                className="w-12 h-12 text-center font-bold text-neutral-900 dark:text-neutral-100 bg-transparent border-none shadow-none focus-visible:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            />
                                                             <button type="button" onClick={() => updateQty(idx, item.qty + 1)} className="w-12 h-12 rounded-lg bg-white dark:bg-neutral-800 shadow-sm border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 flex items-center justify-center">+</button>
                                                         </div>
                                                     </div>

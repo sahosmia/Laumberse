@@ -15,7 +15,7 @@ export default function ExpenseShow({ expense }: ExpenseShowProps) {
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Expenses', href: '/expenses' },
-        { title: `Details #${expense.id}`, href: `/expenses/${expense.id}` },
+        { title: `Details ${expense.unique_id || `EXP-${String(expense.id).padStart(4, '0')}`}`, href: `/expenses/${expense.id}` },
     ];
 
     const isPayroll = Number(expense.expense_category_id) === Number(salaryCategoryId);
@@ -24,14 +24,14 @@ export default function ExpenseShow({ expense }: ExpenseShowProps) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Expense Details #${expense.id}`} />
+            <Head title={`Expense Details ${expense.unique_id || `EXP-${String(expense.id).padStart(4, '0')}`}`} />
 
             <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
                 <div className="flex items-center justify-between">
                     <Link href={route('expenses.index')} className="flex items-center gap-2 text-sm text-neutral-500 hover:text-neutral-900 transition-colors">
                         <ArrowLeft className="w-4 h-4" /> Back to List
                     </Link>
-                    <span className="text-xs font-mono text-neutral-400">ID: {expense.id}</span>
+                    <span className="text-xs font-mono text-neutral-400">ID: {expense.unique_id || `EXP-${String(expense.id).padStart(4, '0')}`}</span>
                 </div>
 
                 <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 overflow-hidden shadow-sm">

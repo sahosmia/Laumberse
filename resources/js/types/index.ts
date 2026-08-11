@@ -140,6 +140,7 @@ export interface ExpenseMaterial {
 
 export interface Expense {
     id: number;
+    unique_id?: string;
     expense_category_id: number;
     category?: ExpenseCategory;
     amount: number;

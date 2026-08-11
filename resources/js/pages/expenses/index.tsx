@@ -237,6 +237,7 @@ export default function Expenses({ expenses, categories, materials, filters }: E
                         <table className="w-full text-sm min-w-[600px]">
                             <thead>
                                 <tr className="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 text-xs uppercase tracking-wider">
+                                    <th className="text-left px-5 py-3 font-semibold">Expense ID</th>
                                     <th className="text-left px-5 py-3 font-semibold">Date</th>
                                     <th className="text-left px-5 py-3 font-semibold">Category</th>
                                     <th className="text-left px-5 py-3 font-semibold">Description</th>
@@ -248,6 +249,9 @@ export default function Expenses({ expenses, categories, materials, filters }: E
                             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                                 {expenses.data.map((e) => (
                                     <tr key={e.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors">
+                                        <td className="px-5 py-4 whitespace-nowrap font-mono text-xs text-neutral-400">
+                                            {e.unique_id || `EXP-${String(e.id).padStart(4, '0')}`}
+                                        </td>
                                         <td className="px-5 py-4 whitespace-nowrap text-neutral-600 dark:text-neutral-400">{e.date}</td>
                                         <td className="px-5 py-4">
                                             <span className="px-2 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 text-xs font-medium text-neutral-600 dark:text-neutral-400">
@@ -272,7 +276,7 @@ export default function Expenses({ expenses, categories, materials, filters }: E
                                 ))}
                                 {expenses.data.length === 0 && (
                                     <tr>
-                                        <td colSpan={6} className="px-5 py-10 text-center text-neutral-400 italic">No expenses found</td>
+                                        <td colSpan={7} className="px-5 py-10 text-center text-neutral-400 italic">No expenses found</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -292,7 +296,7 @@ export default function Expenses({ expenses, categories, materials, filters }: E
                 isProcessing={processing}
             />
 
-            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingExpense ? 'Edit Expense' : 'New Expense'} size="xl">
+            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingExpense ? `Edit Expense (${editingExpense.unique_id || `EXP-${String(editingExpense.id).padStart(4, '0')}`})` : 'New Expense'} size="xl">
                 <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1">
