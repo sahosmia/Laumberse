@@ -30,7 +30,7 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
     const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
-    const { data, setData, post, put, reset, errors, processing } = useForm({
+    const { data, setData, post, put, reset, errors, processing, clearErrors } = useForm({
         name: '',
         phone: '',
         type: 'Consumer' as ClientType,
@@ -43,11 +43,13 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
     const openCreateModal = () => {
         setEditingClient(null);
         reset();
+        clearErrors();
         setShowModal(true);
     };
 
     const openEditModal = (client: Client) => {
         setEditingClient(client);
+        clearErrors();
         setData({
             name: client.name,
             phone: client.phone,
@@ -186,7 +188,7 @@ const confirmSave = () => {
                 isProcessing={processing}
             />
 
-            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingClient ? 'Edit Client' : 'New Client'} size="xl">
+            <Modal isOpen={showModal} onClose={() => { setShowModal(false); clearErrors(); }} title={editingClient ? 'Edit Client' : 'New Client'} size="xl">
                 <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Name Input */}
                 <div>
@@ -376,7 +378,7 @@ const confirmSave = () => {
                 <div className="flex items-center gap-3 pt-4 border-t border-neutral-100 dark:border-neutral-800 mt-6">
                     <button
                         type="button"
-                        onClick={() => setShowModal(false)}
+                        onClick={() => { setShowModal(false); clearErrors(); }}
                         className="flex-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 py-2.5 rounded-xl text-sm font-semibold hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
                     >
                         Cancel

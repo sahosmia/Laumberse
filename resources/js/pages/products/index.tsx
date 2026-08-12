@@ -29,7 +29,7 @@ export default function Products({ products, categories, units, filters }: Produ
     const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
-    const { data, setData, post, put, reset, errors, processing } = useForm({
+    const { data, setData, post, put, reset, errors, processing, clearErrors } = useForm({
         name: '',
         category_id: null as number | null,
         unit_id: null as number | null,
@@ -43,11 +43,13 @@ export default function Products({ products, categories, units, filters }: Produ
     const openCreateModal = () => {
         setEditingProduct(null);
         reset();
+        clearErrors();
         setShowModal(true);
     };
 
     const openEditModal = (product: Product) => {
         setEditingProduct(product);
+        clearErrors();
         setData({
             name: product.name,
             category_id: product.category_id,
@@ -288,7 +290,7 @@ export default function Products({ products, categories, units, filters }: Produ
                 isProcessing={processing}
             />
 
-            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingProduct ? 'Edit Product' : 'New Product'}>
+            <Modal isOpen={showModal} onClose={() => { setShowModal(false); clearErrors(); }} title={editingProduct ? 'Edit Product' : 'New Product'}>
                 <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
                                 <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Product Image</label>
@@ -373,7 +375,7 @@ export default function Products({ products, categories, units, filters }: Produ
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setShowModal(false)}
+                                    onClick={() => { setShowModal(false); clearErrors(); }}
                                     className="flex-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 py-2.5 rounded-xl text-sm font-semibold"
                                 >
                                     Cancel

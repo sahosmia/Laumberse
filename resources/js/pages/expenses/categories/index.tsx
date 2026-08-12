@@ -30,7 +30,7 @@ export default function ExpenseCategories({ categories, filters }: ExpenseCatego
     const [editingCategory, setEditingCategory] = useState<ExpenseCategory | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
-    const { data, setData, post, put, reset, errors, processing } = useForm({
+    const { data, setData, post, put, reset, errors, processing, clearErrors } = useForm({
         name: '',
         description: '',
     });
@@ -40,11 +40,13 @@ export default function ExpenseCategories({ categories, filters }: ExpenseCatego
     const openCreateModal = () => {
         setEditingCategory(null);
         reset();
+        clearErrors();
         setShowModal(true);
     };
 
     const openEditModal = (category: ExpenseCategory) => {
         setEditingCategory(category);
+        clearErrors();
         setData({
             name: category.name,
             description: category.description || '',
@@ -163,7 +165,7 @@ export default function ExpenseCategories({ categories, filters }: ExpenseCatego
                 isProcessing={processing}
             />
 
-            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingCategory ? 'Edit Category' : 'Add Category'}>
+            <Modal isOpen={showModal} onClose={() => { setShowModal(false); clearErrors(); }} title={editingCategory ? 'Edit Category' : 'Add Category'}>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-1">
                         <Label htmlFor="name">Category Name</Label>
@@ -197,7 +199,7 @@ export default function ExpenseCategories({ categories, filters }: ExpenseCatego
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => setShowModal(false)}
+                            onClick={() => { setShowModal(false); clearErrors(); }}
                             className="flex-1"
                         >
                             Cancel

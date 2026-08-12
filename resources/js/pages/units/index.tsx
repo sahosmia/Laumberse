@@ -25,7 +25,7 @@ export default function Units({ units, filters }: UnitsProps) {
     const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
-    const { data, setData, post, put, reset, errors, processing } = useForm({
+    const { data, setData, post, put, reset, errors, processing, clearErrors } = useForm({
         name: '',
         short_name: '',
     });
@@ -35,11 +35,13 @@ export default function Units({ units, filters }: UnitsProps) {
     const openCreateModal = () => {
         setEditingUnit(null);
         reset();
+        clearErrors();
         setShowModal(true);
     };
 
     const openEditModal = (unit: Unit) => {
         setEditingUnit(unit);
+        clearErrors();
         setData({
             name: unit.name,
             short_name: unit.short_name,
@@ -147,7 +149,7 @@ export default function Units({ units, filters }: UnitsProps) {
                 isProcessing={processing}
             />
 
-            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingUnit ? 'Edit Unit' : 'New Unit'}>
+            <Modal isOpen={showModal} onClose={() => { setShowModal(false); clearErrors(); }} title={editingUnit ? 'Edit Unit' : 'New Unit'}>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <FormInput
                         label="Unit Name"
@@ -175,7 +177,7 @@ export default function Units({ units, filters }: UnitsProps) {
                         </FormButton>
                         <FormButton
                             type="button"
-                            onClick={() => setShowModal(false)}
+                            onClick={() => { setShowModal(false); clearErrors(); }}
                             variant="secondary"
                             className="flex-1"
                         >

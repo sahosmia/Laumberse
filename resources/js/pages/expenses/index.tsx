@@ -1,5 +1,5 @@
 import { Head, useForm, Link, usePage, router } from '@inertiajs/react';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Search, Plus, Tag } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, Expense, SharedData } from '@/types';
@@ -43,7 +43,7 @@ export default function Expenses({ expenses, categories, materials, filters }: E
     const salaryCategoryId = settings.salary_category_id;
     const materialExpenseCategoryId = settings.material_expense_category_id;
 
-    const { data, setData, post, put, reset, errors, processing } = useForm({
+    const { data, setData, post, put, reset, errors, processing, clearErrors } = useForm({
         expense_category_id: '' as string | number,
         amount: '' as string | number,
         payment_method: 'Cash',
@@ -61,7 +61,6 @@ export default function Expenses({ expenses, categories, materials, filters }: E
     });
 
     const [eligibleEmployees, setEligibleEmployees] = useState<EligibleEmployee[]>([]);
-    const [selectedEmployee, setSelectedEmployee] = useState<EligibleEmployee | null>(null);
 
     const isPayroll = Number(data.expense_category_id) === Number(salaryCategoryId);
     const isMaterial = Number(data.expense_category_id) === Number(materialExpenseCategoryId);
@@ -73,21 +72,19 @@ export default function Expenses({ expenses, categories, materials, filters }: E
         }
     }, [isPayroll, data.month, data.year]);
 
-    useEffect(() => {
-        if (data.employee_id) {
-            const emp = eligibleEmployees.find(e => e.id == data.employee_id);
-            if (emp) {
-                setSelectedEmployee(emp);
-                setData(d => ({
-                    ...d,
-                    bonus: emp.bonus,
-                    deduction: emp.deduction,
-                }));
-            }
-        } else {
-            setSelectedEmployee(null);
-        }
+    const selectedEmployee = useMemo(() => {
+        return eligibleEmployees.find(e => e.id == data.employee_id) || null;
     }, [data.employee_id, eligibleEmployees]);
+
+    const handleEmployeeChange = (employeeId: string | number) => {
+        const emp = eligibleEmployees.find(e => e.id == employeeId);
+        setData({
+            ...data,
+            employee_id: employeeId,
+            bonus: emp ? emp.bonus : 0,
+            deduction: emp ? emp.deduction : 0,
+        });
+    };
 
     // useEffect(() => {
     //     if (isMaterial) {
@@ -130,6 +127,7 @@ export default function Expenses({ expenses, categories, materials, filters }: E
     const openCreateModal = () => {
         setEditingExpense(null);
         reset();
+        clearErrors();
         setDay(new Date().getDate());
         setMonth(new Date().getMonth() + 1);
         setYear(new Date().getFullYear());
@@ -138,6 +136,7 @@ export default function Expenses({ expenses, categories, materials, filters }: E
 
     const openEditModal = (expense: Expense) => {
         setEditingExpense(expense);
+        clearErrors();
         if (expense.date) {
             const parts = expense.date.split('-');
             if (parts.length === 3) {
@@ -296,7 +295,7 @@ export default function Expenses({ expenses, categories, materials, filters }: E
                 isProcessing={processing}
             />
 
-            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingExpense ? `Edit Expense (${editingExpense.unique_id || `EXP-${String(editingExpense.id).padStart(4, '0')}`})` : 'New Expense'} size="xl">
+            <Modal isOpen={showModal} onClose={() => { setShowModal(false); clearErrors(); }} title={editingExpense ? `Edit Expense (${editingExpense.unique_id || `EXP-${String(editingExpense.id).padStart(4, '0')}`})` : 'New Expense'} size="xl">
                 <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1">
@@ -360,6 +359,7 @@ export default function Expenses({ expenses, categories, materials, filters }: E
                                     selectedEmployee={selectedEmployee}
                                     netSalary={netSalary}
                                     formatCurrency={formatCurrency}
+                                    onEmployeeChange={handleEmployeeChange}
                                 />
                             )}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -453,7 +453,7 @@ export default function Expenses({ expenses, categories, materials, filters }: E
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setShowModal(false)}
+                                    onClick={() => { setShowModal(false); clearErrors(); }}
                                     className="flex-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 py-2.5 rounded-xl text-sm font-semibold"
                                 >
                                     Cancel
