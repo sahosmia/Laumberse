@@ -17,7 +17,7 @@ class ExpenseController extends Controller
 {
     public function index(Request $request)
     {
-        $expenses = Expense::with(['category', 'materials.material.unit', 'payroll'])
+        $expenses = Expense::with(['category', 'materials.material.unit', 'payroll.employee'])
             ->when($request->search, fn($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('description', 'like', "%{$s}%")
                     ->orWhereHas('category', fn($q) => $q->where('name', 'like', "%{$s}%"));

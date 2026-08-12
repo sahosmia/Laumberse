@@ -68,9 +68,32 @@ export default function Expenses({ expenses, categories, materials, filters }: E
     useEffect(() => {
         if (isPayroll && data.month && data.year) {
             axios.get(route('employees.payroll-eligible', { month: data.month, year: data.year }))
-                .then(res => setEligibleEmployees(res.data));
+                .then(res => {
+                    let list = res.data;
+                    if (editingExpense?.payroll?.employee) {
+                        const exists = list.some((e: any) => e.id == editingExpense.payroll?.employee_id);
+                        if (!exists) {
+                            const emp = editingExpense.payroll.employee;
+                            const pr = editingExpense.payroll;
+                            list = [
+                                ...list,
+                                {
+                                    id: emp.id,
+                                    name: emp.name,
+                                    base_salary: emp.base_salary,
+                                    already_paid: pr.paid_amount,
+                                    bonus: pr.bonus,
+                                    deduction: pr.deduction,
+                                    net_salary: pr.net_salary,
+                                    status: pr.status
+                                }
+                            ];
+                        }
+                    }
+                    setEligibleEmployees(list);
+                });
         }
-    }, [isPayroll, data.month, data.year]);
+    }, [isPayroll, data.month, data.year, editingExpense]);
 
     const selectedEmployee = useMemo(() => {
         return eligibleEmployees.find(e => e.id == data.employee_id) || null;

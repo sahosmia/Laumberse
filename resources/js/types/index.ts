@@ -154,6 +154,10 @@ export interface Expense {
         bonus: number;
         deduction: number;
         deduction_note: string;
+        paid_amount: number;
+        net_salary: number;
+        status: string;
+        employee?: Employee;
     };
     materials?: ExpenseMaterial[];
 }
