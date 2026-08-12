@@ -61,7 +61,7 @@ interface InvoiceTotalsInput {
 }
 
 function computeInvoiceTotals({ items, paid, discountType, discountAmount, deliveryCharge, isCorporate }: InvoiceTotalsInput) {
-    const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+    const subtotal = items.reduce((s, i) => s + i.price * (Number(i.qty) || 0), 0);
     const disc = Number(discountAmount) || 0;
     const discountValue = discountType === 'Percentage' ? (subtotal * disc) / 100 : disc;
     const deliv = isCorporate ? 0 : (Number(deliveryCharge) || 0);
@@ -198,10 +198,10 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
         }
     };
 
-    const updateQty = (idx: number, newQty: number) => {
-        if (newQty < 1) return;
+    const updateQty = (idx: number, newQty: number | string) => {
+        if (newQty !== "" && Number(newQty) < 1) return;
         let newItems = [...data.items];
-        newItems[idx].qty = newQty;
+        newItems[idx].qty = newQty === "" ? "" : Number(newQty);
 
         const { total, due } = computeInvoiceTotals({ items: newItems, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate });
         setData(d => ({
@@ -598,19 +598,18 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                                         </td>
                                                         <td className="px-3 py-3 text-center">
                                                             <div className="flex items-center justify-center gap-1">
-                                                                <button type="button" onClick={() => updateQty(idx, item.qty - 1)} className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">−</button>
+                                                                <button type="button" onClick={() => updateQty(idx, (Number(item.qty) || 0) - 1)} className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">−</button>
                                                                 <Input
                                                                     type="number"
-                                                                    min="1"
                                                                     value={item.qty}
                                                                     onChange={e => {
                                                                         const val = e.target.value;
-                                                                        const num = val === '' ? 1 : Math.max(1, parseInt(val, 10));
+                                                                        const num = val === '' ? '' : Math.max(1, parseInt(val, 10));
                                                                         updateQty(idx, num);
                                                                     }}
                                                                     className="w-12 h-8 text-center font-semibold text-neutral-800 dark:text-neutral-200 bg-transparent p-0 focus-visible:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                                 />
-                                                                <button type="button" onClick={() => updateQty(idx, item.qty + 1)} className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">+</button>
+                                                                <button type="button" onClick={() => updateQty(idx, (Number(item.qty) || 0) + 1)} className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">+</button>
                                                             </div>
                                                         </td>
                                                         <td className="px-3 py-3 text-right font-medium">
@@ -662,19 +661,18 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                                     <div className="space-y-1">
                                                         <label className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Quantity</label>
                                                         <div className="flex items-center gap-3 bg-neutral-50 dark:bg-neutral-800/50 p-1.5 rounded-xl w-fit">
-                                                            <button type="button" onClick={() => updateQty(idx, item.qty - 1)} className="w-12 h-12 rounded-lg bg-white dark:bg-neutral-800 shadow-sm border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 flex items-center justify-center">−</button>
+                                                            <button type="button" onClick={() => updateQty(idx, (Number(item.qty) || 0) - 1)} className="w-12 h-12 rounded-lg bg-white dark:bg-neutral-800 shadow-sm border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 flex items-center justify-center">−</button>
                                                             <Input
                                                                 type="number"
-                                                                min="1"
                                                                 value={item.qty}
                                                                 onChange={e => {
                                                                     const val = e.target.value;
-                                                                    const num = val === '' ? 1 : Math.max(1, parseInt(val, 10));
+                                                                    const num = val === '' ? '' : Math.max(1, parseInt(val, 10));
                                                                     updateQty(idx, num);
                                                                 }}
                                                                 className="w-12 h-12 text-center font-bold text-neutral-900 dark:text-neutral-100 bg-transparent border-none shadow-none focus-visible:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                             />
-                                                            <button type="button" onClick={() => updateQty(idx, item.qty + 1)} className="w-12 h-12 rounded-lg bg-white dark:bg-neutral-800 shadow-sm border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 flex items-center justify-center">+</button>
+                                                            <button type="button" onClick={() => updateQty(idx, (Number(item.qty) || 0) + 1)} className="w-12 h-12 rounded-lg bg-white dark:bg-neutral-800 shadow-sm border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 flex items-center justify-center">+</button>
                                                         </div>
                                                     </div>
                                                     <div className="space-y-1 text-right">

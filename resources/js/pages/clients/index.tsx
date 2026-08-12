@@ -271,7 +271,8 @@ const confirmSave = () => {
                             <div className="flex gap-2">
                                 <div className="flex-1">
                                    <SearchableSelect
-    value={selectedProduct}
+    key={data.custom_prices.length}
+    value={selectedProduct || ""}
     options={products.map((p) => ({
         label: p.name,
         value: p.id,
