@@ -140,6 +140,7 @@ export interface ExpenseMaterial {
 
 export interface Expense {
     id: number;
+    unique_id?: string;
     expense_category_id: number;
     category?: ExpenseCategory;
     amount: number;
@@ -153,6 +154,10 @@ export interface Expense {
         bonus: number;
         deduction: number;
         deduction_note: string;
+        paid_amount: number;
+        net_salary: number;
+        status: string;
+        employee?: Employee;
     };
     materials?: ExpenseMaterial[];
 }

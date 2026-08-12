@@ -58,4 +58,5 @@ export interface PayrollFormProps {
     selectedEmployee: EligibleEmployee | null;
     netSalary: number;
     formatCurrency: (n: number | string) => string;
+    onEmployeeChange: (val: string | number) => void;
 }

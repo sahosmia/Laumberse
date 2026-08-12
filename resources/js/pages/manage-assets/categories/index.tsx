@@ -27,7 +27,7 @@ export default function AssetCategories({ categories, filters }: AssetCategories
     const [editingCategory, setEditingCategory] = useState<AssetCategory | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
-    const { data, setData, post, put, reset, errors, processing } = useForm({
+    const { data, setData, post, put, reset, errors, processing, clearErrors } = useForm({
         name: '',
         description: '',
     });
@@ -37,11 +37,13 @@ export default function AssetCategories({ categories, filters }: AssetCategories
     const openCreateModal = () => {
         setEditingCategory(null);
         reset();
+        clearErrors();
         setShowModal(true);
     };
 
     const openEditModal = (category: AssetCategory) => {
         setEditingCategory(category);
+        clearErrors();
         setData({
             name: category.name,
             description: category.description || '',
@@ -147,7 +149,7 @@ export default function AssetCategories({ categories, filters }: AssetCategories
                 isProcessing={processing}
             />
 
-            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingCategory ? 'Edit Category' : 'New Category'} size="lg">
+            <Modal isOpen={showModal} onClose={() => { setShowModal(false); clearErrors(); }} title={editingCategory ? 'Edit Category' : 'New Category'} size="lg">
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-1">
                         <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Category Name</label>
@@ -181,7 +183,7 @@ export default function AssetCategories({ categories, filters }: AssetCategories
                         </button>
                         <button
                             type="button"
-                            onClick={() => setShowModal(false)}
+                            onClick={() => { setShowModal(false); clearErrors(); }}
                             className="flex-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 py-2.5 rounded-xl text-sm font-semibold"
                         >
                             Cancel

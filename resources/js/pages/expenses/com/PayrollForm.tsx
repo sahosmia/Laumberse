@@ -9,6 +9,7 @@ export function PayrollForm({
     selectedEmployee,
     netSalary,
     formatCurrency,
+    onEmployeeChange,
 }: PayrollFormProps) {
     return (
         <>
@@ -54,7 +55,7 @@ export function PayrollForm({
                         value: e.id,
                     }))}
                     value={data.employee_id}
-                    onChange={(val) => setData('employee_id', val as string | number)}
+                    onChange={onEmployeeChange}
                     placeholder="Select Employee"
                     error={errors.employee_id}
                 />

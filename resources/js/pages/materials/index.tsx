@@ -23,7 +23,7 @@ export default function Materials({ materials, units, filters }: MaterialsProps)
     const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
-    const { data, setData, post, put, reset, errors, processing } = useForm({
+    const { data, setData, post, put, reset, errors, processing, clearErrors } = useForm({
         name: '',
         unit_id: '' as string | number,
     });
@@ -33,11 +33,13 @@ export default function Materials({ materials, units, filters }: MaterialsProps)
     const openCreateModal = () => {
         setEditingMaterial(null);
         reset();
+        clearErrors();
         setShowModal(true);
     };
 
     const openEditModal = (material: Material) => {
         setEditingMaterial(material);
+        clearErrors();
         setData({
             name: material.name,
             unit_id: material.unit_id || '',
@@ -182,7 +184,7 @@ export default function Materials({ materials, units, filters }: MaterialsProps)
                 isProcessing={processing}
             />
 
-            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingMaterial ? 'Edit Material' : 'New Material'}>
+            <Modal isOpen={showModal} onClose={() => { setShowModal(false); clearErrors(); }} title={editingMaterial ? 'Edit Material' : 'New Material'}>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-1">
                         <label htmlFor="name" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Material Name</label>
@@ -223,7 +225,7 @@ export default function Materials({ materials, units, filters }: MaterialsProps)
                         </button>
                         <button
                             type="button"
-                            onClick={() => setShowModal(false)}
+                            onClick={() => { setShowModal(false); clearErrors(); }}
                             className="flex-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 py-2.5 rounded-xl text-sm font-semibold"
                         >
                             Cancel

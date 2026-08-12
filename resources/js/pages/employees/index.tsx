@@ -27,7 +27,7 @@ export default function Employees({ employees, filters }: EmployeesProps) {
     const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
-    const { data, setData, post, put, reset, errors, processing } = useForm({
+    const { data, setData, post, put, reset, errors, processing, clearErrors } = useForm({
         name: '',
         phone: '',
         email: '',
@@ -41,11 +41,13 @@ export default function Employees({ employees, filters }: EmployeesProps) {
     const openCreateModal = () => {
         setEditingEmployee(null);
         reset();
+        clearErrors();
         setShowModal(true);
     };
 
     const openEditModal = (employee: Employee) => {
         setEditingEmployee(employee);
+        clearErrors();
         setData({
             name: employee.name,
             phone: employee.phone,
@@ -230,7 +232,7 @@ export default function Employees({ employees, filters }: EmployeesProps) {
                 isProcessing={processing}
             />
 
-            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingEmployee ? 'Edit Employee' : 'New Employee'}>
+            <Modal isOpen={showModal} onClose={() => { setShowModal(false); clearErrors(); }} title={editingEmployee ? 'Edit Employee' : 'New Employee'}>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <FormInput
                         label="Name"
@@ -292,7 +294,7 @@ export default function Employees({ employees, filters }: EmployeesProps) {
                         </FormButton>
                         <FormButton
                             type="button"
-                            onClick={() => setShowModal(false)}
+                            onClick={() => { setShowModal(false); clearErrors(); }}
                             variant="secondary"
                             className="flex-1"
                         >

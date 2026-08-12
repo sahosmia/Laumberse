@@ -85,7 +85,7 @@ export function SearchableSelect({
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <ComboboxOptions anchor="bottom start" className="z-50 mt-1 max-h-60 w-[var(--input-width)] overflow-auto rounded-md bg-white dark:bg-neutral-900 py-1 text-base shadow-lg focus:outline-none sm:text-sm border border-neutral-200 dark:border-neutral-800">
+                        <ComboboxOptions className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-neutral-900 py-1 text-base shadow-lg focus:outline-none sm:text-sm border border-neutral-200 dark:border-neutral-800">
                             {filteredOptions.length === 0 && query !== '' ? (
                                 <div className="relative cursor-default select-none py-2 px-4 text-neutral-500 dark:text-neutral-400">
                                     Nothing found.

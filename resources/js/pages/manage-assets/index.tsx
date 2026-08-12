@@ -26,7 +26,7 @@ export default function ManageAssets({ manageAssets, categories, filters }: Mana
     const [editingAsset, setEditingAsset] = useState<ManageAsset | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
-    const { data, setData, post, put, reset, errors, processing } = useForm({
+    const { data, setData, post, put, reset, errors, processing, clearErrors } = useForm({
         name: '',
         description: '',
         purchase_date: new Date().toISOString().split('T')[0],
@@ -42,11 +42,13 @@ export default function ManageAssets({ manageAssets, categories, filters }: Mana
     const openCreateModal = () => {
         setEditingAsset(null);
         reset();
+        clearErrors();
         setShowModal(true);
     };
 
     const openEditModal = (manageAsset: ManageAsset) => {
         setEditingAsset(manageAsset);
+        clearErrors();
         setData({
             name: manageAsset.name,
             description: manageAsset.description || '',
@@ -188,7 +190,7 @@ export default function ManageAssets({ manageAssets, categories, filters }: Mana
                 isProcessing={processing}
             />
 
-            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingAsset ? 'Edit Asset' : 'New Asset'} size="lg">
+            <Modal isOpen={showModal} onClose={() => { setShowModal(false); clearErrors(); }} title={editingAsset ? 'Edit Asset' : 'New Asset'} size="lg">
                 <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1">
@@ -327,7 +329,7 @@ export default function ManageAssets({ manageAssets, categories, filters }: Mana
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setShowModal(false)}
+                                    onClick={() => { setShowModal(false); clearErrors(); }}
                                     className="flex-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 py-2.5 rounded-xl text-sm font-semibold"
                                 >
                                     Cancel
