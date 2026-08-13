@@ -126,7 +126,7 @@ test('invoice can be stored without ever touching the paid amount field', functi
     expect((float) $invoice->paid)->toEqual(0.0);
 });
 
-test('invoice is assigned a 4-digit zero-padded serial number based on its id', function () {
+test('invoice is assigned an INV-prefixed 4-digit zero-padded serial number based on its id', function () {
     $user = User::factory()->create();
     $category = Category::create(['name' => 'Test Category', 'slug' => 'test-category']);
     $product = Product::create([
@@ -159,7 +159,7 @@ test('invoice is assigned a 4-digit zero-padded serial number based on its id', 
 
     $response->assertSessionHasNoErrors();
     $invoice = Invoice::latest('id')->first();
-    expect($invoice->invoice_uuid)->toBe(str_pad((string) $invoice->id, 4, '0', STR_PAD_LEFT));
+    expect($invoice->invoice_uuid)->toBe('INV-' . str_pad((string) $invoice->id, 4, '0', STR_PAD_LEFT));
 
     // A second invoice gets a distinct, still-unique serial.
     $this->actingAs($user)->post(route('invoices.store'), $data);
