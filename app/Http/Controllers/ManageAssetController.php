@@ -21,7 +21,7 @@ class ManageAssetController extends Controller
                     ->orWhereHas('category', fn($q) => $q->where('name', 'like', "%{$s}%"));
             }))
             ->latest()
-            ->paginate(15)
+            ->paginate(50)
             ->withQueryString();
 
         return Inertia::render('manage-assets/index', [

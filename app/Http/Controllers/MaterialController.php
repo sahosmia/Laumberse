@@ -16,7 +16,7 @@ class MaterialController extends Controller
         $materials = Material::with('unit')
             ->when($request->search, fn($q, $s) => $q->where('name', 'like', "%{$s}%"))
             ->orderBy('name')
-            ->paginate(15)
+            ->paginate(50)
             ->withQueryString();
 
         return Inertia::render('materials/index', [

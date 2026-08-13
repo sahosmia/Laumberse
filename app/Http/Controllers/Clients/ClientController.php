@@ -18,10 +18,12 @@ class ClientController extends Controller
     {
         $clients = Client::with('customPrices')
             ->when($request->search, fn($q, $s) => $q->where(function ($q) use ($s) {
-                $q->where('name', 'like', "%{$s}%")->orWhere('phone', 'like', "%{$s}%");
+                $q->where('name', 'like', "%{$s}%")
+                    ->orWhere('phone', 'like', "%{$s}%")
+                    ->orWhere('client_uuid', 'like', "%{$s}%");
             }))
             ->orderBy('created_at', 'desc')
-            ->paginate(15)
+            ->paginate(50)
             ->withQueryString();
 
         return Inertia::render('clients/index', [

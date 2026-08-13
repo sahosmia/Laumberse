@@ -19,7 +19,7 @@ class UnitController extends Controller
                 });
             })
             ->latest()
-            ->paginate(15)
+            ->paginate(50)
             ->withQueryString();
 
         return Inertia::render('units/index', [

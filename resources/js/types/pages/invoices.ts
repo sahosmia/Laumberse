@@ -4,7 +4,13 @@ import type { ClientType, DiscountType, InvoiceStatus, PaymentStatus } from '@/c
 
 export interface InvoiceHistoryProps {
     invoices: Paginated<Invoice>;
-    filters: { search?: string };
+    filters: {
+        search?: string;
+        payment_status?: PaymentStatus | '';
+        date_filter?: string;
+        start_date?: string;
+        end_date?: string;
+    };
 }
 
 export interface InvoiceLineItem {

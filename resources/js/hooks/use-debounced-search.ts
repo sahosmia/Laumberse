@@ -1,11 +1,27 @@
 import { router } from '@inertiajs/react';
 import { useEffect } from 'react';
 
-/** Debounces `search` and pushes it to the server as a query-string filter, preserving state/scroll. */
-export function useDebouncedSearch(routeName: string, search: string, delay = 300) {
+/**
+ * Debounces `search` (plus any extra filter values) and pushes them to the server
+ * as query-string filters, preserving state/scroll.
+ */
+export function useDebouncedSearch(
+    routeName: string,
+    search: string,
+    delay = 300,
+    extraParams: Record<string, string | undefined> = {},
+) {
+    const extraParamsKey = JSON.stringify(extraParams);
+
     useEffect(() => {
         const timeout = setTimeout(() => {
-            router.get(route(routeName), search ? { search } : {}, {
+            const params: Record<string, string> = {};
+            if (search) params.search = search;
+            Object.entries(extraParams).forEach(([key, value]) => {
+                if (value) params[key] = value;
+            });
+
+            router.get(route(routeName), params, {
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,
@@ -13,5 +29,5 @@ export function useDebouncedSearch(routeName: string, search: string, delay = 30
         }, delay);
         return () => clearTimeout(timeout);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [search]);
+    }, [search, extraParamsKey]);
 }

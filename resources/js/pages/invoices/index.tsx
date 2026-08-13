@@ -9,7 +9,8 @@ import { Pagination } from '@/components/ui/pagination';
 import type { Paginated } from '@/types/pagination';
 import { TableRowActions } from '@/components/table-row-actions';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { INVOICE_STATUSES, INVOICE_STATUS_STYLES, PAYMENT_STATUS_STYLES, type InvoiceStatus, type PaymentStatus } from '@/constants/status';
+import { INVOICE_STATUSES, INVOICE_STATUS_STYLES, PAYMENT_STATUSES, PAYMENT_STATUS_STYLES, type InvoiceStatus, type PaymentStatus } from '@/constants/status';
+import { DATE_FILTERS } from '@/constants/date-filters';
 import { formatCurrency } from '@/lib/format';
 import { useDebouncedSearch } from '@/hooks/use-debounced-search';
 import type { InvoiceHistoryProps } from '@/types/pages/invoices';
@@ -96,11 +97,21 @@ function PaymentStatusToggle({ invoice }: { invoice: Invoice }) {
 
 export default function InvoiceHistory({ invoices, filters }: InvoiceHistoryProps) {
     const [search, setSearch] = useState(filters.search || "");
+    const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | ''>(filters.payment_status || "");
+    const [dateFilter, setDateFilter] = useState(filters.date_filter || "");
+    const [startDate, setStartDate] = useState(filters.start_date || "");
+    const [endDate, setEndDate] = useState(filters.end_date || "");
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
     const [processing, setProcessing] = useState(false);
 
-    useDebouncedSearch('history', search);
+    const isCustomRange = dateFilter === 'custom';
+
+    useDebouncedSearch('history', search, 300, {
+        payment_status: paymentStatus,
+        date_filter: dateFilter,
+        ...(isCustomRange ? { start_date: startDate, end_date: endDate } : {}),
+    });
 
     const handleBulkDelete = () => {
         setShowBulkDeleteModal(true);
@@ -173,15 +184,52 @@ export default function InvoiceHistory({ invoices, filters }: InvoiceHistoryProp
                 </div>
 
                 <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-                        <input
-                            type="text"
-                            placeholder="Search by client or invoice #"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
-                        />
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                            <input
+                                type="text"
+                                placeholder="Search by client or invoice #"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                            />
+                        </div>
+                        <select
+                            value={paymentStatus}
+                            onChange={(e) => setPaymentStatus(e.target.value as PaymentStatus | '')}
+                            className="w-full sm:w-40 px-3 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                        >
+                            <option value="">All Payments</option>
+                            {PAYMENT_STATUSES.map(s => (
+                                <option key={s} value={s}>{s}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={dateFilter}
+                            onChange={(e) => setDateFilter(e.target.value)}
+                            className="w-full sm:w-44 px-3 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                        >
+                            {DATE_FILTERS.map(f => (
+                                <option key={f.value} value={f.value}>{f.label}</option>
+                            ))}
+                        </select>
+                        {isCustomRange && (
+                            <>
+                                <input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className="w-full sm:w-40 px-3 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                                />
+                                <input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="w-full sm:w-40 px-3 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                                />
+                            </>
+                        )}
                     </div>
                 </div>
 

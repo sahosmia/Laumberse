@@ -16,7 +16,7 @@ class AssetCategoryController extends Controller
                 $q->where('name', 'like', "%{$s}%")->orWhere('description', 'like', "%{$s}%");
             }))
             ->latest()
-            ->paginate(15)
+            ->paginate(50)
             ->withQueryString();
 
         return Inertia::render('manage-assets/categories/index', [

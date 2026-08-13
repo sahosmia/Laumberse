@@ -16,7 +16,7 @@ class ExpenseCategoryController extends Controller
                 $q->where('name', 'like', "%{$s}%")->orWhere('description', 'like', "%{$s}%");
             }))
             ->latest()
-            ->paginate(15)
+            ->paginate(50)
             ->withQueryString();
         $filters = ['search' => $request->search];
 

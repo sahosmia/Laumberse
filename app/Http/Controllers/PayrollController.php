@@ -10,7 +10,7 @@ class PayrollController extends Controller
 {
     public function index()
     {
-        $payrolls = Payroll::with(['employee', 'expense'])->latest()->paginate(15);
+        $payrolls = Payroll::with(['employee', 'expense'])->latest()->paginate(50);
 
         return Inertia::render('payrolls/index', [
             'payrolls' => $payrolls

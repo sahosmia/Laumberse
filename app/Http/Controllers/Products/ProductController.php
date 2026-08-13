@@ -28,7 +28,7 @@ class ProductController extends Controller
             ])
             ->when($request->search, fn($q, $s) => $q->where('name', 'like', "%{$s}%"))
             ->latest()
-            ->paginate(15)
+            ->paginate(50)
             ->withQueryString();
 
         return Inertia::render('products/index', [

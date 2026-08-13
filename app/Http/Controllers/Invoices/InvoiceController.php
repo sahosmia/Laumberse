@@ -12,6 +12,7 @@ use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\Client;
 use App\Services\InvoiceService;
+use App\Support\DateRangeFilter;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -29,13 +30,21 @@ class InvoiceController extends Controller
                 $q->where('invoice_uuid', 'like', "%{$s}%")
                     ->orWhereHas('client', fn($q) => $q->where('name', 'like', "%{$s}%"));
             }))
+            ->when($request->payment_status, fn($q, $status) => $q->where('payment_status', $status))
+            ->tap(fn($q) => DateRangeFilter::apply($q, $request))
             ->latest()
-            ->paginate(15)
+            ->paginate(50)
             ->withQueryString();
 
         return Inertia::render('invoices/index', [
             'invoices' => $invoices,
-            'filters' => ['search' => $request->search],
+            'filters' => [
+                'search' => $request->search,
+                'payment_status' => $request->payment_status,
+                'date_filter' => $request->date_filter,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+            ],
         ]);
     }
 

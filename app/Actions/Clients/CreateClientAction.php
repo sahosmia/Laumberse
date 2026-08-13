@@ -12,6 +12,7 @@ class CreateClientAction
     {
         return DB::transaction(function () use ($data) {
             $client = Client::create($data);
+            $client->update(['client_uuid' => 'CLT-' . str_pad((string) $client->id, 4, '0', STR_PAD_LEFT)]);
 
             if ($data['type'] === ClientType::Corporate->value && !empty($data['custom_prices'])) {
                 foreach ($data['custom_prices'] as $priceData) {

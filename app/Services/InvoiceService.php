@@ -22,6 +22,7 @@ class InvoiceService
                     'address' => $data['new_client_address'] ?? null,
                     'type' => $data['new_client_type'] ?? 'Consumer',
                 ]);
+                $client->update(['client_uuid' => 'CLT-' . str_pad((string) $client->id, 4, '0', STR_PAD_LEFT)]);
                 $clientId = $client->id;
 
                 // If it's a corporate client, save the items as their custom prices
@@ -64,7 +65,7 @@ class InvoiceService
                 'payment_date' => $paymentStatus === 'Paid' ? $data['date'] : null,
             ]);
 
-            $invoice->update(['invoice_uuid' => str_pad((string) $invoice->id, 4, '0', STR_PAD_LEFT)]);
+            $invoice->update(['invoice_uuid' => 'INV-' . str_pad((string) $invoice->id, 4, '0', STR_PAD_LEFT)]);
 
             foreach ($data['items'] as $item) {
                 InvoiceItem::create([

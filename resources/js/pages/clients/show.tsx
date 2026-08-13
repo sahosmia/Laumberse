@@ -67,6 +67,7 @@ export default function ClientShow({ client }: ClientShowProps) {
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-neutral-900 dark:text-neutral-100">{client.name}</h3>
+                                    <p className="text-xs font-mono font-semibold text-blue-600">{client.client_uuid}</p>
                                     <p className="text-sm text-neutral-500">{client.phone}</p>
                                 </div>
                             </div>

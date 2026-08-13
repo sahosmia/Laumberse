@@ -10,6 +10,7 @@ use App\Models\Material;
 use App\Models\ExpenseCategory;
 use App\Models\GlobalSetting;
 use App\Services\ExpenseService;
+use App\Support\DateRangeFilter;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -22,8 +23,9 @@ class ExpenseController extends Controller
                 $q->where('description', 'like', "%{$s}%")
                     ->orWhereHas('category', fn($q) => $q->where('name', 'like', "%{$s}%"));
             }))
+            ->tap(fn($q) => DateRangeFilter::apply($q, $request))
             ->latest()
-            ->paginate(15)
+            ->paginate(50)
             ->withQueryString();
 
         return Inertia::render('expenses/index', [
@@ -31,7 +33,12 @@ class ExpenseController extends Controller
             'categories' => ExpenseCategory::all(),
             'salary_category_id' => GlobalSetting::get('salary_category_id'),
             'materials' => Material::with('unit')->orderBy('name')->get(),
-            'filters' => ['search' => $request->search],
+            'filters' => [
+                'search' => $request->search,
+                'date_filter' => $request->date_filter,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+            ],
         ]);
     }
 

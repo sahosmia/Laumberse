@@ -78,6 +78,7 @@ export interface CustomerProductPrice {
 
 export interface Client {
     id: number;
+    client_uuid?: string;
     name: string;
     phone: string;
     type: ClientType;

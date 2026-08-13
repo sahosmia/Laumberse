@@ -151,6 +151,7 @@ const confirmSave = () => {
                                             {c.type}
                                         </span>
                                     </div>
+                                    <p className="text-xs font-mono font-semibold text-blue-600 mt-0.5">{c.client_uuid}</p>
                                     <p className="text-xs text-neutral-400 mt-0.5 break-all">{c.phone}</p>
                                     <p className="text-xs text-neutral-400 mt-0.5 line-clamp-2">{c.address || '-'}</p>
                                 </div>

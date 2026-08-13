@@ -101,8 +101,6 @@ class DemoDataSeeder extends Seeder
                 $items = [];
                 $numItems = rand(1, min(4, $productModels->count()));
 
-                $invoiceId = 'INV-' . date('Ymd') . rand(1000, 9999);
-
                 // Select random products for this specific invoice
                 $selectedProducts = $productModels->random($numItems);
 
@@ -123,7 +121,7 @@ class DemoDataSeeder extends Seeder
                 $due = $total - $paid;
 
                 $invoice = Invoice::create([
-                    'invoice_uuid' => $invoiceId,
+                    'invoice_uuid' => (string) \Illuminate\Support\Str::uuid(),
                     'date' => date('Y-m-d', strtotime("-" . rand(0, 60) . " days")),
                     'client_id' => $client->id,
                     'total' => $total,
@@ -132,6 +130,8 @@ class DemoDataSeeder extends Seeder
                     'status' => ($due > 0) ? InvoiceStatus::Processing->value : InvoiceStatus::Delivered->value,
                     'method' => ['Cash', 'Bkash', 'Bank'][rand(0, 2)],
                 ]);
+
+                $invoice->update(['invoice_uuid' => 'INV-' . str_pad((string) $invoice->id, 4, '0', STR_PAD_LEFT)]);
 
                 foreach ($items as $item) {
                     $item['invoice_id'] = $invoice->id;

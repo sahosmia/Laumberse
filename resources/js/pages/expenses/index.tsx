@@ -12,6 +12,7 @@ import { Pagination } from '@/components/ui/pagination';
 import { TableRowActions } from '@/components/table-row-actions';
 import { formatCurrency } from '@/lib/format';
 import { useDebouncedSearch } from '@/hooks/use-debounced-search';
+import { DATE_FILTERS } from '@/constants/date-filters';
 import type { EligibleEmployee, ExpensesProps } from '@/types/pages/expenses';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -25,6 +26,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Expenses({ expenses, categories, materials, filters }: ExpensesProps) {
 
     const [search, setSearch] = useState(filters.search || "");
+    const [dateFilter, setDateFilter] = useState(filters.date_filter || "");
+    const [startDate, setStartDate] = useState(filters.start_date || "");
+    const [endDate, setEndDate] = useState(filters.end_date || "");
+    const isCustomRange = dateFilter === 'custom';
     const [showModal, setShowModal] = useState(false);
     const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
@@ -145,7 +150,10 @@ export default function Expenses({ expenses, categories, materials, filters }: E
         }
     }, [isPayroll, netSalary]);
 
-    useDebouncedSearch('expenses.index', search);
+    useDebouncedSearch('expenses.index', search, 300, {
+        date_filter: dateFilter,
+        ...(isCustomRange ? { start_date: startDate, end_date: endDate } : {}),
+    });
 
     const openCreateModal = () => {
         setEditingExpense(null);
@@ -243,15 +251,42 @@ export default function Expenses({ expenses, categories, materials, filters }: E
                     </div>
                 </div>
 
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-                    <input
-                        type="text"
-                        placeholder="Search expenses..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full sm:w-80 pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
-                    />
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="relative flex-1 sm:flex-none">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                        <input
+                            type="text"
+                            placeholder="Search expenses..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full sm:w-80 pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                        />
+                    </div>
+                    <select
+                        value={dateFilter}
+                        onChange={(e) => setDateFilter(e.target.value)}
+                        className="w-full sm:w-44 px-3 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                    >
+                        {DATE_FILTERS.map(f => (
+                            <option key={f.value} value={f.value}>{f.label}</option>
+                        ))}
+                    </select>
+                    {isCustomRange && (
+                        <>
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="w-full sm:w-40 px-3 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                            />
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="w-full sm:w-40 px-3 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                            />
+                        </>
+                    )}
                 </div>
 
                 <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">

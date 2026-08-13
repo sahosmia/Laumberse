@@ -19,7 +19,7 @@ class EmployeeController extends Controller
                 $q->where('name', 'like', "%{$s}%")->orWhere('designation', 'like', "%{$s}%");
             }))
             ->latest()
-            ->paginate(15)
+            ->paginate(50)
             ->withQueryString();
 
         return Inertia::render('employees/index', [

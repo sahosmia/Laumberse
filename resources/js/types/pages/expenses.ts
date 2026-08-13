@@ -5,7 +5,7 @@ export interface ExpensesProps {
     expenses: Paginated<Expense>;
     categories: ExpenseCategory[];
     materials: Material[];
-    filters: { search?: string };
+    filters: { search?: string; date_filter?: string; start_date?: string; end_date?: string };
 }
 
 export interface EligibleEmployee {
