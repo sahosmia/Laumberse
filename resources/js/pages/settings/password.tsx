@@ -6,8 +6,8 @@ import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler, useRef } from 'react';
 
 import HeadingSmall from '@/components/heading-small';
-import { FormInput } from '@/components/ui/form-input';
 import { FormButton } from '@/components/ui/form-button';
+import { FormInput } from '@/components/ui/form-input';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -94,7 +94,9 @@ export default function Password() {
                         />
 
                         <div className="flex items-center gap-4">
-                            <FormButton disabled={processing} type="submit">Save password</FormButton>
+                            <FormButton disabled={processing} type="submit">
+                                Save password
+                            </FormButton>
 
                             <Transition
                                 show={recentlySuccessful}

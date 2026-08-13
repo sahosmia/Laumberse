@@ -5,8 +5,8 @@ import { FormEventHandler } from 'react';
 
 import DeleteUser from '@/components/delete-user';
 import HeadingSmall from '@/components/heading-small';
-import { FormInput } from '@/components/ui/form-input';
 import { FormButton } from '@/components/ui/form-button';
+import { FormInput } from '@/components/ui/form-input';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
@@ -86,7 +86,9 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                         )}
 
                         <div className="flex items-center gap-4">
-                            <FormButton disabled={processing} type="submit">Save</FormButton>
+                            <FormButton disabled={processing} type="submit">
+                                Save
+                            </FormButton>
 
                             <Transition
                                 show={recentlySuccessful}

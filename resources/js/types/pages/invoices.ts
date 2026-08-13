@@ -1,6 +1,6 @@
+import type { ClientType, DiscountType, InvoiceStatus, PaymentStatus } from '@/constants/status';
 import type { Category, Client, Invoice, Product } from '@/types';
 import type { Paginated } from '@/types/pagination';
-import type { ClientType, DiscountType, InvoiceStatus, PaymentStatus } from '@/constants/status';
 
 export interface InvoiceHistoryProps {
     invoices: Paginated<Invoice>;

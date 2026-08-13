@@ -8,7 +8,8 @@
 
 @theme {
     --font-sans:
-        'Instrument Sans', 'Noto Sans Bengali', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+        'Instrument Sans', 'Noto Sans Bengali', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -156,12 +157,14 @@
         @apply bg-background text-foreground;
     }
 
-    select, option {
+    select,
+    option {
         background-color: white;
         color: #111827;
     }
 
-    .dark select, .dark option {
+    .dark select,
+    .dark option {
         background-color: #171717 !important;
         color: #f9fafb !important;
     }
@@ -190,6 +193,6 @@
     display: none;
 }
 .no-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
 }

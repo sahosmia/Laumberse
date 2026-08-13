@@ -1,15 +1,9 @@
-import { Link, router } from '@inertiajs/react';
-import { Eye, SquarePen, Trash2, MoreHorizontal } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Link, router } from '@inertiajs/react';
+import { Eye, MoreHorizontal, SquarePen, Trash2 } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 
 type RowAction = { href: string; label?: string } | { onClick: () => void; label?: string };
 
@@ -60,13 +54,13 @@ export function TableRowActions({ deleteRoute, id, label = 'item', view, edit, c
         <>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="w-8 h-8 p-0">
-                        <MoreHorizontal className="w-4 h-4" />
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                        <MoreHorizontal className="h-4 w-4" />
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
-                    {view && <ActionItem action={{ label: 'View Details', ...view }} icon={<Eye className="w-4 h-4 mr-2" />} />}
-                    {edit && <ActionItem action={{ label: 'Edit', ...edit }} icon={<SquarePen className="w-4 h-4 mr-2" />} />}
+                    {view && <ActionItem action={{ label: 'View Details', ...view }} icon={<Eye className="mr-2 h-4 w-4" />} />}
+                    {edit && <ActionItem action={{ label: 'Edit', ...edit }} icon={<SquarePen className="mr-2 h-4 w-4" />} />}
 
                     {customActions}
 
@@ -78,9 +72,9 @@ export function TableRowActions({ deleteRoute, id, label = 'item', view, edit, c
                                     e.preventDefault();
                                     setShowDeleteModal(true);
                                 }}
-                                className="text-red-600 focus:text-red-600 cursor-pointer"
+                                className="cursor-pointer text-red-600 focus:text-red-600"
                             >
-                                <Trash2 className="w-4 h-4 mr-2" />
+                                <Trash2 className="mr-2 h-4 w-4" />
                                 <span>Delete</span>
                             </DropdownMenuItem>
                         </>

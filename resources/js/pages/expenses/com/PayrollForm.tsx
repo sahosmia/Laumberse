@@ -13,7 +13,7 @@ export function PayrollForm({
 }: PayrollFormProps) {
     return (
         <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                     <label htmlFor="month" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                         Month
@@ -22,7 +22,7 @@ export function PayrollForm({
                         id="month"
                         value={data.month}
                         onChange={(e) => setData('month', parseInt(e.target.value, 10))}
-                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-transparent dark:text-neutral-100"
+                        className="h-12 w-full rounded-xl border border-neutral-200 bg-transparent px-3 text-sm md:h-10 dark:border-neutral-800 dark:text-neutral-100"
                         required
                     >
                         {Array.from({ length: 12 }, (_, i) => (
@@ -41,7 +41,7 @@ export function PayrollForm({
                         type="number"
                         value={data.year}
                         onChange={(e) => setData('year', parseInt(e.target.value, 10))}
-                        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-transparent dark:text-neutral-100"
+                        className="h-12 w-full rounded-xl border border-neutral-200 bg-transparent px-3 text-sm md:h-10 dark:border-neutral-800 dark:text-neutral-100"
                         required
                     />
                 </div>
@@ -62,14 +62,12 @@ export function PayrollForm({
             </div>
 
             {selectedEmployee && (
-                <div className="bg-neutral-50 dark:bg-neutral-800/50 p-4 rounded-xl space-y-3">
+                <div className="space-y-3 rounded-xl bg-neutral-50 p-4 dark:bg-neutral-800/50">
                     <div className="flex justify-between text-xs">
                         <span className="text-neutral-500">Base Salary:</span>
-                        <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-                            {formatCurrency(selectedEmployee.base_salary)}
-                        </span>
+                        <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatCurrency(selectedEmployee.base_salary)}</span>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-1">
                             <label htmlFor="bonus" className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
                                 Bonus
@@ -85,7 +83,7 @@ export function PayrollForm({
                                     }
                                     setData('bonus', val === '' ? '' : parseFloat(val));
                                 }}
-                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 h-12 sm:h-9 text-xs bg-transparent dark:text-neutral-100"
+                                className="h-12 w-full rounded-lg border border-neutral-200 bg-transparent px-2 text-xs sm:h-9 dark:border-neutral-800 dark:text-neutral-100"
                                 step="any"
                             />
                         </div>
@@ -104,7 +102,7 @@ export function PayrollForm({
                                     }
                                     setData('deduction', val === '' ? '' : parseFloat(val));
                                 }}
-                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 h-12 sm:h-9 text-xs bg-transparent dark:text-neutral-100"
+                                className="h-12 w-full rounded-lg border border-neutral-200 bg-transparent px-2 text-xs sm:h-9 dark:border-neutral-800 dark:text-neutral-100"
                                 step="any"
                             />
                         </div>
@@ -119,14 +117,14 @@ export function PayrollForm({
                                 type="text"
                                 value={data.deduction_note}
                                 onChange={(e) => setData('deduction_note', e.target.value)}
-                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 h-12 sm:h-9 text-xs bg-transparent dark:text-neutral-100"
+                                className="h-12 w-full rounded-lg border border-neutral-200 bg-transparent px-2 text-xs sm:h-9 dark:border-neutral-800 dark:text-neutral-100"
                                 required
                                 placeholder="Reason for deduction"
                             />
                             {errors.deduction_note && <p className="text-xs text-red-500">{errors.deduction_note}</p>}
                         </div>
                     )}
-                    <div className="pt-2 border-t border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
+                    <div className="flex items-center justify-between border-t border-neutral-200 pt-2 dark:border-neutral-700">
                         <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300">Net Salary:</span>
                         <span className="text-sm font-bold text-blue-600">{formatCurrency(netSalary)}</span>
                     </div>

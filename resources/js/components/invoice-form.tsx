@@ -1,15 +1,15 @@
-import { useForm } from '@inertiajs/react';
-import { useState, useMemo, useRef } from "react";
-import { Search, Package, Trash2, Printer, Calendar, CreditCard, Users, UserPlus, Building2 } from "lucide-react";
-import { SearchableSelect } from '@/components/ui/searchable-select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Category, Product, Client } from '@/types';
-import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { CLIENT_TYPES, DISCOUNT_TYPES, INVOICE_FORM_STATUSES, type ClientType, type DiscountType, type InvoiceStatus } from '@/constants/status';
 import { formatCurrency } from '@/lib/format';
+import { Category, Client, Product } from '@/types';
+import { useForm } from '@inertiajs/react';
+import { Calendar, CreditCard, Package, Printer, Search, Trash2, UserPlus, Users } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
 
 export interface InvoiceItem {
     productId: number;
@@ -39,7 +39,7 @@ export interface Invoice {
         product?: {
             name: string;
             image_url?: string | null;
-        }
+        };
     }[];
 }
 
@@ -64,16 +64,16 @@ function computeInvoiceTotals({ items, paid, discountType, discountAmount, deliv
     const subtotal = items.reduce((s, i) => s + i.price * (Number(i.qty) || 0), 0);
     const disc = Number(discountAmount) || 0;
     const discountValue = discountType === 'Percentage' ? (subtotal * disc) / 100 : disc;
-    const deliv = isCorporate ? 0 : (Number(deliveryCharge) || 0);
+    const deliv = isCorporate ? 0 : Number(deliveryCharge) || 0;
     const total = Math.max(0, subtotal - discountValue) + deliv;
     const due = total - (Number(paid) || 0);
     return { subtotal, discountValue, total, due };
 }
 
-export default function InvoiceForm({ invoice, products, clients, categories, isEdit = false }: InvoiceFormProps) {
-    const [searchTerm, setSearchTerm] = useState("");
+export default function InvoiceForm({ invoice, products, clients, isEdit = false }: InvoiceFormProps) {
+    const [searchTerm, setSearchTerm] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState("All");
+    const [selectedCategory] = useState('All');
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
     const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
     const [itemIndexToDelete, setItemIndexToDelete] = useState<number | null>(null);
@@ -82,33 +82,34 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
 
     const { data, setData, post, put, processing, errors } = useForm({
         date: invoice?.date || new Date().toISOString().split('T')[0],
-        client_id: invoice?.client_id || null as string | number | null,
+        client_id: invoice?.client_id || (null as string | number | null),
         create_new_client: false,
         new_client_name: '',
         new_client_phone: '',
         new_client_type: 'Consumer' as ClientType,
         new_client_address: '',
         total: invoice?.total || 0,
-        paid: invoice?.paid ? invoice.paid : '' as string | number,
+        paid: invoice?.paid ? invoice.paid : ('' as string | number),
         due: invoice?.due || 0,
         status: invoice?.status || ('Processing' as InvoiceStatus),
         method: invoice?.method || 'Cash',
         remarks: invoice?.remarks || '',
         discount_type: invoice?.discount_type || ('Fixed' as DiscountType),
-        discount_amount: invoice?.discount_amount ? invoice.discount_amount : '' as string | number,
-        delivery_charge: invoice?.delivery_charge ? invoice.delivery_charge : '' as string | number,
-        items: invoice?.items.map(item => ({
-            productId: item.product_id,
-            name: item.product?.name || 'Unknown Product',
-            price: Number(item.price),
-            qty: item.qty,
-            imageUrl: item.product?.image_url || null
-        })) || [] as InvoiceItem[],
+        discount_amount: invoice?.discount_amount ? invoice.discount_amount : ('' as string | number),
+        delivery_charge: invoice?.delivery_charge ? invoice.delivery_charge : ('' as string | number),
+        items:
+            invoice?.items.map((item) => ({
+                productId: item.product_id,
+                name: item.product?.name || 'Unknown Product',
+                price: Number(item.price),
+                qty: item.qty,
+                imageUrl: item.product?.image_url || null,
+            })) || ([] as InvoiceItem[]),
     });
 
     const filtered = useMemo(() => {
         return products.filter((p) => {
-            const matchCat = selectedCategory === "All" || p.category?.name === selectedCategory;
+            const matchCat = selectedCategory === 'All' || p.category?.name === selectedCategory;
             const matchSearch = searchTerm.length === 0 || p.name.toLowerCase().includes(searchTerm.toLowerCase());
             return matchCat && matchSearch;
         });
@@ -116,14 +117,19 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
 
     const visibleProducts = filtered.slice(0, 20);
 
-    const selectedClient = clients.find(c => c.id == data.client_id);
-    const isCorporate = data.create_new_client
-        ? data.new_client_type === 'Corporate'
-        : selectedClient?.type === 'Corporate';
+    const selectedClient = clients.find((c) => c.id == data.client_id);
+    const isCorporate = data.create_new_client ? data.new_client_type === 'Corporate' : selectedClient?.type === 'Corporate';
 
     const handleDeliveryChargeChange = (val: string) => {
-        const { total, due } = computeInvoiceTotals({ items: data.items, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: val, isCorporate });
-        setData(d => ({
+        const { total, due } = computeInvoiceTotals({
+            items: data.items,
+            paid: data.paid,
+            discountType: data.discount_type,
+            discountAmount: data.discount_amount,
+            deliveryCharge: val,
+            isCorporate,
+        });
+        setData((d) => ({
             ...d,
             delivery_charge: val,
             total,
@@ -133,12 +139,12 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
 
     const addItem = (product: Product) => {
         const existingIdx = data.items.findIndex((i) => i.productId === product.id);
-        let newItems = [...data.items];
+        const newItems = [...data.items];
 
         let price = Number(product.price);
 
         if (!data.create_new_client && selectedClient?.type === 'Corporate') {
-            const customPrice = selectedClient.custom_prices?.find(cp => cp.product_id === product.id)?.custom_price;
+            const customPrice = selectedClient.custom_prices?.find((cp) => cp.product_id === product.id)?.custom_price;
             if (customPrice !== undefined) {
                 price = Number(customPrice);
             }
@@ -147,27 +153,32 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
         if (existingIdx > -1) {
             newItems[existingIdx].qty += 1;
             newItems[existingIdx].price = price;
-
         } else {
             newItems.push({
                 productId: product.id,
                 name: product.name,
                 price: price,
                 qty: 1,
-                imageUrl: product.image_url
+                imageUrl: product.image_url,
             });
         }
 
-
-        const { total, due } = computeInvoiceTotals({ items: newItems, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate });
-        setData(d => ({
+        const { total, due } = computeInvoiceTotals({
+            items: newItems,
+            paid: data.paid,
+            discountType: data.discount_type,
+            discountAmount: data.discount_amount,
+            deliveryCharge: data.delivery_charge,
+            isCorporate,
+        });
+        setData((d) => ({
             ...d,
             items: newItems,
             total,
             due,
         }));
 
-        setSearchTerm("");
+        setSearchTerm('');
         setShowDropdown(false);
         setHighlightedIndex(0);
     };
@@ -177,14 +188,14 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
 
         if (e.key === 'ArrowDown') {
             e.preventDefault();
-            setHighlightedIndex(i => {
+            setHighlightedIndex((i) => {
                 const next = Math.min(i + 1, visibleProducts.length - 1);
                 productOptionRefs.current[next]?.scrollIntoView({ block: 'nearest' });
                 return next;
             });
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
-            setHighlightedIndex(i => {
+            setHighlightedIndex((i) => {
                 const next = Math.max(i - 1, 0);
                 productOptionRefs.current[next]?.scrollIntoView({ block: 'nearest' });
                 return next;
@@ -199,12 +210,19 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
     };
 
     const updateQty = (idx: number, newQty: number | string) => {
-        if (newQty !== "" && Number(newQty) < 1) return;
-        let newItems = [...data.items];
-        newItems[idx].qty = newQty === "" ? "" : Number(newQty);
+        if (newQty !== '' && Number(newQty) < 1) return;
+        const newItems = [...data.items];
+        newItems[idx].qty = newQty === '' ? '' : Number(newQty);
 
-        const { total, due } = computeInvoiceTotals({ items: newItems, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate });
-        setData(d => ({
+        const { total, due } = computeInvoiceTotals({
+            items: newItems,
+            paid: data.paid,
+            discountType: data.discount_type,
+            discountAmount: data.discount_amount,
+            deliveryCharge: data.delivery_charge,
+            isCorporate,
+        });
+        setData((d) => ({
             ...d,
             items: newItems,
             total,
@@ -213,11 +231,18 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
     };
 
     const updatePrice = (idx: number, newPrice: number) => {
-        let newItems = [...data.items];
+        const newItems = [...data.items];
         newItems[idx].price = newPrice;
 
-        const { total, due } = computeInvoiceTotals({ items: newItems, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate });
-        setData(d => ({
+        const { total, due } = computeInvoiceTotals({
+            items: newItems,
+            paid: data.paid,
+            discountType: data.discount_type,
+            discountAmount: data.discount_amount,
+            deliveryCharge: data.delivery_charge,
+            isCorporate,
+        });
+        setData((d) => ({
             ...d,
             items: newItems,
             total,
@@ -227,8 +252,15 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
 
     const removeItem = (idx: number) => {
         const newItems = data.items.filter((_, i) => i !== idx);
-        const { total, due } = computeInvoiceTotals({ items: newItems, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate });
-        setData(d => ({
+        const { total, due } = computeInvoiceTotals({
+            items: newItems,
+            paid: data.paid,
+            discountType: data.discount_type,
+            discountAmount: data.discount_amount,
+            deliveryCharge: data.delivery_charge,
+            isCorporate,
+        });
+        setData((d) => ({
             ...d,
             items: newItems,
             total,
@@ -242,17 +274,31 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
     };
 
     const handlePaidChange = (val: string) => {
-        const { total } = computeInvoiceTotals({ items: data.items, paid: val, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate });
-        setData(d => ({
+        const { total } = computeInvoiceTotals({
+            items: data.items,
+            paid: val,
+            discountType: data.discount_type,
+            discountAmount: data.discount_amount,
+            deliveryCharge: data.delivery_charge,
+            isCorporate,
+        });
+        setData((d) => ({
             ...d,
             paid: val,
-            due: total - (Number(val) || 0)
+            due: total - (Number(val) || 0),
         }));
     };
 
     const handleDiscountTypeChange = (type: DiscountType) => {
-        const { total, due } = computeInvoiceTotals({ items: data.items, paid: data.paid, discountType: type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate });
-        setData(d => ({
+        const { total, due } = computeInvoiceTotals({
+            items: data.items,
+            paid: data.paid,
+            discountType: type,
+            discountAmount: data.discount_amount,
+            deliveryCharge: data.delivery_charge,
+            isCorporate,
+        });
+        setData((d) => ({
             ...d,
             discount_type: type,
             total,
@@ -261,8 +307,15 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
     };
 
     const handleDiscountAmountChange = (val: string) => {
-        const { total, due } = computeInvoiceTotals({ items: data.items, paid: data.paid, discountType: data.discount_type, discountAmount: val, deliveryCharge: data.delivery_charge, isCorporate });
-        setData(d => ({
+        const { total, due } = computeInvoiceTotals({
+            items: data.items,
+            paid: data.paid,
+            discountType: data.discount_type,
+            discountAmount: val,
+            deliveryCharge: data.delivery_charge,
+            isCorporate,
+        });
+        setData((d) => ({
             ...d,
             discount_amount: val,
             total,
@@ -289,21 +342,19 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
     };
 
     const totals = useMemo(
-        () => computeInvoiceTotals({
-            items: data.items,
-            paid: data.paid,
-            discountType: data.discount_type,
-            discountAmount: data.discount_amount,
-            deliveryCharge: data.delivery_charge,
-            isCorporate,
-        }),
-        [data.items, data.paid, data.discount_type, data.discount_amount, data.delivery_charge, isCorporate]
+        () =>
+            computeInvoiceTotals({
+                items: data.items,
+                paid: data.paid,
+                discountType: data.discount_type,
+                discountAmount: data.discount_amount,
+                deliveryCharge: data.delivery_charge,
+                isCorporate,
+            }),
+        [data.items, data.paid, data.discount_type, data.discount_amount, data.delivery_charge, isCorporate],
     );
 
-    const usedCategoryIds = new Set(products.map(p => p.category_id));
-    const activeCategories = categories.filter(c => usedCategoryIds.has(c.id));
-    const categoryNames = ["All", ...activeCategories.map(c => c.name)];
-    const clientOptions = clients.map(c => ({ label: `${c.name} (${c.phone})`, value: c.id }));
+    const clientOptions = clients.map((c) => ({ label: `${c.name} (${c.phone})`, value: c.id }));
 
     return (
         <>
@@ -332,7 +383,7 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                 description="Are you sure you want to remove this product from the invoice?"
                 confirmText="Remove"
             />
-            <form onSubmit={handleSubmit} className="p-4 space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 p-4">
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{isEdit ? 'Edit Invoice' : 'Create Invoice'}</h1>
@@ -340,19 +391,18 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                     </div>
                     <div className="text-right">
                         <p className="text-xs text-neutral-400">Invoice No.</p>
-                        <p className="h-8 flex items-center justify-end text-sm font-bold text-neutral-700 dark:text-neutral-300 font-mono">
+                        <p className="flex h-8 items-center justify-end font-mono text-sm font-bold text-neutral-700 dark:text-neutral-300">
                             {invoice?.invoice_uuid || 'Auto-generated on save'}
                         </p>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <div className="lg:col-span-2 space-y-4">
-
-                        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 space-y-4">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                    <div className="space-y-4 lg:col-span-2">
+                        <div className="space-y-4 rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-2">
-                                    <Users className="w-4 h-4" /> Client
+                                <h3 className="flex items-center gap-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                                    <Users className="h-4 w-4" /> Client
                                 </h3>
                                 {!isEdit && (
                                     <div className="flex items-center space-x-2">
@@ -361,8 +411,15 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                             checked={data.create_new_client}
                                             onCheckedChange={(checked) => {
                                                 const isNew = !!checked;
-                                                const { total, due } = computeInvoiceTotals({ items: [], paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: isNew ? '' : data.delivery_charge, isCorporate: isNew ? data.new_client_type === 'Corporate' : false });
-                                                setData(d => ({
+                                                const { total, due } = computeInvoiceTotals({
+                                                    items: [],
+                                                    paid: data.paid,
+                                                    discountType: data.discount_type,
+                                                    discountAmount: data.discount_amount,
+                                                    deliveryCharge: isNew ? '' : data.delivery_charge,
+                                                    isCorporate: isNew ? data.new_client_type === 'Corporate' : false,
+                                                });
+                                                setData((d) => ({
                                                     ...d,
                                                     create_new_client: isNew,
                                                     client_id: null,
@@ -373,7 +430,9 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                                 }));
                                             }}
                                         />
-                                        <Label htmlFor="create_new_client" className="text-xs font-medium cursor-pointer">New Client</Label>
+                                        <Label htmlFor="create_new_client" className="cursor-pointer text-xs font-medium">
+                                            New Client
+                                        </Label>
                                     </div>
                                 )}
                             </div>
@@ -384,23 +443,32 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                         options={clientOptions}
                                         value={data.client_id}
                                         onChange={(val) => {
-                                            const newClient = clients.find(c => c.id == val);
+                                            const newClient = clients.find((c) => c.id == val);
                                             if (newClient?.type === 'Corporate') {
                                                 // Automatically populate items with custom prices for Corporate clients
-                                                const corporateItems = (newClient.custom_prices || []).map(cp => {
-                                                    const product = products.find(p => p.id === cp.product_id);
-                                                    if (!product) return null;
-                                                    return {
-                                                        productId: product.id,
-                                                        name: product.name,
-                                                        price: Number(cp.custom_price),
-                                                        qty: 1,
-                                                        imageUrl: product.image_url
-                                                    };
-                                                }).filter(Boolean) as InvoiceItem[];
+                                                const corporateItems = (newClient.custom_prices || [])
+                                                    .map((cp) => {
+                                                        const product = products.find((p) => p.id === cp.product_id);
+                                                        if (!product) return null;
+                                                        return {
+                                                            productId: product.id,
+                                                            name: product.name,
+                                                            price: Number(cp.custom_price),
+                                                            qty: 1,
+                                                            imageUrl: product.image_url,
+                                                        };
+                                                    })
+                                                    .filter(Boolean) as InvoiceItem[];
 
-                                                const { total, due } = computeInvoiceTotals({ items: corporateItems, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: 0, isCorporate: true });
-                                                setData(d => ({
+                                                const { total, due } = computeInvoiceTotals({
+                                                    items: corporateItems,
+                                                    paid: data.paid,
+                                                    discountType: data.discount_type,
+                                                    discountAmount: data.discount_amount,
+                                                    deliveryCharge: 0,
+                                                    isCorporate: true,
+                                                });
+                                                setData((d) => ({
                                                     ...d,
                                                     client_id: val,
                                                     items: corporateItems,
@@ -409,9 +477,15 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                                     due,
                                                 }));
                                             } else {
-
-                                                const { total, due } = computeInvoiceTotals({ items: [], paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: data.delivery_charge, isCorporate: false });
-                                                setData(d => ({
+                                                const { total, due } = computeInvoiceTotals({
+                                                    items: [],
+                                                    paid: data.paid,
+                                                    discountType: data.discount_type,
+                                                    discountAmount: data.discount_amount,
+                                                    deliveryCharge: data.delivery_charge,
+                                                    isCorporate: false,
+                                                });
+                                                setData((d) => ({
                                                     ...d,
                                                     client_id: val,
                                                     items: [],
@@ -425,44 +499,57 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                     />
                                 </div>
                             ) : (
-                                <div className="space-y-3 p-3 rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800/20">
-                                    <div className="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 mb-1">
-                                        <UserPlus className="w-3 h-3" /> Inline Client Creation
+                                <div className="space-y-3 rounded-xl border border-dashed border-neutral-200 bg-neutral-50/50 p-3 dark:border-neutral-800 dark:bg-neutral-800/20">
+                                    <div className="mb-1 flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400">
+                                        <UserPlus className="h-3 w-3" /> Inline Client Creation
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="new_client_name" className="text-[10px] uppercase tracking-wider text-neutral-500">Name</Label>
+                                        <Label htmlFor="new_client_name" className="text-[10px] tracking-wider text-neutral-500 uppercase">
+                                            Name
+                                        </Label>
                                         <Input
                                             id="new_client_name"
                                             value={data.new_client_name}
-                                            onChange={e => setData('new_client_name', e.target.value)}
+                                            onChange={(e) => setData('new_client_name', e.target.value)}
                                             placeholder="Client Name"
-                                            className="h-12 md:h-9 text-sm md:text-xs"
+                                            className="h-12 text-sm md:h-9 md:text-xs"
                                         />
                                         {errors.new_client_name && <p className="text-[10px] text-red-500">{errors.new_client_name}</p>}
                                     </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                         <div className="space-y-2">
-                                            <Label htmlFor="new_client_phone" className="text-[10px] uppercase tracking-wider text-neutral-500">Phone</Label>
+                                            <Label htmlFor="new_client_phone" className="text-[10px] tracking-wider text-neutral-500 uppercase">
+                                                Phone
+                                            </Label>
                                             <Input
                                                 id="new_client_phone"
                                                 value={data.new_client_phone}
-                                                onChange={e => setData('new_client_phone', e.target.value)}
+                                                onChange={(e) => setData('new_client_phone', e.target.value)}
                                                 placeholder="Phone Number"
-                                                className="h-12 md:h-9 text-sm md:text-xs"
+                                                className="h-12 text-sm md:h-9 md:text-xs"
                                             />
                                             {errors.new_client_phone && <p className="text-[10px] text-red-500">{errors.new_client_phone}</p>}
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="new_client_type" className="text-[10px] uppercase tracking-wider text-neutral-500">Type</Label>
+                                            <Label htmlFor="new_client_type" className="text-[10px] tracking-wider text-neutral-500 uppercase">
+                                                Type
+                                            </Label>
                                             <select
                                                 id="new_client_type"
                                                 value={data.new_client_type}
-                                                onChange={e => {
+                                                onChange={(e) => {
                                                     const newType = e.target.value as ClientType;
                                                     const newIsCorporate = newType === 'Corporate';
                                                     const newDeliveryCharge = newIsCorporate ? '' : data.delivery_charge;
-                                                    const { total, due } = computeInvoiceTotals({ items: data.items, paid: data.paid, discountType: data.discount_type, discountAmount: data.discount_amount, deliveryCharge: newDeliveryCharge, isCorporate: newIsCorporate });
-                                                    setData(d => ({
+                                                    const { total, due } = computeInvoiceTotals({
+                                                        items: data.items,
+                                                        paid: data.paid,
+                                                        discountType: data.discount_type,
+                                                        discountAmount: data.discount_amount,
+                                                        deliveryCharge: newDeliveryCharge,
+                                                        isCorporate: newIsCorporate,
+                                                    });
+                                                    setData((d) => ({
                                                         ...d,
                                                         new_client_type: newType,
                                                         delivery_charge: newDeliveryCharge,
@@ -470,76 +557,90 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                                         due,
                                                     }));
                                                 }}
-                                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-9 text-sm md:text-xs bg-transparent dark:text-neutral-100"
+                                                className="h-12 w-full rounded-xl border border-neutral-200 bg-transparent px-3 text-sm md:h-9 md:text-xs dark:border-neutral-800 dark:text-neutral-100"
                                             >
-                                                {CLIENT_TYPES.map(t => (
-                                                    <option key={t} value={t}>{t}</option>
+                                                {CLIENT_TYPES.map((t) => (
+                                                    <option key={t} value={t}>
+                                                        {t}
+                                                    </option>
                                                 ))}
                                             </select>
                                             {errors.new_client_type && <p className="text-[10px] text-red-500">{errors.new_client_type}</p>}
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="new_client_address" className="text-[10px] uppercase tracking-wider text-neutral-500">Address (Optional)</Label>
+                                        <Label htmlFor="new_client_address" className="text-[10px] tracking-wider text-neutral-500 uppercase">
+                                            Address (Optional)
+                                        </Label>
                                         <Input
                                             id="new_client_address"
                                             value={data.new_client_address}
-                                            onChange={e => setData('new_client_address', e.target.value)}
+                                            onChange={(e) => setData('new_client_address', e.target.value)}
                                             placeholder="Address"
-                                            className="h-12 md:h-9 text-sm md:text-xs"
+                                            className="h-12 text-sm md:h-9 md:text-xs"
                                         />
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800">
-                            <div className="p-5 border-b border-neutral-100 dark:border-neutral-800">
-                                <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3 flex items-center gap-2">
-                                    <Search className="w-4 h-4" /> Add Product
+                        <div className="rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+                            <div className="border-b border-neutral-100 p-5 dark:border-neutral-800">
+                                <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                                    <Search className="h-4 w-4" /> Add Product
                                 </h3>
                                 <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                                     <input
                                         type="text"
                                         placeholder="Search product..."
                                         value={searchTerm}
-                                        onChange={(e) => { setSearchTerm(e.target.value); setShowDropdown(true); setHighlightedIndex(0); }}
+                                        onChange={(e) => {
+                                            setSearchTerm(e.target.value);
+                                            setShowDropdown(true);
+                                            setHighlightedIndex(0);
+                                        }}
                                         onFocus={() => setShowDropdown(true)}
                                         onKeyDown={handleProductSearchKeyDown}
-                                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                                        className="w-full rounded-xl border border-neutral-200 bg-transparent py-2.5 pr-4 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500/30 focus:outline-none dark:border-neutral-800"
                                     />
-                                    {showDropdown && (searchTerm.length > 0 || selectedCategory !== "All") && (
-                                        <div className="absolute z-30 top-full left-0 right-0 mt-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl max-h-72 overflow-y-auto">
+                                    {showDropdown && (searchTerm.length > 0 || selectedCategory !== 'All') && (
+                                        <div className="absolute top-full right-0 left-0 z-30 mt-1 max-h-72 overflow-y-auto rounded-xl border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-900">
                                             {visibleProducts.length === 0 ? (
-                                                <div className="p-4 text-sm text-neutral-400 text-center">No products found</div>
+                                                <div className="p-4 text-center text-sm text-neutral-400">No products found</div>
                                             ) : (
                                                 visibleProducts.map((p, idx) => (
                                                     <button
                                                         key={p.id}
-                                                        ref={(el) => { productOptionRefs.current[idx] = el; }}
+                                                        ref={(el) => {
+                                                            productOptionRefs.current[idx] = el;
+                                                        }}
                                                         type="button"
                                                         onClick={() => addItem(p)}
                                                         onMouseEnter={() => setHighlightedIndex(idx)}
-                                                        className={`w-full flex items-center justify-between px-4 py-2.5 transition-colors text-left border-b border-neutral-50 dark:border-neutral-800 last:border-0 ${idx === highlightedIndex ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+                                                        className={`flex w-full items-center justify-between border-b border-neutral-50 px-4 py-2.5 text-left transition-colors last:border-0 dark:border-neutral-800 ${idx === highlightedIndex ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
                                                     >
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex-shrink-0 overflow-hidden border border-neutral-200 dark:border-neutral-800">
+                                                            <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-800">
                                                                 {p.image_url ? (
-                                                                    <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                                                                    <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" />
                                                                 ) : (
-                                                                    <div className="w-full h-full flex items-center justify-center text-neutral-400 font-bold text-xs uppercase">
+                                                                    <div className="flex h-full w-full items-center justify-center text-xs font-bold text-neutral-400 uppercase">
                                                                         {p.name.charAt(0)}
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                            <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{p.name}</span>
+                                                            <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                                                                {p.name}
+                                                            </span>
                                                         </div>
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-sm font-bold text-blue-600">
                                                                 {(() => {
                                                                     if (isCorporate && !data.create_new_client) {
-                                                                        const cp = selectedClient?.custom_prices?.find(cp => cp.product_id === p.id);
+                                                                        const cp = selectedClient?.custom_prices?.find(
+                                                                            (cp) => cp.product_id === p.id,
+                                                                        );
                                                                         return formatCurrency(cp ? Number(cp.custom_price) : Number(p.price));
                                                                     }
                                                                     return formatCurrency(Number(p.price));
@@ -554,41 +655,48 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                 </div>
                             </div>
 
-                            <div className="px-5 py-3 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center">
+                            <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-3 dark:border-neutral-800">
                                 <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Invoice Items ({data.items.length})</h3>
                                 {errors.items && <p className="text-xs text-red-500">{errors.items}</p>}
                             </div>
                             {data.items.length === 0 ? (
                                 <div className="p-10 text-center">
-                                    <Package className="w-10 h-10 text-neutral-200 dark:text-neutral-800 mx-auto mb-2" />
+                                    <Package className="mx-auto mb-2 h-10 w-10 text-neutral-200 dark:text-neutral-800" />
                                     <p className="text-sm text-neutral-400">No items added yet.</p>
                                 </div>
                             ) : (
                                 <>
                                     {/* Desktop Table View */}
-                                    <div className="hidden lg:block overflow-x-auto">
+                                    <div className="hidden overflow-x-auto lg:block">
                                         <table className="w-full text-sm">
                                             <thead>
-                                                <tr className="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 text-xs uppercase tracking-wider">
-                                                    <th className="text-left px-5 py-2.5 font-semibold">#</th>
-                                                    <th className="text-left px-3 py-2.5 font-semibold">Service</th>
-                                                    <th className="text-center px-3 py-2.5 font-semibold w-24">Qty</th>
-                                                    <th className="text-right px-3 py-2.5 font-semibold w-28">Price</th>
-                                                    <th className="text-right px-3 py-2.5 font-semibold w-28">Total</th>
-                                                    <th className="text-center px-3 py-2.5 font-semibold w-12"></th>
+                                                <tr className="bg-neutral-50 text-xs tracking-wider text-neutral-500 uppercase dark:bg-neutral-800/50">
+                                                    <th className="px-5 py-2.5 text-left font-semibold">#</th>
+                                                    <th className="px-3 py-2.5 text-left font-semibold">Service</th>
+                                                    <th className="w-24 px-3 py-2.5 text-center font-semibold">Qty</th>
+                                                    <th className="w-28 px-3 py-2.5 text-right font-semibold">Price</th>
+                                                    <th className="w-28 px-3 py-2.5 text-right font-semibold">Total</th>
+                                                    <th className="w-12 px-3 py-2.5 text-center font-semibold"></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {data.items.map((item, idx: number) => (
-                                                    <tr key={idx} className="border-b border-neutral-50 dark:border-neutral-800 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30 transition-colors">
-                                                        <td className="px-5 py-3 text-neutral-400 font-mono text-xs">{idx + 1}</td>
+                                                    <tr
+                                                        key={idx}
+                                                        className="border-b border-neutral-50 transition-colors hover:bg-neutral-50/50 dark:border-neutral-800 dark:hover:bg-neutral-800/30"
+                                                    >
+                                                        <td className="px-5 py-3 font-mono text-xs text-neutral-400">{idx + 1}</td>
                                                         <td className="px-3 py-3">
                                                             <div className="flex items-center gap-3">
-                                                                <div className="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex-shrink-0 overflow-hidden border border-neutral-200 dark:border-neutral-800">
+                                                                <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-800">
                                                                     {item.imageUrl ? (
-                                                                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                                                                        <img
+                                                                            src={item.imageUrl}
+                                                                            alt={item.name}
+                                                                            className="h-full w-full object-cover"
+                                                                        />
                                                                     ) : (
-                                                                        <div className="w-full h-full flex items-center justify-center text-neutral-400 font-bold text-xs uppercase">
+                                                                        <div className="flex h-full w-full items-center justify-center text-xs font-bold text-neutral-400 uppercase">
                                                                             {item.name.charAt(0)}
                                                                         </div>
                                                                     )}
@@ -598,32 +706,50 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                                         </td>
                                                         <td className="px-3 py-3 text-center">
                                                             <div className="flex items-center justify-center gap-1">
-                                                                <button type="button" onClick={() => updateQty(idx, (Number(item.qty) || 0) - 1)} className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">−</button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => updateQty(idx, (Number(item.qty) || 0) - 1)}
+                                                                    className="h-7 w-7 rounded-lg bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+                                                                >
+                                                                    −
+                                                                </button>
                                                                 <Input
                                                                     type="number"
                                                                     value={item.qty}
-                                                                    onChange={e => {
+                                                                    onChange={(e) => {
                                                                         const val = e.target.value;
                                                                         const num = val === '' ? '' : Math.max(1, parseInt(val, 10));
                                                                         updateQty(idx, num);
                                                                     }}
-                                                                    className="w-12 h-8 text-center font-semibold text-neutral-800 dark:text-neutral-200 bg-transparent p-0 focus-visible:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                    className="h-8 w-12 [appearance:textfield] bg-transparent p-0 text-center font-semibold text-neutral-800 focus-visible:ring-1 dark:text-neutral-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                                                                 />
-                                                                <button type="button" onClick={() => updateQty(idx, (Number(item.qty) || 0) + 1)} className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">+</button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => updateQty(idx, (Number(item.qty) || 0) + 1)}
+                                                                    className="h-7 w-7 rounded-lg bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+                                                                >
+                                                                    +
+                                                                </button>
                                                             </div>
                                                         </td>
                                                         <td className="px-3 py-3 text-right font-medium">
                                                             <Input
                                                                 type="number"
                                                                 value={item.price}
-                                                                onChange={e => updatePrice(idx, Number(e.target.value))}
+                                                                onChange={(e) => updatePrice(idx, Number(e.target.value))}
                                                                 className="h-8 w-24 text-right text-xs"
                                                             />
                                                         </td>
-                                                        <td className="px-3 py-3 text-right font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(item.price * item.qty)}</td>
+                                                        <td className="px-3 py-3 text-right font-bold text-neutral-900 dark:text-neutral-100">
+                                                            {formatCurrency(item.price * item.qty)}
+                                                        </td>
                                                         <td className="px-3 py-3 text-center">
-                                                            <button type="button" onClick={() => handleRemoveClick(idx)} className="p-1.5 text-red-400 hover:text-red-600">
-                                                                <Trash2 className="w-4 h-4" />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleRemoveClick(idx)}
+                                                                className="p-1.5 text-red-400 hover:text-red-600"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
                                                             </button>
                                                         </td>
                                                     </tr>
@@ -633,61 +759,83 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                     </div>
 
                                     {/* Mobile List View */}
-                                    <div className="lg:hidden divide-y divide-neutral-100 dark:divide-neutral-800">
+                                    <div className="divide-y divide-neutral-100 lg:hidden dark:divide-neutral-800">
                                         {data.items.map((item, idx: number) => (
-                                            <div key={idx} className="p-4 space-y-4">
+                                            <div key={idx} className="space-y-4 p-4">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-12 h-12 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex-shrink-0 overflow-hidden border border-neutral-200 dark:border-neutral-800">
+                                                        <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-800">
                                                             {item.imageUrl ? (
-                                                                <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                                                                <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center text-neutral-400 font-bold text-sm uppercase">
+                                                                <div className="flex h-full w-full items-center justify-center text-sm font-bold text-neutral-400 uppercase">
                                                                     {item.name.charAt(0)}
                                                                 </div>
                                                             )}
                                                         </div>
                                                         <div>
                                                             <p className="font-bold text-neutral-900 dark:text-neutral-100">{item.name}</p>
-                                                            <p className="text-xs text-neutral-500 font-mono">Item #{idx + 1}</p>
+                                                            <p className="font-mono text-xs text-neutral-500">Item #{idx + 1}</p>
                                                         </div>
                                                     </div>
-                                                    <button type="button" onClick={() => handleRemoveClick(idx)} className="p-2 text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                                                        <Trash2 className="w-4 h-4" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveClick(idx)}
+                                                        className="rounded-lg bg-red-50 p-2 text-red-500 dark:bg-red-900/20"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
                                                     </button>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                                                <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
                                                     <div className="space-y-1">
-                                                        <label className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Quantity</label>
-                                                        <div className="flex items-center gap-3 bg-neutral-50 dark:bg-neutral-800/50 p-1.5 rounded-xl w-fit">
-                                                            <button type="button" onClick={() => updateQty(idx, (Number(item.qty) || 0) - 1)} className="w-12 h-12 rounded-lg bg-white dark:bg-neutral-800 shadow-sm border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 flex items-center justify-center">−</button>
+                                                        <label className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">
+                                                            Quantity
+                                                        </label>
+                                                        <div className="flex w-fit items-center gap-3 rounded-xl bg-neutral-50 p-1.5 dark:bg-neutral-800/50">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => updateQty(idx, (Number(item.qty) || 0) - 1)}
+                                                                className="flex h-12 w-12 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-600 shadow-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
+                                                            >
+                                                                −
+                                                            </button>
                                                             <Input
                                                                 type="number"
                                                                 value={item.qty}
-                                                                onChange={e => {
+                                                                onChange={(e) => {
                                                                     const val = e.target.value;
                                                                     const num = val === '' ? '' : Math.max(1, parseInt(val, 10));
                                                                     updateQty(idx, num);
                                                                 }}
-                                                                className="w-12 h-12 text-center font-bold text-neutral-900 dark:text-neutral-100 bg-transparent border-none shadow-none focus-visible:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                className="h-12 w-12 [appearance:textfield] border-none bg-transparent p-0 text-center font-bold text-neutral-900 shadow-none focus-visible:ring-0 dark:text-neutral-100 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                                                             />
-                                                            <button type="button" onClick={() => updateQty(idx, (Number(item.qty) || 0) + 1)} className="w-12 h-12 rounded-lg bg-white dark:bg-neutral-800 shadow-sm border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 flex items-center justify-center">+</button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => updateQty(idx, (Number(item.qty) || 0) + 1)}
+                                                                className="flex h-12 w-12 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-600 shadow-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
+                                                            >
+                                                                +
+                                                            </button>
                                                         </div>
                                                     </div>
                                                     <div className="space-y-1 text-right">
-                                                        <label className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Unit Price</label>
+                                                        <label className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">
+                                                            Unit Price
+                                                        </label>
                                                         <Input
                                                             type="number"
                                                             value={item.price}
-                                                            onChange={e => updatePrice(idx, Number(e.target.value))}
-                                                            className="h-12 text-right font-bold text-blue-600 bg-transparent"
+                                                            onChange={(e) => updatePrice(idx, Number(e.target.value))}
+                                                            className="h-12 bg-transparent text-right font-bold text-blue-600"
                                                         />
                                                     </div>
                                                 </div>
-                                                <div className="flex justify-between items-center pt-2 border-t border-neutral-50 dark:border-neutral-800/50">
+                                                <div className="flex items-center justify-between border-t border-neutral-50 pt-2 dark:border-neutral-800/50">
                                                     <span className="text-sm font-medium text-neutral-500">Subtotal</span>
-                                                    <span className="text-lg font-black text-neutral-900 dark:text-neutral-100">{formatCurrency(item.price * item.qty)}</span>
+                                                    <span className="text-lg font-black text-neutral-900 dark:text-neutral-100">
+                                                        {formatCurrency(item.price * item.qty)}
+                                                    </span>
                                                 </div>
                                             </div>
                                         ))}
@@ -698,37 +846,43 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                     </div>
 
                     <div className="space-y-4">
-                        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 space-y-3">
-                            <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-2"><Calendar className="w-4 h-4" /> Order Details</h3>
+                        <div className="space-y-3 rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+                            <h3 className="flex items-center gap-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                                <Calendar className="h-4 w-4" /> Order Details
+                            </h3>
                             <input
                                 type="date"
                                 value={data.date}
-                                onChange={e => setData('date', e.target.value)}
-                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-transparent dark:text-neutral-100"
+                                onChange={(e) => setData('date', e.target.value)}
+                                className="h-12 w-full rounded-xl border border-neutral-200 bg-transparent px-3 text-sm md:h-10 dark:border-neutral-800 dark:text-neutral-100"
                                 placeholder="Select Date"
                                 required
                             />
                             <select
                                 value={data.status}
-                                onChange={e => setData('status', e.target.value as InvoiceStatus)}
-                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 h-12 md:h-10 text-sm bg-transparent dark:text-neutral-100"
+                                onChange={(e) => setData('status', e.target.value as InvoiceStatus)}
+                                className="h-12 w-full rounded-xl border border-neutral-200 bg-transparent px-3 text-sm md:h-10 dark:border-neutral-800 dark:text-neutral-100"
                             >
-                                {INVOICE_FORM_STATUSES.map(s => (
-                                    <option key={s} value={s}>{s}</option>
+                                {INVOICE_FORM_STATUSES.map((s) => (
+                                    <option key={s} value={s}>
+                                        {s}
+                                    </option>
                                 ))}
                             </select>
                         </div>
 
-                        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 space-y-3">
-                            <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-2"><CreditCard className="w-4 h-4" /> Discount & Payment</h3>
+                        <div className="space-y-3 rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+                            <h3 className="flex items-center gap-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                                <CreditCard className="h-4 w-4" /> Discount & Payment
+                            </h3>
                             <div className="space-y-3">
                                 <div className="flex gap-2">
-                                    {DISCOUNT_TYPES.map(t => (
+                                    {DISCOUNT_TYPES.map((t) => (
                                         <button
                                             key={t}
                                             type="button"
                                             onClick={() => handleDiscountTypeChange(t)}
-                                            className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold border uppercase tracking-wider ${data.discount_type === t ? 'bg-amber-50 border-amber-300 text-amber-600' : 'border-neutral-200 dark:border-neutral-800 text-neutral-500'}`}
+                                            className={`flex-1 rounded-lg border py-1.5 text-[10px] font-bold tracking-wider uppercase ${data.discount_type === t ? 'border-amber-300 bg-amber-50 text-amber-600' : 'border-neutral-200 text-neutral-500 dark:border-neutral-800'}`}
                                         >
                                             {t}
                                         </button>
@@ -738,33 +892,35 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                     type="number"
                                     placeholder="Discount Amount"
                                     value={data.discount_amount}
-                                    onChange={e => handleDiscountAmountChange(e.target.value)}
-                                    className="h-12 md:h-9 text-sm md:text-xs"
+                                    onChange={(e) => handleDiscountAmountChange(e.target.value)}
+                                    className="h-12 text-sm md:h-9 md:text-xs"
                                 />
                             </div>
 
                             {!isCorporate && (
-                                <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-1">
-                                    <Label htmlFor="delivery_charge" className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold">Delivery Charge</Label>
+                                <div className="space-y-1 border-t border-neutral-100 pt-2 dark:border-neutral-800">
+                                    <Label htmlFor="delivery_charge" className="text-[10px] font-bold tracking-wider text-neutral-500 uppercase">
+                                        Delivery Charge
+                                    </Label>
                                     <Input
                                         id="delivery_charge"
                                         type="number"
                                         placeholder="Delivery Charge"
                                         value={data.delivery_charge}
-                                        onChange={e => handleDeliveryChargeChange(e.target.value)}
-                                        className="h-12 md:h-9 text-sm md:text-xs"
+                                        onChange={(e) => handleDeliveryChargeChange(e.target.value)}
+                                        className="h-12 text-sm md:h-9 md:text-xs"
                                     />
                                 </div>
                             )}
 
-                            <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800">
-                                <div className="flex gap-2 mb-3">
-                                    {['Cash', 'Bkash', 'Bank'].map(m => (
+                            <div className="border-t border-neutral-100 pt-2 dark:border-neutral-800">
+                                <div className="mb-3 flex gap-2">
+                                    {['Cash', 'Bkash', 'Bank'].map((m) => (
                                         <button
                                             key={m}
                                             type="button"
                                             onClick={() => setData('method', m)}
-                                            className={`flex-1 py-2 rounded-xl text-xs font-semibold border ${data.method === m ? 'bg-blue-50 border-blue-300 text-blue-600' : 'border-neutral-200 dark:border-neutral-800 text-neutral-500'}`}
+                                            className={`flex-1 rounded-xl border py-2 text-xs font-semibold ${data.method === m ? 'border-blue-300 bg-blue-50 text-blue-600' : 'border-neutral-200 text-neutral-500 dark:border-neutral-800'}`}
                                         >
                                             {m}
                                         </button>
@@ -774,18 +930,23 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                     type="number"
                                     placeholder="Paid Amount"
                                     value={data.paid}
-                                    onChange={e => handlePaidChange(e.target.value)}
-                                    className="h-12 md:h-9 text-sm md:text-xs"
+                                    onChange={(e) => handlePaidChange(e.target.value)}
+                                    className="h-12 text-sm md:h-9 md:text-xs"
                                 />
                             </div>
                         </div>
 
-                        <div className="bg-neutral-900 dark:bg-neutral-100 rounded-2xl p-5 text-white dark:text-neutral-900">
-                            <h3 className="text-sm font-semibold text-neutral-400 dark:text-neutral-600 mb-4">Invoice Summary</h3>
+                        <div className="rounded-2xl bg-neutral-900 p-5 text-white dark:bg-neutral-100 dark:text-neutral-900">
+                            <h3 className="mb-4 text-sm font-semibold text-neutral-400 dark:text-neutral-600">Invoice Summary</h3>
                             <div className="space-y-2 text-sm">
-                                <div className="flex justify-between"><span>Subtotal</span><span>{formatCurrency(totals.subtotal)}</span></div>
+                                <div className="flex justify-between">
+                                    <span>Subtotal</span>
+                                    <span>{formatCurrency(totals.subtotal)}</span>
+                                </div>
                                 <div className="flex justify-between text-amber-400">
-                                    <span>Discount ({data.discount_type === 'Percentage' ? `Percentage ${data.discount_amount}%` : data.discount_type})</span>
+                                    <span>
+                                        Discount ({data.discount_type === 'Percentage' ? `Percentage ${data.discount_amount}%` : data.discount_type})
+                                    </span>
                                     <span>-{formatCurrency(totals.discountValue)}</span>
                                 </div>
                                 {!isCorporate && (
@@ -794,26 +955,35 @@ export default function InvoiceForm({ invoice, products, clients, categories, is
                                         <span>{formatCurrency(Number(data.delivery_charge) || 0)}</span>
                                     </div>
                                 )}
-                                <div className="flex justify-between text-emerald-400"><span>Paid</span><span>{formatCurrency(Number(data.paid) || 0)}</span></div>
-                                <div className="flex justify-between text-red-400"><span>Due</span><span>{formatCurrency(data.due)}</span></div>
-                                <div className="border-t border-white/10 dark:border-neutral-200 pt-2 mt-2 flex justify-between text-lg font-bold">
-                                    <span>Total</span><span className="text-blue-400 dark:text-blue-600">{formatCurrency(data.total)}</span>
+                                <div className="flex justify-between text-emerald-400">
+                                    <span>Paid</span>
+                                    <span>{formatCurrency(Number(data.paid) || 0)}</span>
+                                </div>
+                                <div className="flex justify-between text-red-400">
+                                    <span>Due</span>
+                                    <span>{formatCurrency(data.due)}</span>
+                                </div>
+                                <div className="mt-2 flex justify-between border-t border-white/10 pt-2 text-lg font-bold dark:border-neutral-200">
+                                    <span>Total</span>
+                                    <span className="text-blue-400 dark:text-blue-600">{formatCurrency(data.total)}</span>
                                 </div>
                             </div>
                             {Object.keys(errors).length > 0 && (
-                                <div className="mt-4 rounded-xl bg-red-500/10 border border-red-500/30 p-3 space-y-1">
+                                <div className="mt-4 space-y-1 rounded-xl border border-red-500/30 bg-red-500/10 p-3">
                                     <p className="text-xs font-bold text-red-400">Please fix the following before saving:</p>
                                     {Object.values(errors).map((message, idx) => (
-                                        <p key={idx} className="text-xs text-red-400">{message}</p>
+                                        <p key={idx} className="text-xs text-red-400">
+                                            {message}
+                                        </p>
                                     ))}
                                 </div>
                             )}
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="w-full mt-4 bg-blue-600 text-white py-3 rounded-xl text-sm font-bold shadow-lg shadow-blue-500/25 disabled:opacity-50"
+                                className="mt-4 w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 disabled:opacity-50"
                             >
-                                <Printer className="w-4 h-4 inline mr-2" /> {processing ? 'Saving...' : (isEdit ? 'Update Invoice' : 'Save & Print')}
+                                <Printer className="mr-2 inline h-4 w-4" /> {processing ? 'Saving...' : isEdit ? 'Update Invoice' : 'Save & Print'}
                             </button>
                         </div>
                     </div>

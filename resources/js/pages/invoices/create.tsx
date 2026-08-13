@@ -1,8 +1,8 @@
-import { Head } from '@inertiajs/react';
+import InvoiceForm from '@/components/invoice-form';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import InvoiceForm from '@/components/invoice-form';
 import type { CreateInvoiceProps } from '@/types/pages/invoices';
+import { Head } from '@inertiajs/react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -15,12 +15,7 @@ export default function CreateInvoice({ products, clients, categories, invoice }
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Create Invoice" />
-            <InvoiceForm
-                products={products}
-                clients={clients}
-                categories={categories}
-                invoice={invoice}
-            />
+            <InvoiceForm products={products} clients={clients} categories={categories} invoice={invoice} />
         </AppLayout>
     );
 }

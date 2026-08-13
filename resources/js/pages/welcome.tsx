@@ -42,9 +42,7 @@ export default function Welcome() {
                     <main className="flex w-full max-w-[335px] flex-col-reverse lg:max-w-4xl lg:flex-row">
                         <div className="flex-1 rounded-br-lg rounded-bl-lg bg-white p-6 pb-12 text-[13px] leading-[20px] shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] lg:rounded-tl-lg lg:rounded-br-none lg:p-20 dark:bg-[#161615] dark:text-[#EDEDEC] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d]">
                             <h1 className="mb-1 font-medium">Welcome to Launverse</h1>
-                            <p className="mb-2 text-[#706f6c] dark:text-[#A1A09A]">
-                                Your complete laundry business management solution.
-                            </p>
+                            <p className="mb-2 text-[#706f6c] dark:text-[#A1A09A]">Your complete laundry business management solution.</p>
                             <ul className="mb-4 flex flex-col lg:mb-6">
                                 <li className="relative flex items-center gap-4 py-2 before:absolute before:top-1/2 before:bottom-0 before:left-[0.4rem] before:border-l before:border-[#e3e3e0] dark:before:border-[#3E3E3A]">
                                     <span className="relative bg-white py-1 dark:bg-[#161615]">
@@ -91,10 +89,10 @@ export default function Welcome() {
                             </ul>
                         </div>
                         <div className="relative -mb-px aspect-[335/376] w-full shrink-0 overflow-hidden rounded-t-lg bg-[#fff2f2] lg:mb-0 lg:-ml-px lg:aspect-auto lg:w-[438px] lg:rounded-t-none lg:rounded-r-lg dark:bg-[#1D0002]">
-                           {/* Illustration remains the same */}
-                           <div className="absolute inset-0 flex items-center justify-center">
+                            {/* Illustration remains the same */}
+                            <div className="absolute inset-0 flex items-center justify-center">
                                 <span className="text-4xl font-black text-[#F53003]">LAURNVERSE</span>
-                           </div>
+                            </div>
                         </div>
                     </main>
                 </div>

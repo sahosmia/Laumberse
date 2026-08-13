@@ -1,5 +1,51 @@
-const Ziggy = {"url":"http:\/\/localhost:8000","port":8000,"defaults":{},"routes":{"home":{"uri":"\/","methods":["GET","HEAD"]},"dashboard":{"uri":"dashboard","methods":["GET","HEAD"]},"clients.index":{"uri":"clients","methods":["GET","HEAD"]},"clients.create":{"uri":"clients\/create","methods":["GET","HEAD"]},"clients.store":{"uri":"clients","methods":["POST"]},"clients.show":{"uri":"clients\/{client}","methods":["GET","HEAD"],"parameters":["client"]},"clients.edit":{"uri":"clients\/{client}\/edit","methods":["GET","HEAD"],"parameters":["client"]},"clients.update":{"uri":"clients\/{client}","methods":["PUT","PATCH"],"parameters":["client"],"bindings":{"client":"id"}},"clients.destroy":{"uri":"clients\/{client}","methods":["DELETE"],"parameters":["client"],"bindings":{"client":"id"}},"products.index":{"uri":"products","methods":["GET","HEAD"]},"products.create":{"uri":"products\/create","methods":["GET","HEAD"]},"products.store":{"uri":"products","methods":["POST"]},"products.show":{"uri":"products\/{product}","methods":["GET","HEAD"],"parameters":["product"]},"products.edit":{"uri":"products\/{product}\/edit","methods":["GET","HEAD"],"parameters":["product"]},"products.update":{"uri":"products\/{product}","methods":["PUT","PATCH"],"parameters":["product"],"bindings":{"product":"id"}},"products.destroy":{"uri":"products\/{product}","methods":["DELETE"],"parameters":["product"],"bindings":{"product":"id"}},"history":{"uri":"invoices","methods":["GET","HEAD"]},"create-invoice":{"uri":"invoices\/create","methods":["GET","HEAD"]},"invoices.store":{"uri":"invoices","methods":["POST"]},"invoices.destroy":{"uri":"invoices\/{invoice}","methods":["DELETE"],"parameters":["invoice"],"bindings":{"invoice":"id"}},"reports":{"uri":"reports","methods":["GET","HEAD"]},"profile.edit":{"uri":"settings\/profile","methods":["GET","HEAD"]},"profile.update":{"uri":"settings\/profile","methods":["PATCH"]},"profile.destroy":{"uri":"settings\/profile","methods":["DELETE"]},"password.edit":{"uri":"settings\/password","methods":["GET","HEAD"]},"password.update":{"uri":"settings\/password","methods":["PUT"]},"appearance":{"uri":"settings\/appearance","methods":["GET","HEAD"]},"register":{"uri":"register","methods":["GET","HEAD"]},"login":{"uri":"login","methods":["GET","HEAD"]},"password.request":{"uri":"forgot-password","methods":["GET","HEAD"]},"password.email":{"uri":"forgot-password","methods":["POST"]},"password.reset":{"uri":"reset-password\/{token}","methods":["GET","HEAD"],"parameters":["token"]},"password.store":{"uri":"reset-password","methods":["POST"]},"verification.notice":{"uri":"verify-email","methods":["GET","HEAD"]},"verification.verify":{"uri":"verify-email\/{id}\/{hash}","methods":["GET","HEAD"],"parameters":["id","hash"]},"verification.send":{"uri":"email\/verification-notification","methods":["POST"]},"password.confirm":{"uri":"confirm-password","methods":["GET","HEAD"]},"logout":{"uri":"logout","methods":["POST"]},"storage.local":{"uri":"storage\/{path}","methods":["GET","HEAD"],"wheres":{"path":".*"},"parameters":["path"]},"storage.local.upload":{"uri":"storage\/{path}","methods":["PUT"],"wheres":{"path":".*"},"parameters":["path"]}}};
+const Ziggy = {
+    url: 'http:\/\/localhost:8000',
+    port: 8000,
+    defaults: {},
+    routes: {
+        home: { uri: '\/', methods: ['GET', 'HEAD'] },
+        dashboard: { uri: 'dashboard', methods: ['GET', 'HEAD'] },
+        'clients.index': { uri: 'clients', methods: ['GET', 'HEAD'] },
+        'clients.create': { uri: 'clients\/create', methods: ['GET', 'HEAD'] },
+        'clients.store': { uri: 'clients', methods: ['POST'] },
+        'clients.show': { uri: 'clients\/{client}', methods: ['GET', 'HEAD'], parameters: ['client'] },
+        'clients.edit': { uri: 'clients\/{client}\/edit', methods: ['GET', 'HEAD'], parameters: ['client'] },
+        'clients.update': { uri: 'clients\/{client}', methods: ['PUT', 'PATCH'], parameters: ['client'], bindings: { client: 'id' } },
+        'clients.destroy': { uri: 'clients\/{client}', methods: ['DELETE'], parameters: ['client'], bindings: { client: 'id' } },
+        'products.index': { uri: 'products', methods: ['GET', 'HEAD'] },
+        'products.create': { uri: 'products\/create', methods: ['GET', 'HEAD'] },
+        'products.store': { uri: 'products', methods: ['POST'] },
+        'products.show': { uri: 'products\/{product}', methods: ['GET', 'HEAD'], parameters: ['product'] },
+        'products.edit': { uri: 'products\/{product}\/edit', methods: ['GET', 'HEAD'], parameters: ['product'] },
+        'products.update': { uri: 'products\/{product}', methods: ['PUT', 'PATCH'], parameters: ['product'], bindings: { product: 'id' } },
+        'products.destroy': { uri: 'products\/{product}', methods: ['DELETE'], parameters: ['product'], bindings: { product: 'id' } },
+        history: { uri: 'invoices', methods: ['GET', 'HEAD'] },
+        'create-invoice': { uri: 'invoices\/create', methods: ['GET', 'HEAD'] },
+        'invoices.store': { uri: 'invoices', methods: ['POST'] },
+        'invoices.destroy': { uri: 'invoices\/{invoice}', methods: ['DELETE'], parameters: ['invoice'], bindings: { invoice: 'id' } },
+        reports: { uri: 'reports', methods: ['GET', 'HEAD'] },
+        'profile.edit': { uri: 'settings\/profile', methods: ['GET', 'HEAD'] },
+        'profile.update': { uri: 'settings\/profile', methods: ['PATCH'] },
+        'profile.destroy': { uri: 'settings\/profile', methods: ['DELETE'] },
+        'password.edit': { uri: 'settings\/password', methods: ['GET', 'HEAD'] },
+        'password.update': { uri: 'settings\/password', methods: ['PUT'] },
+        appearance: { uri: 'settings\/appearance', methods: ['GET', 'HEAD'] },
+        register: { uri: 'register', methods: ['GET', 'HEAD'] },
+        login: { uri: 'login', methods: ['GET', 'HEAD'] },
+        'password.request': { uri: 'forgot-password', methods: ['GET', 'HEAD'] },
+        'password.email': { uri: 'forgot-password', methods: ['POST'] },
+        'password.reset': { uri: 'reset-password\/{token}', methods: ['GET', 'HEAD'], parameters: ['token'] },
+        'password.store': { uri: 'reset-password', methods: ['POST'] },
+        'verification.notice': { uri: 'verify-email', methods: ['GET', 'HEAD'] },
+        'verification.verify': { uri: 'verify-email\/{id}\/{hash}', methods: ['GET', 'HEAD'], parameters: ['id', 'hash'] },
+        'verification.send': { uri: 'email\/verification-notification', methods: ['POST'] },
+        'password.confirm': { uri: 'confirm-password', methods: ['GET', 'HEAD'] },
+        logout: { uri: 'logout', methods: ['POST'] },
+        'storage.local': { uri: 'storage\/{path}', methods: ['GET', 'HEAD'], wheres: { path: '.*' }, parameters: ['path'] },
+        'storage.local.upload': { uri: 'storage\/{path}', methods: ['PUT'], wheres: { path: '.*' }, parameters: ['path'] },
+    },
+};
 if (typeof window !== 'undefined' && typeof window.Ziggy !== 'undefined') {
-  Object.assign(Ziggy.routes, window.Ziggy.routes);
+    Object.assign(Ziggy.routes, window.Ziggy.routes);
 }
 export { Ziggy };

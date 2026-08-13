@@ -1,5 +1,5 @@
-import type { Paginated } from '@/types/pagination';
 import type { PayrollStatus } from '@/constants/status';
+import type { Paginated } from '@/types/pagination';
 
 export interface Payroll {
     id: number;

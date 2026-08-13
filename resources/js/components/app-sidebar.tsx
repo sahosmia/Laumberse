@@ -1,10 +1,9 @@
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavGroup } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Home, FilePlus, Clock, Users, UserCog, BarChart3, Package, Receipt, Wallet } from 'lucide-react';
+import { BarChart3, BookOpen, Clock, FilePlus, Home, Package, Receipt, UserCog, Users, Wallet } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const navGroups: NavGroup[] = [
@@ -96,7 +95,7 @@ const navGroups: NavGroup[] = [
                     },
                 ],
             },
-      
+
             {
                 title: 'Reports',
                 url: route('reports'),

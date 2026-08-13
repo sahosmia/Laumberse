@@ -5,12 +5,7 @@ import { useEffect } from 'react';
  * Debounces `search` (plus any extra filter values) and pushes them to the server
  * as query-string filters, preserving state/scroll.
  */
-export function useDebouncedSearch(
-    routeName: string,
-    search: string,
-    delay = 300,
-    extraParams: Record<string, string | undefined> = {},
-) {
+export function useDebouncedSearch(routeName: string, search: string, delay = 300, extraParams: Record<string, string | undefined> = {}) {
     const extraParamsKey = JSON.stringify(extraParams);
 
     useEffect(() => {

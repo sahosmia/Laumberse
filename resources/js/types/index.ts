@@ -1,7 +1,6 @@
+import type { AssetStatus, ClientType, DiscountType, InvoiceStatus, PaymentStatus } from '@/constants/status';
 import { LucideIcon } from 'lucide-react';
 import type { Config } from 'ziggy-js';
-import type { AssetStatus, ClientType, DiscountType, InvoiceStatus, PaymentStatus } from '@/constants/status';
-
 
 export interface SharedData {
     name: string;
@@ -31,7 +30,6 @@ export interface NavItem {
     isActive?: boolean;
     items?: NavItem[];
 }
-
 
 export interface User {
     id: number;
@@ -64,7 +62,7 @@ export interface Product {
     category?: Category;
     unit_id?: number;
     unit?: Unit;
-     image: string | null;
+    image: string | null;
     image_url: string | null;
     price: number;
 }
@@ -162,7 +160,6 @@ export interface Expense {
     };
     materials?: ExpenseMaterial[];
 }
-
 
 export interface Employee {
     id: number;

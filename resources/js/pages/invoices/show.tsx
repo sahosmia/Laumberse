@@ -1,19 +1,18 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { Printer, ArrowLeft, Download, CreditCard, Calendar, User, Package, Edit3, CircleCheck, CircleDollarSign } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
-import { Button } from '@/components/ui/button';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
-import { formatCurrency } from '@/lib/format';
-import type { InvoiceDetailProps } from '@/types/pages/invoices';
+import { Button } from '@/components/ui/button';
 import type { PaymentStatus } from '@/constants/status';
+import AppLayout from '@/layouts/app-layout';
+import { formatCurrency } from '@/lib/format';
+import { type BreadcrumbItem } from '@/types';
+import type { InvoiceDetailProps } from '@/types/pages/invoices';
+import { Head, Link, router } from '@inertiajs/react';
+import { ArrowLeft, Calendar, CircleCheck, CircleDollarSign, Download, Edit3, Package, Printer, User } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Invoice History', href: '/invoices' },
     { title: 'Invoice Detail', href: '#' },
 ];
-
 
 export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
     const [togglingPayment, setTogglingPayment] = useState(false);
@@ -34,25 +33,29 @@ export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
 
     const confirmTogglePayment = () => {
         setTogglingPayment(true);
-        router.patch(route('invoices.update-payment-status', invoice.id), {
-            payment_status: nextPaymentStatus,
-        }, {
-            preserveScroll: true,
-            onFinish: () => {
-                setTogglingPayment(false);
-                setShowPaymentConfirm(false);
+        router.patch(
+            route('invoices.update-payment-status', invoice.id),
+            {
+                payment_status: nextPaymentStatus,
             },
-        });
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setTogglingPayment(false);
+                    setShowPaymentConfirm(false);
+                },
+            },
+        );
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Invoice ${invoice.id}`} />
-            <div className="p-4 max-w-4xl mx-auto space-y-6">
-                <div className="flex items-center justify-between no-print">
+            <div className="mx-auto max-w-4xl space-y-6 p-4">
+                <div className="no-print flex items-center justify-between">
                     <Button variant="ghost" asChild>
                         <Link href={route('history')}>
-                            <ArrowLeft className="w-4 h-4 mr-2" /> Back to History
+                            <ArrowLeft className="mr-2 h-4 w-4" /> Back to History
                         </Link>
                     </Button>
                     <div className="flex gap-2">
@@ -60,32 +63,39 @@ export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                             variant="outline"
                             disabled={togglingPayment}
                             onClick={() => setShowPaymentConfirm(true)}
-                            className={isPaid ? 'text-emerald-600 border-emerald-200 hover:text-emerald-700' : 'text-red-600 border-red-200 hover:text-red-700'}
+                            className={
+                                isPaid
+                                    ? 'border-emerald-200 text-emerald-600 hover:text-emerald-700'
+                                    : 'border-red-200 text-red-600 hover:text-red-700'
+                            }
                         >
-                            {isPaid ? <CircleCheck className="w-4 h-4 mr-2" /> : <CircleDollarSign className="w-4 h-4 mr-2" />}
+                            {isPaid ? <CircleCheck className="mr-2 h-4 w-4" /> : <CircleDollarSign className="mr-2 h-4 w-4" />}
                             {isPaid ? 'Paid' : 'Mark as Paid'}
                         </Button>
                         <Button variant="outline" asChild>
                             <Link href={route('invoices.edit', invoice.id)}>
-                                <Edit3 className="w-4 h-4 mr-2" /> Edit
+                                <Edit3 className="mr-2 h-4 w-4" /> Edit
                             </Link>
                         </Button>
                         <Button variant="outline" onClick={handlePrint}>
-                            <Printer className="w-4 h-4 mr-2" /> Print
+                            <Printer className="mr-2 h-4 w-4" /> Print
                         </Button>
                         <a href={route('invoices.print', invoice.id)} target="_blank" rel="noopener noreferrer">
                             <Button>
-                                <Download className="w-4 h-4 mr-2" /> Download
+                                <Download className="mr-2 h-4 w-4" /> Download
                             </Button>
                         </a>
                     </div>
                 </div>
 
-                <div id="invoice-content" className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden shadow-sm p-8 space-y-8 print:border-0 print:shadow-none">
-                    <div className="flex justify-between items-start">
+                <div
+                    id="invoice-content"
+                    className="space-y-8 overflow-hidden rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 print:border-0 print:shadow-none"
+                >
+                    <div className="flex items-start justify-between">
                         <div>
                             <h1 className="text-3xl font-bold text-blue-600">INVOICE</h1>
-                            <p className="text-neutral-500 font-mono mt-1">{invoice.id}</p>
+                            <p className="mt-1 font-mono text-neutral-500">{invoice.id}</p>
                         </div>
                         <div className="text-right">
                             <h2 className="text-xl font-bold">Launverse</h2>
@@ -94,29 +104,36 @@ export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-8 py-8 border-y border-neutral-100 dark:border-neutral-800">
+                    <div className="grid grid-cols-2 gap-8 border-y border-neutral-100 py-8 dark:border-neutral-800">
                         <div className="space-y-3">
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-2">
-                                <User className="w-3 h-3" /> Billed To
+                            <h3 className="flex items-center gap-2 text-xs font-bold tracking-wider text-neutral-400 uppercase">
+                                <User className="h-3 w-3" /> Billed To
                             </h3>
                             <div>
-                                <p className="font-bold text-lg">{invoice.client.name}</p>
+                                <p className="text-lg font-bold">{invoice.client.name}</p>
                                 <p className="text-neutral-600 dark:text-neutral-400">{invoice.client.phone}</p>
                                 <p className="text-neutral-600 dark:text-neutral-400">{invoice.client.address || 'N/A'}</p>
                             </div>
                         </div>
                         <div className="space-y-3 text-right">
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-2 justify-end">
-                                <Calendar className="w-3 h-3" /> Invoice Details
+                            <h3 className="flex items-center justify-end gap-2 text-xs font-bold tracking-wider text-neutral-400 uppercase">
+                                <Calendar className="h-3 w-3" /> Invoice Details
                             </h3>
                             <div className="space-y-1">
-                                <p className="text-sm"><span className="text-neutral-500">Date:</span> <span className="font-medium">{invoice.date}</span></p>
-                                <p className="text-sm"><span className="text-neutral-500">Status:</span> <span className="font-medium">{invoice.status}</span></p>
-                                <p className="text-sm"><span className="text-neutral-500">Method:</span> <span className="font-medium">{invoice.method}</span></p>
+                                <p className="text-sm">
+                                    <span className="text-neutral-500">Date:</span> <span className="font-medium">{invoice.date}</span>
+                                </p>
+                                <p className="text-sm">
+                                    <span className="text-neutral-500">Status:</span> <span className="font-medium">{invoice.status}</span>
+                                </p>
+                                <p className="text-sm">
+                                    <span className="text-neutral-500">Method:</span> <span className="font-medium">{invoice.method}</span>
+                                </p>
                                 <p className="text-sm">
                                     <span className="text-neutral-500">Payment:</span>{' '}
                                     <span className={`font-medium ${isPaid ? 'text-emerald-600' : 'text-red-500'}`}>
-                                        {invoice.payment_status}{isPaid && invoice.payment_date ? ` on ${invoice.payment_date}` : ''}
+                                        {invoice.payment_status}
+                                        {isPaid && invoice.payment_date ? ` on ${invoice.payment_date}` : ''}
                                     </span>
                                 </p>
                             </div>
@@ -124,16 +141,16 @@ export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                     </div>
 
                     <div className="space-y-4">
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-2">
-                            <Package className="w-3 h-3" /> Items & Services
+                        <h3 className="flex items-center gap-2 text-xs font-bold tracking-wider text-neutral-400 uppercase">
+                            <Package className="h-3 w-3" /> Items & Services
                         </h3>
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="border-b border-neutral-100 dark:border-neutral-800 text-neutral-500">
-                                    <th className="text-left py-3 font-semibold">Description</th>
-                                    <th className="text-center py-3 font-semibold">Qty</th>
-                                    <th className="text-right py-3 font-semibold">Price</th>
-                                    <th className="text-right py-3 font-semibold">Amount</th>
+                                <tr className="border-b border-neutral-100 text-neutral-500 dark:border-neutral-800">
+                                    <th className="py-3 text-left font-semibold">Description</th>
+                                    <th className="py-3 text-center font-semibold">Qty</th>
+                                    <th className="py-3 text-right font-semibold">Price</th>
+                                    <th className="py-3 text-right font-semibold">Amount</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-50 dark:divide-neutral-800">
@@ -141,11 +158,15 @@ export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                                     <tr key={item.id}>
                                         <td className="py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex-shrink-0 overflow-hidden border border-neutral-200 dark:border-neutral-800">
+                                                <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-800">
                                                     {item.product.image_url ? (
-                                                        <img src={item.product.image_url} alt={item.product.name} className="w-full h-full object-cover" />
+                                                        <img
+                                                            src={item.product.image_url}
+                                                            alt={item.product.name}
+                                                            className="h-full w-full object-cover"
+                                                        />
                                                     ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-neutral-400 font-bold text-xs uppercase">
+                                                        <div className="flex h-full w-full items-center justify-center text-xs font-bold text-neutral-400 uppercase">
                                                             {item.product.name.charAt(0)}
                                                         </div>
                                                     )}
@@ -174,26 +195,34 @@ export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                                 const discountValue = invoice.discount_type === 'Percentage' ? (subtotal * disc) / 100 : disc;
                                 return (
                                     <div className="flex justify-between text-sm text-amber-600">
-                                        <span>Discount ({invoice.discount_type === 'Percentage' ? `Percentage ${invoice.discount_amount}%` : invoice.discount_type})</span>
+                                        <span>
+                                            Discount (
+                                            {invoice.discount_type === 'Percentage'
+                                                ? `Percentage ${invoice.discount_amount}%`
+                                                : invoice.discount_type}
+                                            )
+                                        </span>
                                         <span>-{formatCurrency(discountValue)}</span>
                                     </div>
                                 );
                             })()}
                             {invoice.client.type !== 'Corporate' && (
-                                <div className="flex justify-between text-sm text-blue-600 font-medium">
+                                <div className="flex justify-between text-sm font-medium text-blue-600">
                                     <span>Delivery Charge</span>
                                     <span>{formatCurrency(Number(invoice.delivery_charge || 0))}</span>
                                 </div>
                             )}
-                            <div className="flex justify-between text-sm text-emerald-600 font-medium">
+                            <div className="flex justify-between text-sm font-medium text-emerald-600">
                                 <span>Paid</span>
                                 <span>{formatCurrency(Number(invoice.paid))}</span>
                             </div>
-                            <div className={`flex justify-between text-sm font-medium border-b border-neutral-100 dark:border-neutral-800 pb-3 ${isPaid ? 'text-emerald-600' : 'text-red-500'}`}>
+                            <div
+                                className={`flex justify-between border-b border-neutral-100 pb-3 text-sm font-medium dark:border-neutral-800 ${isPaid ? 'text-emerald-600' : 'text-red-500'}`}
+                            >
                                 <span>Payment Status</span>
                                 <span>{invoice.payment_status}</span>
                             </div>
-                            <div className="flex justify-between text-xl font-bold pt-1 text-blue-600">
+                            <div className="flex justify-between pt-1 text-xl font-bold text-blue-600">
                                 <span>Total</span>
                                 <span>{formatCurrency(Number(invoice.total))}</span>
                             </div>
@@ -201,20 +230,24 @@ export default function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                     </div>
 
                     {invoice.remarks && (
-                        <div className="pt-8 border-t border-neutral-100 dark:border-neutral-800">
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Remarks</h3>
-                            <p className="text-sm text-neutral-600 dark:text-neutral-400 italic">{invoice.remarks}</p>
+                        <div className="border-t border-neutral-100 pt-8 dark:border-neutral-800">
+                            <h3 className="mb-2 text-xs font-bold tracking-wider text-neutral-400 uppercase">Remarks</h3>
+                            <p className="text-sm text-neutral-600 italic dark:text-neutral-400">{invoice.remarks}</p>
                         </div>
                     )}
                 </div>
 
-                <style dangerouslySetInnerHTML={{ __html: `
+                <style
+                    dangerouslySetInnerHTML={{
+                        __html: `
                     @media print {
                         .no-print { display: none !important; }
                         body { background: white !important; }
                         #invoice-content { border: 0 !important; box-shadow: none !important; padding: 0 !important; }
                     }
-                `}} />
+                `,
+                    }}
+                />
             </div>
 
             <SaveConfirmationModal

@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { Plus, Trash2, Edit3, Check } from "lucide-react";
-import { SearchableSelect } from '@/components/ui/searchable-select';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import type { MaterialItem, MaterialItemsFormProps } from '@/types/pages/expenses';
+import { Check, Edit3, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 export function MaterialItemsForm({ items, materials, errors, onChange }: MaterialItemsFormProps) {
     const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
@@ -10,10 +10,7 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
     const [localErrors, setLocalErrors] = useState<Record<number, { material_id?: string; quantity?: string; unit_price?: string }>>({});
 
     const handleAddItem = () => {
-        onChange([
-            ...items,
-            { material_id: '', quantity: 1, unit_price: '', isSaved: false }
-        ]);
+        onChange([...items, { material_id: '', quantity: 1, unit_price: '', isSaved: false }]);
     };
 
     const handleRemoveClick = (index: number) => {
@@ -21,19 +18,19 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
         setIsConfirmingDelete(true);
     };
 
-    const handleItemChange = (index: number, field: keyof MaterialItem, value: any) => {
+    const handleItemChange = (index: number, field: keyof MaterialItem, value: MaterialItem[keyof MaterialItem]) => {
         const newItems = [...items];
 
         if (field === 'material_id') {
             newItems[index] = {
                 ...newItems[index],
-                material_id: value,
-                unit_price: ''
+                material_id: value as string | number,
+                unit_price: '',
             };
         } else {
             newItems[index] = {
                 ...newItems[index],
-                [field]: value
+                [field]: value,
             } as MaterialItem;
         }
 
@@ -45,22 +42,22 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
         const errs: { material_id?: string; quantity?: string; unit_price?: string } = {};
 
         if (!item.material_id) {
-            errs.material_id = "Material selection is required.";
+            errs.material_id = 'Material selection is required.';
         }
         if (item.quantity === '' || Number(item.quantity) <= 0) {
-            errs.quantity = "Quantity must be greater than 0.";
+            errs.quantity = 'Quantity must be greater than 0.';
         }
         if (item.unit_price === '' || Number(item.unit_price) <= 0) {
-            errs.unit_price = "Price is required and must be greater than 0.";
+            errs.unit_price = 'Price is required and must be greater than 0.';
         }
 
         if (Object.keys(errs).length > 0) {
-            setLocalErrors(prev => ({ ...prev, [index]: errs }));
+            setLocalErrors((prev) => ({ ...prev, [index]: errs }));
             return;
         }
 
         // Clear local errors for this row
-        setLocalErrors(prev => {
+        setLocalErrors((prev) => {
             const copy = { ...prev };
             delete copy[index];
             return copy;
@@ -72,24 +69,22 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
     };
 
     return (
-        <div className="space-y-3 bg-neutral-50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-            <div className="flex justify-between items-center">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-500">Materials</h4>
-                <button
-                    type="button"
-                    onClick={handleAddItem}
-                    className="text-xs text-blue-600 font-semibold flex items-center gap-1"
-                >
-                    <Plus className="w-3 h-3" /> Add Item
+        <div className="space-y-3 rounded-xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800/50">
+            <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold tracking-wider text-neutral-500 uppercase">Materials</h4>
+                <button type="button" onClick={handleAddItem} className="flex items-center gap-1 text-xs font-semibold text-blue-600">
+                    <Plus className="h-3 w-3" /> Add Item
                 </button>
             </div>
 
             <div className="space-y-3">
                 {items.map((item, index) => {
                     const isItemSaved = !!item.isSaved;
-                    const selectedMaterial = materials.find(m => m.id == item.material_id);
+                    const selectedMaterial = materials.find((m) => m.id == item.material_id);
                     const materialLabel = selectedMaterial
-                        ? (selectedMaterial.unit ? `${selectedMaterial.name} (${selectedMaterial.unit.short_name})` : selectedMaterial.name)
+                        ? selectedMaterial.unit
+                            ? `${selectedMaterial.name} (${selectedMaterial.unit.short_name})`
+                            : selectedMaterial.name
                         : 'Select Material';
 
                     const priceError = localErrors[index]?.unit_price || errors[`items.${index}.unit_price`];
@@ -97,17 +92,30 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
                     const materialError = localErrors[index]?.material_id || errors[`items.${index}.material_id`];
 
                     return (
-                        <div key={index} className="bg-white dark:bg-neutral-900 p-3 rounded-lg border border-neutral-100 dark:border-neutral-800 shadow-sm relative pr-12">
+                        <div
+                            key={index}
+                            className="relative rounded-lg border border-neutral-100 bg-white p-3 pr-12 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+                        >
                             {isItemSaved ? (
                                 <div className="flex items-center justify-between gap-4 py-1">
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">
-                                            {materialLabel}
-                                        </p>
-                                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                                            <span>Qty: <strong className="text-neutral-700 dark:text-neutral-300">{item.quantity}</strong></span>
-                                            <span>Price: <strong className="text-neutral-700 dark:text-neutral-300">৳{Number(item.unit_price).toFixed(2)}</strong></span>
-                                            <span>Total: <strong className="text-blue-600 dark:text-blue-400 font-bold">৳{(Number(item.quantity) * Number(item.unit_price)).toFixed(2)}</strong></span>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">{materialLabel}</p>
+                                        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400">
+                                            <span>
+                                                Qty: <strong className="text-neutral-700 dark:text-neutral-300">{item.quantity}</strong>
+                                            </span>
+                                            <span>
+                                                Price:{' '}
+                                                <strong className="text-neutral-700 dark:text-neutral-300">
+                                                    ৳{Number(item.unit_price).toFixed(2)}
+                                                </strong>
+                                            </span>
+                                            <span>
+                                                Total:{' '}
+                                                <strong className="font-bold text-blue-600 dark:text-blue-400">
+                                                    ৳{(Number(item.quantity) * Number(item.unit_price)).toFixed(2)}
+                                                </strong>
+                                            </span>
                                         </div>
                                     </div>
                                     <button
@@ -117,30 +125,28 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
                                             newItems[index] = { ...newItems[index], isSaved: false };
                                             onChange(newItems);
                                         }}
-                                        className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-neutral-600 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400 transition-colors flex items-center gap-1 text-xs font-semibold"
+                                        className="flex items-center gap-1 rounded-lg bg-neutral-100 p-1.5 text-xs font-semibold text-neutral-600 transition-colors hover:text-blue-600 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:text-blue-400"
                                     >
-                                        <Edit3 className="w-3.5 h-3.5" /> Edit
+                                        <Edit3 className="h-3.5 w-3.5" /> Edit
                                     </button>
                                 </div>
                             ) : (
                                 <div className="space-y-2">
-                                    <div className="grid grid-cols-12 gap-2 items-start">
-                                        <div className="col-span-12 sm:col-span-6 space-y-1">
+                                    <div className="grid grid-cols-12 items-start gap-2">
+                                        <div className="col-span-12 space-y-1 sm:col-span-6">
                                             <label className="text-[10px] font-bold text-neutral-400 uppercase">Material</label>
                                             <SearchableSelect
-                                                options={materials.map(m => ({
+                                                options={materials.map((m) => ({
                                                     label: m.unit ? `${m.name} (${m.unit.short_name})` : m.name,
-                                                    value: m.id
+                                                    value: m.id,
                                                 }))}
                                                 value={item.material_id}
                                                 onChange={(val) => handleItemChange(index, 'material_id', val)}
                                                 placeholder="Select"
                                             />
-                                            {materialError && (
-                                                <p className="text-xs text-red-500 mt-1">{materialError}</p>
-                                            )}
+                                            {materialError && <p className="mt-1 text-xs text-red-500">{materialError}</p>}
                                         </div>
-                                        <div className="col-span-12 sm:col-span-3 space-y-1">
+                                        <div className="col-span-12 space-y-1 sm:col-span-3">
                                             <label className="text-[10px] font-bold text-neutral-400 uppercase">Qty</label>
                                             <input
                                                 type="number"
@@ -152,15 +158,13 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
                                                     }
                                                     handleItemChange(index, 'quantity', val === '' ? '' : parseFloat(val));
                                                 }}
-                                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 h-12 sm:h-9 text-xs bg-transparent dark:text-neutral-100"
+                                                className="h-12 w-full rounded-lg border border-neutral-200 bg-transparent px-2 text-xs sm:h-9 dark:border-neutral-800 dark:text-neutral-100"
                                                 step="any"
                                                 placeholder="Qty"
                                             />
-                                            {qtyError && (
-                                                <p className="text-xs text-red-500 mt-1">{qtyError}</p>
-                                            )}
+                                            {qtyError && <p className="mt-1 text-xs text-red-500">{qtyError}</p>}
                                         </div>
-                                        <div className="col-span-12 sm:col-span-3 space-y-1">
+                                        <div className="col-span-12 space-y-1 sm:col-span-3">
                                             <label className="text-[10px] font-bold text-neutral-400 uppercase">Price</label>
                                             <input
                                                 type="number"
@@ -172,22 +176,20 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
                                                     }
                                                     handleItemChange(index, 'unit_price', val === '' ? '' : parseFloat(val));
                                                 }}
-                                                className="w-full border border-neutral-200 dark:border-neutral-800 rounded-lg px-2 h-12 sm:h-9 text-xs bg-transparent dark:text-neutral-100"
+                                                className="h-12 w-full rounded-lg border border-neutral-200 bg-transparent px-2 text-xs sm:h-9 dark:border-neutral-800 dark:text-neutral-100"
                                                 step="any"
                                                 placeholder="0.00"
                                             />
-                                            {priceError && (
-                                                <p className="text-xs text-red-500 mt-1">{priceError}</p>
-                                            )}
+                                            {priceError && <p className="mt-1 text-xs text-red-500">{priceError}</p>}
                                         </div>
                                     </div>
                                     <div className="flex justify-end pt-1">
                                         <button
                                             type="button"
                                             onClick={() => handleSaveRow(index)}
-                                            className="px-3 py-1.5 bg-green-500 text-white hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold"
+                                            className="flex items-center gap-1 rounded-lg bg-green-500 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700"
                                         >
-                                            <Check className="w-3.5 h-3.5" /> Save Row
+                                            <Check className="h-3.5 w-3.5" /> Save Row
                                         </button>
                                     </div>
                                 </div>
@@ -196,18 +198,16 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
                             <button
                                 type="button"
                                 onClick={() => handleRemoveClick(index)}
-                                className="absolute top-3 right-3 p-1.5 text-neutral-400 hover:text-red-500 transition-colors"
+                                className="absolute top-3 right-3 p-1.5 text-neutral-400 transition-colors hover:text-red-500"
                                 title="Remove item"
                             >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="h-4 w-4" />
                             </button>
                         </div>
                     );
                 })}
 
-                {items.length === 0 && (
-                    <p className="text-[10px] text-center text-neutral-400 italic py-2">No items added</p>
-                )}
+                {items.length === 0 && <p className="py-2 text-center text-[10px] text-neutral-400 italic">No items added</p>}
                 {errors.items && <p className="text-xs text-red-500">{errors.items}</p>}
             </div>
 
