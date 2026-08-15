@@ -125,8 +125,21 @@ export default function InvoiceHistory({ invoices, filters }: InvoiceHistoryProp
     useDebouncedSearch('history', search, 300, {
         payment_status: paymentStatus,
         date_filter: dateFilter,
-        ...(isCustomRange ? { start_date: startDate, end_date: endDate } : {}),
     });
+
+    const applyCustomRange = () => {
+        router.get(
+            route('history'),
+            {
+                ...(search ? { search } : {}),
+                ...(paymentStatus ? { payment_status: paymentStatus } : {}),
+                date_filter: 'custom',
+                start_date: startDate || undefined,
+                end_date: endDate || undefined,
+            },
+            { preserveState: true, preserveScroll: true },
+        );
+    };
 
     const handleBulkDelete = () => {
         setShowBulkDeleteModal(true);
@@ -215,7 +228,7 @@ export default function InvoiceHistory({ invoices, filters }: InvoiceHistoryProp
                             onChange={(e) => setPaymentStatus(e.target.value as PaymentStatus | '')}
                             className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm transition-all focus:ring-2 focus:ring-blue-500/30 focus:outline-none sm:w-40 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
                         >
-                            <option value="">All Payments</option>
+                            <option value="">Payment Status</option>
                             {PAYMENT_STATUSES.map((s) => (
                                 <option key={s} value={s}>
                                     {s}
@@ -234,20 +247,28 @@ export default function InvoiceHistory({ invoices, filters }: InvoiceHistoryProp
                             ))}
                         </select>
                         {isCustomRange && (
-                            <>
+                            <div className="flex flex-wrap items-center gap-2 border-neutral-200 sm:border-l sm:pl-3 dark:border-neutral-800">
                                 <input
                                     type="date"
                                     value={startDate}
                                     onChange={(e) => setStartDate(e.target.value)}
-                                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm transition-all focus:ring-2 focus:ring-blue-500/30 focus:outline-none sm:w-40 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
+                                    className="h-9 rounded-lg border border-neutral-200 bg-transparent px-2 text-xs dark:border-neutral-800 dark:text-neutral-100"
                                 />
+                                <span className="text-xs text-neutral-400">to</span>
                                 <input
                                     type="date"
                                     value={endDate}
                                     onChange={(e) => setEndDate(e.target.value)}
-                                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm transition-all focus:ring-2 focus:ring-blue-500/30 focus:outline-none sm:w-40 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
+                                    className="h-9 rounded-lg border border-neutral-200 bg-transparent px-2 text-xs dark:border-neutral-800 dark:text-neutral-100"
                                 />
-                            </>
+                                <button
+                                    type="button"
+                                    onClick={applyCustomRange}
+                                    className="h-9 rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
+                                >
+                                    Apply
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>

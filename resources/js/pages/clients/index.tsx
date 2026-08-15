@@ -1,3 +1,4 @@
+import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { TableRowActions } from '@/components/table-row-actions';
 import { Modal } from '@/components/ui/modal';
@@ -28,6 +29,7 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
     const [editingClient, setEditingClient] = useState<Client | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+    const [priceIndexToDelete, setPriceIndexToDelete] = useState<number | null>(null);
 
     const { data, setData, post, put, reset, errors, processing, clearErrors } = useForm({
         name: '',
@@ -193,6 +195,23 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
                 title="Save Client Changes"
                 description="Are you sure you want to save these changes to the client?"
                 isProcessing={processing}
+            />
+
+            <DeleteConfirmationModal
+                isOpen={priceIndexToDelete !== null}
+                onClose={() => setPriceIndexToDelete(null)}
+                onConfirm={() => {
+                    if (priceIndexToDelete !== null) {
+                        setData(
+                            'custom_prices',
+                            data.custom_prices.filter((_, i) => i !== priceIndexToDelete),
+                        );
+                    }
+                    setPriceIndexToDelete(null);
+                }}
+                title="Remove Product Price"
+                description="Are you sure you want to remove this product's custom price from the client?"
+                confirmText="Remove"
             />
 
             <Modal
@@ -371,12 +390,7 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
                                                     <button
                                                         type="button"
                                                         disabled={processing}
-                                                        onClick={() =>
-                                                            setData(
-                                                                'custom_prices',
-                                                                data.custom_prices.filter((_, i) => i !== idx),
-                                                            )
-                                                        }
+                                                        onClick={() => setPriceIndexToDelete(idx)}
                                                         className="rounded-lg p-1.5 text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-900/20"
                                                         title="Remove price profile"
                                                     >
