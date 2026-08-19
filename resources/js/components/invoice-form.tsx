@@ -3,6 +3,7 @@ import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RequiredMark } from '@/components/ui/required-mark';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { CLIENT_TYPES, DISCOUNT_TYPES, INVOICE_FORM_STATUSES, type ClientType, type DiscountType, type InvoiceStatus } from '@/constants/status';
 import { formatCurrency } from '@/lib/format';
@@ -505,7 +506,7 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="new_client_name" className="text-[10px] tracking-wider text-neutral-500 uppercase">
-                                            Name
+                                            Name <RequiredMark />
                                         </Label>
                                         <Input
                                             id="new_client_name"
@@ -519,7 +520,7 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
                                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                         <div className="space-y-2">
                                             <Label htmlFor="new_client_phone" className="text-[10px] tracking-wider text-neutral-500 uppercase">
-                                                Phone
+                                                Phone <RequiredMark />
                                             </Label>
                                             <Input
                                                 id="new_client_phone"

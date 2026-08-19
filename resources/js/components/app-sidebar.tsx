@@ -16,6 +16,16 @@ const navGroups: NavGroup[] = [
                 icon: Home,
             },
             {
+                title: 'Reports',
+                url: route('reports'),
+                icon: BarChart3,
+            },
+        ],
+    },
+    {
+        title: 'Sales',
+        items: [
+            {
                 title: 'Create Invoice',
                 url: route('create-invoice'),
                 icon: FilePlus,
@@ -30,18 +40,11 @@ const navGroups: NavGroup[] = [
                 url: route('clients.index'),
                 icon: Users,
             },
-
-            {
-                title: 'Employees',
-                url: route('employees.index'),
-                icon: UserCog,
-            },
-            {
-                title: 'Payroll Ledger',
-                url: route('payrolls.index'),
-                icon: BookOpen,
-            },
-
+        ],
+    },
+    {
+        title: 'Catalog',
+        items: [
             {
                 title: 'Products',
                 url: '#',
@@ -61,6 +64,26 @@ const navGroups: NavGroup[] = [
                     },
                 ],
             },
+        ],
+    },
+    {
+        title: 'Team',
+        items: [
+            {
+                title: 'Employees',
+                url: route('employees.index'),
+                icon: UserCog,
+            },
+            {
+                title: 'Payroll Ledger',
+                url: route('payrolls.index'),
+                icon: BookOpen,
+            },
+        ],
+    },
+    {
+        title: 'Finance',
+        items: [
             {
                 title: 'Expenses',
                 url: '#',
@@ -94,12 +117,6 @@ const navGroups: NavGroup[] = [
                         url: route('asset-categories.index'),
                     },
                 ],
-            },
-
-            {
-                title: 'Reports',
-                url: route('reports'),
-                icon: BarChart3,
             },
         ],
     },

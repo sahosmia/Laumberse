@@ -1,10 +1,9 @@
-import type { Category, Product, Unit } from '@/types';
+import type { Category, Product } from '@/types';
 import type { Paginated } from '@/types/pagination';
 
 export interface ProductsProps {
     products: Paginated<Product>;
     categories: Category[];
-    units: Unit[];
     filters: { search?: string };
 }
 

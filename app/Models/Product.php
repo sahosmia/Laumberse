@@ -9,7 +9,6 @@ class Product extends Model
     protected $fillable = [
         'name',
         'category_id',
-        'unit_id',
         'image',
         'price',
     ];
@@ -18,7 +17,7 @@ class Product extends Model
 
     public function getImageUrlAttribute()
     {
-        return $this->image ? asset('storage/' . $this->image) : null;
+        return $this->image ? asset('storage/'.$this->image) : null;
     }
 
     public function customPrices()
@@ -29,11 +28,6 @@ class Product extends Model
     public function category()
     {
         return $this->belongsTo(Category::class);
-    }
-
-    public function unit()
-    {
-        return $this->belongsTo(Unit::class);
     }
 
     public function invoiceItems()

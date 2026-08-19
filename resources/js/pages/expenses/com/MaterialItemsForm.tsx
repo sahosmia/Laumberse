@@ -1,4 +1,5 @@
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
+import { RequiredMark } from '@/components/ui/required-mark';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import type { MaterialItem, MaterialItemsFormProps } from '@/types/pages/expenses';
 import { Check, Edit3, Plus, Trash2 } from 'lucide-react';
@@ -134,7 +135,9 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
                                 <div className="space-y-2">
                                     <div className="grid grid-cols-12 items-start gap-2">
                                         <div className="col-span-12 space-y-1 sm:col-span-6">
-                                            <label className="text-[10px] font-bold text-neutral-400 uppercase">Material</label>
+                                            <label className="text-[10px] font-bold text-neutral-400 uppercase">
+                                                Material <RequiredMark />
+                                            </label>
                                             <SearchableSelect
                                                 options={materials.map((m) => ({
                                                     label: m.unit ? `${m.name} (${m.unit.short_name})` : m.name,
@@ -147,7 +150,9 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
                                             {materialError && <p className="mt-1 text-xs text-red-500">{materialError}</p>}
                                         </div>
                                         <div className="col-span-12 space-y-1 sm:col-span-3">
-                                            <label className="text-[10px] font-bold text-neutral-400 uppercase">Qty</label>
+                                            <label className="text-[10px] font-bold text-neutral-400 uppercase">
+                                                Qty <RequiredMark />
+                                            </label>
                                             <input
                                                 type="number"
                                                 value={item.quantity}
@@ -165,7 +170,9 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
                                             {qtyError && <p className="mt-1 text-xs text-red-500">{qtyError}</p>}
                                         </div>
                                         <div className="col-span-12 space-y-1 sm:col-span-3">
-                                            <label className="text-[10px] font-bold text-neutral-400 uppercase">Price</label>
+                                            <label className="text-[10px] font-bold text-neutral-400 uppercase">
+                                                Price <RequiredMark />
+                                            </label>
                                             <input
                                                 type="number"
                                                 value={item.unit_price}

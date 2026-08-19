@@ -15,13 +15,13 @@ class GetReportSummaryAction
     {
         // Monthly Revenue, Paid, Cost (calculated as 40% of revenue for demo)
         $monthlyStats = Invoice::selectRaw(
-            SqlDateFormat::monthLabel() . ' as month,
+            SqlDateFormat::monthLabel().' as month,
                 SUM(total) as revenue,
                 SUM(paid) as paid,
                 SUM(total) * 0.4 as cost'
         )
             ->groupBy('month')
-            ->orderBy('date')
+            ->orderByRaw('MIN(date) asc')
             ->get();
 
         $categorySplit = Category::with(['products.invoiceItems' => function ($query) {

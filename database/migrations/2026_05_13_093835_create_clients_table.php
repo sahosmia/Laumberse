@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('clients', function (Blueprint $table) {
             $table->id();
+            $table->string('client_uuid')->nullable()->unique();
             $table->string('name');
             $table->string('phone');
              $table->enum('type', ['Consumer', 'Corporate', 'B2B'])->default('Consumer');

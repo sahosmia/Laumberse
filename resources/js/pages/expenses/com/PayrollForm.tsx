@@ -1,3 +1,4 @@
+import { RequiredMark } from '@/components/ui/required-mark';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import type { PayrollFormProps } from '@/types/pages/expenses';
 
@@ -16,7 +17,7 @@ export function PayrollForm({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                     <label htmlFor="month" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                        Month
+                        Month <RequiredMark />
                     </label>
                     <select
                         id="month"
@@ -34,7 +35,7 @@ export function PayrollForm({
                 </div>
                 <div className="space-y-1">
                     <label htmlFor="year" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                        Year
+                        Year <RequiredMark />
                     </label>
                     <input
                         id="year"
@@ -110,7 +111,7 @@ export function PayrollForm({
                     {typeof data.deduction === 'number' && data.deduction > 0 && (
                         <div className="space-y-1">
                             <label htmlFor="deduction_note" className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                                Deduction Note
+                                Deduction Note <RequiredMark />
                             </label>
                             <input
                                 id="deduction_note"

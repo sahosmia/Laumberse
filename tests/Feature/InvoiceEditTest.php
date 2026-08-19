@@ -1,21 +1,18 @@
 <?php
 
-use App\Models\User;
-use App\Models\Invoice;
-use App\Models\Client;
-use App\Models\Product;
 use App\Models\Category;
-use App\Models\Unit;
+use App\Models\Client;
+use App\Models\Invoice;
+use App\Models\Product;
+use App\Models\User;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
     $this->category = Category::create(['name' => 'Services', 'slug' => 'services']);
-    $this->unit = Unit::create(['name' => 'pcs', 'short_name' => 'pcs']);
     $this->product = Product::create([
         'name' => 'Test Product',
         'price' => 100,
         'category_id' => $this->category->id,
-        'unit_id' => $this->unit->id,
     ]);
     $this->client = Client::create(['name' => 'John Doe', 'phone' => '123456789']);
 });
@@ -43,8 +40,8 @@ test('invoice can be updated successfully', function () {
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
-            ['productId' => $this->product->id, 'qty' => 2, 'price' => 100]
-        ]
+            ['productId' => $this->product->id, 'qty' => 2, 'price' => 100],
+        ],
     ]);
 
     $response->assertRedirect(route('history'));
@@ -79,8 +76,8 @@ test('invoice_uuid stays the same and is not editable through an update', functi
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
-            ['productId' => $this->product->id, 'qty' => 2, 'price' => 100]
-        ]
+            ['productId' => $this->product->id, 'qty' => 2, 'price' => 100],
+        ],
     ]);
 
     $response->assertRedirect(route('history'));
@@ -116,8 +113,8 @@ test('editing an invoice to be fully paid updates its payment status', function 
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
-            ['productId' => $this->product->id, 'qty' => 10, 'price' => 100]
-        ]
+            ['productId' => $this->product->id, 'qty' => 10, 'price' => 100],
+        ],
     ]);
 
     $response->assertRedirect(route('history'));
@@ -151,8 +148,8 @@ test('editing a paid invoice back to having a balance reverts its payment status
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
-            ['productId' => $this->product->id, 'qty' => 10, 'price' => 100]
-        ]
+            ['productId' => $this->product->id, 'qty' => 10, 'price' => 100],
+        ],
     ]);
 
     $response->assertRedirect(route('history'));
@@ -186,8 +183,8 @@ test('editing an already-paid invoice preserves its original payment date', func
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
-            ['productId' => $this->product->id, 'qty' => 5, 'price' => 100]
-        ]
+            ['productId' => $this->product->id, 'qty' => 5, 'price' => 100],
+        ],
     ]);
 
     $response->assertRedirect(route('history'));

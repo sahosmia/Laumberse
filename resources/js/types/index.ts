@@ -60,8 +60,6 @@ export interface Product {
     name: string;
     category_id: number;
     category?: Category;
-    unit_id?: number;
-    unit?: Unit;
     image: string | null;
     image_url: string | null;
     price: number;
@@ -163,6 +161,7 @@ export interface Expense {
 
 export interface Employee {
     id: number;
+    employee_id: string;
     name: string;
     phone: string;
     email?: string | null;

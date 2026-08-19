@@ -1,5 +1,8 @@
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { TableRowActions } from '@/components/table-row-actions';
+import { FormButton } from '@/components/ui/form-button';
+import { FormInput } from '@/components/ui/form-input';
+import { FormLabel } from '@/components/ui/form-label';
 import { Modal } from '@/components/ui/modal';
 import { Pagination } from '@/components/ui/pagination';
 import { DATE_FILTERS } from '@/constants/date-filters';
@@ -370,9 +373,9 @@ export default function Expenses({ expenses, categories, materials, filters }: E
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-1">
-                            <label htmlFor="expense_category_id" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                            <FormLabel htmlFor="expense_category_id" required>
                                 Category
-                            </label>
+                            </FormLabel>
                             <select
                                 id="expense_category_id"
                                 value={data.expense_category_id}
@@ -390,29 +393,25 @@ export default function Expenses({ expenses, categories, materials, filters }: E
                             {errors.expense_category_id && <p className="text-xs text-red-500">{errors.expense_category_id}</p>}
                         </div>
                         {!isPayroll && (
-                            <div className="space-y-1">
-                                <label htmlFor="amount" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                    Amount
-                                </label>
-                                <input
-                                    id="amount"
-                                    type="number"
-                                    value={data.amount}
-                                    onChange={(e) => {
-                                        let val = e.target.value;
-                                        if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
-                                            val = val.replace(/^0+/, '');
-                                        }
-                                        setData('amount', val === '' ? '' : parseFloat(val));
-                                    }}
-                                    className="h-12 w-full rounded-xl border border-neutral-200 bg-transparent px-3 text-sm disabled:bg-neutral-50 disabled:opacity-50 md:h-10 dark:border-neutral-800 dark:text-neutral-100 dark:disabled:bg-neutral-800/50"
-                                    required
-                                    placeholder="0.00"
-                                    readOnly={isMaterial}
-                                    step="any"
-                                />
-                                {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
-                            </div>
+                            <FormInput
+                                id="amount"
+                                label="Amount"
+                                required
+                                type="number"
+                                value={data.amount}
+                                onChange={(e) => {
+                                    let val = e.target.value;
+                                    if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
+                                        val = val.replace(/^0+/, '');
+                                    }
+                                    setData('amount', val === '' ? '' : parseFloat(val));
+                                }}
+                                className="h-12 rounded-xl border-neutral-200 bg-transparent disabled:bg-neutral-50 disabled:opacity-50 md:h-10 dark:border-neutral-800 dark:text-neutral-100 dark:disabled:bg-neutral-800/50"
+                                placeholder="0.00"
+                                readOnly={isMaterial}
+                                step="any"
+                                error={errors.amount}
+                            />
                         )}
                     </div>
 
@@ -439,7 +438,7 @@ export default function Expenses({ expenses, categories, materials, filters }: E
                     )}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-1">
-                            <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Date</label>
+                            <FormLabel required>Date</FormLabel>
                             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                                 <div>
                                     <input
@@ -495,7 +494,7 @@ export default function Expenses({ expenses, categories, materials, filters }: E
                             {errors.date && <p className="text-xs text-red-500">{errors.date}</p>}
                         </div>
                         <div className="space-y-1">
-                            <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Method</label>
+                            <FormLabel required>Method</FormLabel>
                             <select
                                 value={data.payment_method}
                                 onChange={(e) => setData('payment_method', e.target.value)}
@@ -519,13 +518,9 @@ export default function Expenses({ expenses, categories, materials, filters }: E
                         {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
                     </div>
                     <div className="flex gap-2 pt-2">
-                        <button
-                            type="submit"
-                            disabled={processing}
-                            className="flex-1 rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
-                        >
-                            {editingExpense ? 'Update Expense' : 'Save Expense'}
-                        </button>
+                        <FormButton type="submit" loading={processing} className="flex-1 rounded-xl">
+                            {processing ? 'Saving...' : editingExpense ? 'Update Expense' : 'Save Expense'}
+                        </FormButton>
                         <button
                             type="button"
                             onClick={() => {

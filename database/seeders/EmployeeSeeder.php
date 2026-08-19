@@ -22,6 +22,7 @@ class EmployeeSeeder extends Seeder
                 'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'employee_id' => 'EMP001',
             ],
             [
                 'name' => 'Jane Smith',
@@ -32,6 +33,7 @@ class EmployeeSeeder extends Seeder
                 'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'employee_id' => 'EMP002',
             ],
             [
                 'name' => 'Robert Johnson',
@@ -42,6 +44,7 @@ class EmployeeSeeder extends Seeder
                 'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'employee_id' => 'EMP003',
             ],
             [
                 'name' => 'Emily Davis',
@@ -52,6 +55,7 @@ class EmployeeSeeder extends Seeder
                 'is_active' => false, // Former employee
                 'created_at' => now(),
                 'updated_at' => now(),
+                'employee_id' => 'EMP004',
             ],
         ];
 

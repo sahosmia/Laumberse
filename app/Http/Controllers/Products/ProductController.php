@@ -11,7 +11,6 @@ use App\Http\Requests\Products\StoreProductRequest;
 use App\Http\Requests\Products\UpdateProductRequest;
 use App\Models\Category;
 use App\Models\Product;
-use App\Models\Unit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -24,9 +23,8 @@ class ProductController extends Controller
         $products = Product::query()
             ->with([
                 'category:id,name',
-                'unit:id,name',
             ])
-            ->when($request->search, fn($q, $s) => $q->where('name', 'like', "%{$s}%"))
+            ->when($request->search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%"))
             ->latest()
             ->paginate(50)
             ->withQueryString();
@@ -34,10 +32,6 @@ class ProductController extends Controller
         return Inertia::render('products/index', [
             'products' => $products,
             'categories' => Category::query()
-                ->select('id', 'name')
-                ->get(),
-
-            'units' => Unit::query()
                 ->select('id', 'name')
                 ->get(),
             'filters' => ['search' => $request->search],

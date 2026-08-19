@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Label } from './label';
+import { RequiredMark } from './required-mark';
 import { cn } from '@/lib/utils';
 
 interface FormLabelProps extends React.ComponentPropsWithoutRef<typeof Label> {
@@ -17,7 +18,11 @@ export const FormLabel = React.forwardRef<
             {...props}
         >
             {children}
-            {required && <span className="text-red-500 ml-0.5" aria-hidden="true">*</span>}
+            {required && (
+                <span className="ml-0.5">
+                    <RequiredMark />
+                </span>
+            )}
         </Label>
     );
 });

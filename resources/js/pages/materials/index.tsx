@@ -1,5 +1,7 @@
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { TableRowActions } from '@/components/table-row-actions';
+import { FormButton } from '@/components/ui/form-button';
+import { FormInput } from '@/components/ui/form-input';
 import { Modal } from '@/components/ui/modal';
 import { Pagination } from '@/components/ui/pagination';
 import { useDebouncedSearch } from '@/hooks/use-debounced-search';
@@ -199,21 +201,16 @@ export default function Materials({ materials, units, filters }: MaterialsProps)
                 title={editingMaterial ? 'Edit Material' : 'New Material'}
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-1">
-                        <label htmlFor="name" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                            Material Name
-                        </label>
-                        <input
-                            id="name"
-                            type="text"
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                            className="w-full rounded-xl border border-neutral-200 bg-transparent px-3 py-2 text-sm dark:border-neutral-800 dark:text-neutral-100"
-                            required
-                            placeholder="e.g. Fabric A"
-                        />
-                        {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
-                    </div>
+                    <FormInput
+                        id="name"
+                        label="Material Name"
+                        required
+                        value={data.name}
+                        onChange={(e) => setData('name', e.target.value)}
+                        className="rounded-xl border-neutral-200 bg-transparent dark:border-neutral-800 dark:text-neutral-100"
+                        placeholder="e.g. Fabric A"
+                        error={errors.name}
+                    />
                     <div className="space-y-1">
                         <label htmlFor="unit_id" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                             Unit
@@ -235,13 +232,9 @@ export default function Materials({ materials, units, filters }: MaterialsProps)
                     </div>
 
                     <div className="flex gap-2 pt-2">
-                        <button
-                            type="submit"
-                            disabled={processing}
-                            className="flex-1 rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
-                        >
-                            {editingMaterial ? 'Update Material' : 'Save Material'}
-                        </button>
+                        <FormButton type="submit" loading={processing} className="flex-1 rounded-xl">
+                            {processing ? 'Saving...' : editingMaterial ? 'Update Material' : 'Save Material'}
+                        </FormButton>
                         <button
                             type="button"
                             onClick={() => {

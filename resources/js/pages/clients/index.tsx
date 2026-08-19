@@ -1,6 +1,8 @@
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { TableRowActions } from '@/components/table-row-actions';
+import { FormButton } from '@/components/ui/form-button';
+import { FormInput } from '@/components/ui/form-input';
 import { Modal } from '@/components/ui/modal';
 import { Pagination } from '@/components/ui/pagination';
 import { SearchableSelect } from '@/components/ui/searchable-select';
@@ -225,41 +227,32 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Name Input */}
-                    <div>
-                        <label htmlFor="client_name" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                            Name
-                        </label>
-                        <input
-                            id="client_name"
-                            type="text"
-                            value={data.name}
-                            disabled={processing}
-                            onChange={(e) => setData('name', e.target.value)}
-                            className="mt-1 h-12 w-full rounded-xl border border-neutral-200 bg-transparent px-3 text-sm transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none disabled:opacity-60 md:h-10 dark:border-neutral-800 dark:text-neutral-100"
-                            placeholder="John Doe"
-                            required
-                        />
-                        {errors.name && <p className="mt-1 text-xs font-medium text-red-500">{errors.name}</p>}
-                    </div>
+                    <FormInput
+                        id="client_name"
+                        label="Name"
+                        required
+                        value={data.name}
+                        disabled={processing}
+                        onChange={(e) => setData('name', e.target.value)}
+                        className="h-12 rounded-xl border-neutral-200 bg-transparent focus-visible:border-blue-500 focus-visible:ring-blue-500/20 disabled:opacity-60 md:h-10 dark:border-neutral-800 dark:text-neutral-100"
+                        placeholder="John Doe"
+                        error={errors.name}
+                    />
 
                     {/* Phone & Type Rows */}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div>
-                            <label htmlFor="client_phone" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                Phone
-                            </label>
-                            <input
-                                id="client_phone"
-                                type="tel"
-                                value={data.phone}
-                                disabled={processing}
-                                onChange={(e) => setData('phone', e.target.value)}
-                                className="mt-1 h-12 w-full rounded-xl border border-neutral-200 bg-transparent px-3 text-sm transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none disabled:opacity-60 md:h-10 dark:border-neutral-800 dark:text-neutral-100"
-                                placeholder="+1 (555) 000-0000"
-                                required
-                            />
-                            {errors.phone && <p className="mt-1 text-xs font-medium text-red-500">{errors.phone}</p>}
-                        </div>
+                        <FormInput
+                            id="client_phone"
+                            label="Phone"
+                            required
+                            type="tel"
+                            value={data.phone}
+                            disabled={processing}
+                            onChange={(e) => setData('phone', e.target.value)}
+                            className="h-12 rounded-xl border-neutral-200 bg-transparent focus-visible:border-blue-500 focus-visible:ring-blue-500/20 disabled:opacity-60 md:h-10 dark:border-neutral-800 dark:text-neutral-100"
+                            placeholder="+1 (555) 000-0000"
+                            error={errors.phone}
+                        />
                         <div>
                             <label htmlFor="client_type" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                                 Type
@@ -429,27 +422,9 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
                         >
                             Cancel
                         </button>
-                        <button
-                            type="submit"
-                            disabled={processing}
-                            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/10 transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            {processing ? (
-                                <>
-                                    <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                        <path
-                                            className="opacity-75"
-                                            fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                        />
-                                    </svg>
-                                    <span>Processing...</span>
-                                </>
-                            ) : (
-                                <span>{editingClient ? 'Update Client' : 'Save Client'}</span>
-                            )}
-                        </button>
+                        <FormButton type="submit" loading={processing} className="flex-1 rounded-xl shadow-lg shadow-blue-500/10">
+                            {processing ? 'Processing...' : editingClient ? 'Update Client' : 'Save Client'}
+                        </FormButton>
                     </div>
                 </form>
             </Modal>

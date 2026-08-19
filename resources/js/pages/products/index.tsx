@@ -1,6 +1,9 @@
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { TableRowActions } from '@/components/table-row-actions';
+import { FormButton } from '@/components/ui/form-button';
+import { FormInput } from '@/components/ui/form-input';
+import { FormLabel } from '@/components/ui/form-label';
 import { Modal } from '@/components/ui/modal';
 import { Pagination } from '@/components/ui/pagination';
 import { SearchableSelect } from '@/components/ui/searchable-select';
@@ -20,7 +23,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Products({ products, categories, units, filters }: ProductsProps) {
+export default function Products({ products, categories, filters }: ProductsProps) {
     const [search, setSearch] = useState(filters.search || '');
     const [showModal, setShowModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -31,7 +34,6 @@ export default function Products({ products, categories, units, filters }: Produ
     const { data, setData, post, put, reset, errors, processing, clearErrors } = useForm({
         name: '',
         category_id: null as number | null,
-        unit_id: null as number | null,
         image: null as File | null,
 
         price: '',
@@ -52,7 +54,6 @@ export default function Products({ products, categories, units, filters }: Produ
         setData({
             name: product.name,
             category_id: product.category_id,
-            unit_id: product.unit_id || null,
             image: null,
             price: product.price.toString(),
         });
@@ -306,7 +307,7 @@ export default function Products({ products, categories, units, filters }: Produ
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Product Image</label>
+                        <FormLabel>Product Image</FormLabel>
                         <div className="mt-1 flex items-center gap-4">
                             <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-800">
                                 {data.image ? (
@@ -328,21 +329,18 @@ export default function Products({ products, categories, units, filters }: Produ
                         </div>
                         {errors.image && <p className="mt-1 text-xs text-red-500">{errors.image}</p>}
                     </div>
-                    <div>
-                        <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Product Name</label>
-                        <input
-                            type="text"
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                            className="mt-1 w-full rounded-xl border border-neutral-200 bg-transparent px-3 py-2 text-sm dark:border-neutral-800 dark:text-neutral-100"
-                            placeholder="Enter product name (e.g. Cotton Shirt)"
-                            required
-                        />
-                        {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
-                    </div>
+                    <FormInput
+                        label="Product Name"
+                        required
+                        value={data.name}
+                        onChange={(e) => setData('name', e.target.value)}
+                        className="rounded-xl border-neutral-200 bg-transparent dark:border-neutral-800 dark:text-neutral-100"
+                        placeholder="Enter product name (e.g. Cotton Shirt)"
+                        error={errors.name}
+                    />
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-1">
-                            <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Category</label>
+                            <FormLabel required>Category</FormLabel>
                             <SearchableSelect
                                 options={categories.map((c) => ({ label: c.name, value: c.id }))}
                                 value={data.category_id || ''}
@@ -351,40 +349,22 @@ export default function Products({ products, categories, units, filters }: Produ
                                 error={errors.category_id}
                             />
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Unit</label>
-                            <SearchableSelect
-                                options={units.map((u) => ({ label: u.name, value: u.id }))}
-                                value={data.unit_id || ''}
-                                onChange={(val) => setData('unit_id', Number(val))}
-                                placeholder="Select Unit"
-                                error={errors.unit_id}
-                            />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div>
-                            <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Base Price (৳)</label>
-                            <input
-                                type="number"
-                                value={data.price}
-                                onChange={(e) => setData('price', e.target.value)}
-                                className="mt-1 w-full rounded-xl border border-neutral-200 bg-transparent px-3 py-2 text-sm dark:border-neutral-800 dark:text-neutral-100"
-                                placeholder="0.00"
-                                required
-                            />
-                            {errors.price && <p className="mt-1 text-xs text-red-500">{errors.price}</p>}
-                        </div>
+                        <FormInput
+                            label="Base Price (৳)"
+                            required
+                            type="number"
+                            value={data.price}
+                            onChange={(e) => setData('price', e.target.value)}
+                            className="rounded-xl border-neutral-200 bg-transparent dark:border-neutral-800 dark:text-neutral-100"
+                            placeholder="0.00"
+                            error={errors.price}
+                        />
                     </div>
 
                     <div className="flex gap-2 pt-2">
-                        <button
-                            type="submit"
-                            disabled={processing}
-                            className="flex-1 rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
-                        >
-                            {editingProduct ? 'Update Product' : 'Save Product'}
-                        </button>
+                        <FormButton type="submit" loading={processing} className="flex-1 rounded-xl">
+                            {processing ? 'Saving...' : editingProduct ? 'Update Product' : 'Save Product'}
+                        </FormButton>
                         <button
                             type="button"
                             onClick={() => {

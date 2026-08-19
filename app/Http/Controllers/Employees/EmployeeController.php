@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Employees;
 
 use App\Actions\Employees\GetEligibleEmployeesForPayrollAction;
 use App\Http\Controllers\Controller;
-use App\Models\Employee;
+use App\Http\Requests\Employees\GetEligibleForPayrollRequest;
 use App\Http\Requests\Employees\StoreEmployeeRequest;
 use App\Http\Requests\Employees\UpdateEmployeeRequest;
-use App\Http\Requests\Employees\GetEligibleForPayrollRequest;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -15,9 +15,9 @@ class EmployeeController extends Controller
 {
     public function index(Request $request)
     {
-        $employees = Employee::when($request->search, fn($q, $s) => $q->where(function ($q) use ($s) {
-                $q->where('name', 'like', "%{$s}%")->orWhere('designation', 'like', "%{$s}%");
-            }))
+        $employees = Employee::when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
+            $q->where('name', 'like', "%{$s}%")->orWhere('designation', 'like', "%{$s}%");
+        }))
             ->latest()
             ->paginate(50)
             ->withQueryString();
@@ -35,13 +35,17 @@ class EmployeeController extends Controller
         return redirect()->back()->with('success', 'Employee added successfully');
     }
 
-    public function show(Request $request, Employee $employee){
+    public function show(Request $request, Employee $employee)
+    {
         return $employee;
     }
 
     public function update(UpdateEmployeeRequest $request, Employee $employee)
     {
-        $employee->update($request->validated());
+        $data = $request->validated();
+        $data['employee_id'] = ($data['employee_id'] ?? null) ?: $employee->employee_id;
+
+        $employee->update($data);
 
         return redirect()->back()->with('success', 'Employee updated successfully');
     }
@@ -49,6 +53,7 @@ class EmployeeController extends Controller
     public function destroy(Employee $employee)
     {
         $employee->delete();
+
         return redirect()->back()->with('success', 'Employee deleted successfully');
     }
 

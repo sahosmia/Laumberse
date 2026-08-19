@@ -1,5 +1,8 @@
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { TableRowActions } from '@/components/table-row-actions';
+import { FormButton } from '@/components/ui/form-button';
+import { FormInput } from '@/components/ui/form-input';
+import { FormLabel } from '@/components/ui/form-label';
 import { Modal } from '@/components/ui/modal';
 import { Pagination } from '@/components/ui/pagination';
 import { useDebouncedSearch } from '@/hooks/use-debounced-search';
@@ -164,20 +167,17 @@ export default function AssetCategories({ categories, filters }: AssetCategories
                 size="lg"
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    <FormInput
+                        label="Category Name"
+                        required
+                        value={data.name}
+                        onChange={(e) => setData('name', e.target.value)}
+                        className="rounded-xl border-neutral-200 bg-transparent dark:border-neutral-800 dark:text-neutral-100"
+                        placeholder="e.g. Furniture, Electronics"
+                        error={errors.name}
+                    />
                     <div className="space-y-1">
-                        <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Category Name</label>
-                        <input
-                            type="text"
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                            className="w-full rounded-xl border border-neutral-200 bg-transparent px-3 py-2 text-sm dark:border-neutral-800 dark:text-neutral-100"
-                            required
-                            placeholder="e.g. Furniture, Electronics"
-                        />
-                        {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Description</label>
+                        <FormLabel>Description</FormLabel>
                         <textarea
                             value={data.description}
                             onChange={(e) => setData('description', e.target.value)}
@@ -187,13 +187,9 @@ export default function AssetCategories({ categories, filters }: AssetCategories
                         {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
                     </div>
                     <div className="flex gap-2 pt-2">
-                        <button
-                            type="submit"
-                            disabled={processing}
-                            className="flex-1 rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
-                        >
-                            {editingCategory ? 'Update Category' : 'Save Category'}
-                        </button>
+                        <FormButton type="submit" loading={processing} className="flex-1 rounded-xl">
+                            {processing ? 'Saving...' : editingCategory ? 'Update Category' : 'Save Category'}
+                        </FormButton>
                         <button
                             type="button"
                             onClick={() => {

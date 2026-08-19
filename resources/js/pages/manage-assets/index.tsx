@@ -1,7 +1,11 @@
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { TableRowActions } from '@/components/table-row-actions';
+import { FormButton } from '@/components/ui/form-button';
+import { FormInput } from '@/components/ui/form-input';
+import { FormLabel } from '@/components/ui/form-label';
 import { Modal } from '@/components/ui/modal';
 import { Pagination } from '@/components/ui/pagination';
+import { RequiredMark } from '@/components/ui/required-mark';
 import { ASSET_STATUSES, ASSET_STATUS_STYLES, type AssetStatus } from '@/constants/status';
 import { useDebouncedSearch } from '@/hooks/use-debounced-search';
 import AppLayout from '@/layouts/app-layout';
@@ -201,25 +205,20 @@ export default function ManageAssets({ manageAssets, categories, filters }: Mana
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <FormInput
+                            id="name"
+                            label="Asset Name"
+                            required
+                            value={data.name}
+                            onChange={(e) => setData('name', e.target.value)}
+                            className="rounded-xl border-neutral-200 bg-transparent dark:border-neutral-800 dark:text-neutral-100"
+                            placeholder="e.g. Washing Machine"
+                            error={errors.name}
+                        />
                         <div className="space-y-1">
-                            <label htmlFor="name" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                Asset Name
-                            </label>
-                            <input
-                                id="name"
-                                type="text"
-                                value={data.name}
-                                onChange={(e) => setData('name', e.target.value)}
-                                className="w-full rounded-xl border border-neutral-200 bg-transparent px-3 py-2 text-sm dark:border-neutral-800 dark:text-neutral-100"
-                                required
-                                placeholder="e.g. Washing Machine"
-                            />
-                            {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
-                        </div>
-                        <div className="space-y-1">
-                            <label htmlFor="asset_category_id" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                            <FormLabel htmlFor="asset_category_id" required>
                                 Category
-                            </label>
+                            </FormLabel>
                             <select
                                 id="asset_category_id"
                                 value={data.asset_category_id}
@@ -253,20 +252,16 @@ export default function ManageAssets({ manageAssets, categories, filters }: Mana
                     </div>
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div className="space-y-1">
-                            <label htmlFor="purchase_date" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                Purchase Date
-                            </label>
-                            <input
-                                id="purchase_date"
-                                type="date"
-                                value={data.purchase_date}
-                                onChange={(e) => setData('purchase_date', e.target.value)}
-                                className="w-full rounded-xl border border-neutral-200 bg-transparent px-3 py-2 text-sm dark:border-neutral-800 dark:text-neutral-100"
-                                required
-                            />
-                            {errors.purchase_date && <p className="text-xs text-red-500">{errors.purchase_date}</p>}
-                        </div>
+                        <FormInput
+                            id="purchase_date"
+                            label="Purchase Date"
+                            required
+                            type="date"
+                            value={data.purchase_date}
+                            onChange={(e) => setData('purchase_date', e.target.value)}
+                            className="rounded-xl border-neutral-200 bg-transparent dark:border-neutral-800 dark:text-neutral-100"
+                            error={errors.purchase_date}
+                        />
                         <div className="space-y-1">
                             <label htmlFor="status" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                                 Status
@@ -287,21 +282,17 @@ export default function ManageAssets({ manageAssets, categories, filters }: Mana
                     </div>
 
                     <div className="grid grid-cols-1 gap-4">
-                        <div className="space-y-1">
-                            <label htmlFor="cost" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                Cost
-                            </label>
-                            <input
-                                id="cost"
-                                type="number"
-                                value={data.cost}
-                                onChange={(e) => setData('cost', e.target.value)}
-                                className="w-full rounded-xl border border-neutral-200 bg-transparent px-3 py-2 text-sm dark:border-neutral-800 dark:text-neutral-100"
-                                required
-                                placeholder="0.00"
-                            />
-                            {errors.cost && <p className="text-xs text-red-500">{errors.cost}</p>}
-                        </div>
+                        <FormInput
+                            id="cost"
+                            label="Cost"
+                            required
+                            type="number"
+                            value={data.cost}
+                            onChange={(e) => setData('cost', e.target.value)}
+                            className="rounded-xl border-neutral-200 bg-transparent dark:border-neutral-800 dark:text-neutral-100"
+                            placeholder="0.00"
+                            error={errors.cost}
+                        />
                     </div>
 
                     {!editingAsset && (
@@ -327,7 +318,7 @@ export default function ManageAssets({ manageAssets, categories, filters }: Mana
                             {data.is_new_purchase && (
                                 <div className="animate-in fade-in slide-in-from-top-2 space-y-1 duration-300">
                                     <label htmlFor="payment_method" className="text-xs font-bold tracking-wider text-neutral-500 uppercase">
-                                        Payment Method
+                                        Payment Method <RequiredMark />
                                     </label>
                                     <select
                                         id="payment_method"
@@ -348,13 +339,9 @@ export default function ManageAssets({ manageAssets, categories, filters }: Mana
                     )}
 
                     <div className="flex gap-2 pt-2">
-                        <button
-                            type="submit"
-                            disabled={processing}
-                            className="flex-1 rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
-                        >
-                            {editingAsset ? 'Update Asset' : 'Save Asset'}
-                        </button>
+                        <FormButton type="submit" loading={processing} className="flex-1 rounded-xl">
+                            {processing ? 'Saving...' : editingAsset ? 'Update Asset' : 'Save Asset'}
+                        </FormButton>
                         <button
                             type="button"
                             onClick={() => {

@@ -8,9 +8,9 @@ use App\Http\Requests\Invoices\UpdateInvoiceRequest;
 use App\Http\Requests\Invoices\UpdateInvoiceStatusRequest;
 use App\Http\Requests\Invoices\UpdatePaymentStatusRequest;
 use App\Models\Category;
+use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Product;
-use App\Models\Client;
 use App\Services\InvoiceService;
 use App\Support\DateRangeFilter;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -19,19 +19,17 @@ use Inertia\Inertia;
 
 class InvoiceController extends Controller
 {
-    public function __construct(protected InvoiceService $invoiceService)
-    {
-    }
+    public function __construct(protected InvoiceService $invoiceService) {}
 
     public function index(Request $request)
     {
         $invoices = Invoice::with('client')
-            ->when($request->search, fn($q, $s) => $q->where(function ($q) use ($s) {
+            ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('invoice_uuid', 'like', "%{$s}%")
-                    ->orWhereHas('client', fn($q) => $q->where('name', 'like', "%{$s}%"));
+                    ->orWhereHas('client', fn ($q) => $q->where('name', 'like', "%{$s}%"));
             }))
-            ->when($request->payment_status, fn($q, $status) => $q->where('payment_status', $status))
-            ->tap(fn($q) => DateRangeFilter::apply($q, $request))
+            ->when($request->payment_status, fn ($q, $status) => $q->where('payment_status', $status))
+            ->tap(fn ($q) => DateRangeFilter::apply($q, $request))
             ->latest()
             ->paginate(50)
             ->withQueryString();
@@ -48,10 +46,10 @@ class InvoiceController extends Controller
         ]);
     }
 
-    public function create( )
+    public function create()
     {
         return Inertia::render('invoices/create', [
-            'products' => Product::with(['category', 'unit'])->get(),
+            'products' => Product::with('category')->get(),
             'clients' => Client::with('customPrices')->get(),
             'categories' => Category::all(),
         ]);
@@ -60,6 +58,7 @@ class InvoiceController extends Controller
     public function store(StoreInvoiceRequest $request)
     {
         $this->invoiceService->createInvoice($request->validated());
+
         return redirect()->route('history')->with('success', 'Invoice created successfully.');
     }
 
@@ -67,7 +66,7 @@ class InvoiceController extends Controller
     {
         return Inertia::render('invoices/edit', [
             'invoice' => $invoice->load(['items.product']),
-            'products' => Product::with(['category', 'unit'])->get(),
+            'products' => Product::with('category')->get(),
             'clients' => Client::with('customPrices')->get(),
             'categories' => Category::all(),
         ]);
@@ -76,6 +75,7 @@ class InvoiceController extends Controller
     public function update(UpdateInvoiceRequest $request, Invoice $invoice)
     {
         $this->invoiceService->updateInvoice($invoice, $request->validated());
+
         return redirect()->route('history')->with('success', 'Invoice updated successfully.');
     }
 
@@ -89,6 +89,7 @@ class InvoiceController extends Controller
     public function destroy(Invoice $invoice)
     {
         $invoice->delete();
+
         return redirect()->back()->with('success', 'Invoice deleted successfully.');
     }
 
@@ -104,25 +105,29 @@ class InvoiceController extends Controller
     public function updatePaymentStatus(UpdatePaymentStatusRequest $request, Invoice $invoice)
     {
         $this->invoiceService->updatePaymentStatus($invoice, $request->validated()['payment_status']);
+
         return redirect()->back()->with('success', 'Payment status updated successfully.');
     }
 
-     public function print(Invoice $invoice)
+    public function print(Invoice $invoice)
     {
         $invoice->load(['client', 'items.product']);
         $pdf = Pdf::loadView('invoices.pdf', compact('invoice'));
-        return $pdf->stream('invoice-' . $invoice->invoice_uuid . '.pdf');
+
+        return $pdf->stream('invoice-'.$invoice->invoice_uuid.'.pdf');
     }
 
-     public function bulkDestroy(\Illuminate\Http\Request $request)
+    public function bulkDestroy(Request $request)
     {
         $ids = $request->input('ids');
         if (empty($ids)) {
             Invoice::query()->delete();
+
             return redirect()->back()->with('success', 'All invoices deleted successfully.');
         }
 
         Invoice::whereIn('id', $ids)->delete();
+
         return redirect()->back()->with('success', 'Selected invoices deleted successfully.');
     }
 }

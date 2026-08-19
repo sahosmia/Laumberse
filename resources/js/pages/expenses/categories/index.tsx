@@ -1,8 +1,8 @@
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { TableRowActions } from '@/components/table-row-actions';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { FormButton } from '@/components/ui/form-button';
+import { FormInput } from '@/components/ui/form-input';
 import { Modal } from '@/components/ui/modal';
 import { Pagination } from '@/components/ui/pagination';
 import { useDebouncedSearch } from '@/hooks/use-debounced-search';
@@ -174,31 +174,27 @@ export default function ExpenseCategories({ categories, filters }: ExpenseCatego
                 title={editingCategory ? 'Edit Category' : 'Add Category'}
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-1">
-                        <Label htmlFor="name">Category Name</Label>
-                        <Input
-                            id="name"
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                            placeholder="Enter category name"
-                            required
-                        />
-                        {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
-                    </div>
-                    <div className="space-y-1">
-                        <Label htmlFor="description">Description</Label>
-                        <Input
-                            id="description"
-                            value={data.description}
-                            onChange={(e) => setData('description', e.target.value)}
-                            placeholder="Enter description (optional)"
-                        />
-                        {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
-                    </div>
+                    <FormInput
+                        id="name"
+                        label="Category Name"
+                        required
+                        value={data.name}
+                        onChange={(e) => setData('name', e.target.value)}
+                        placeholder="Enter category name"
+                        error={errors.name}
+                    />
+                    <FormInput
+                        id="description"
+                        label="Description"
+                        value={data.description}
+                        onChange={(e) => setData('description', e.target.value)}
+                        placeholder="Enter description (optional)"
+                        error={errors.description}
+                    />
                     <div className="flex gap-2 pt-2">
-                        <Button type="submit" disabled={processing} className="flex-1">
-                            {editingCategory ? 'Update' : 'Save'} Category
-                        </Button>
+                        <FormButton type="submit" loading={processing} className="flex-1">
+                            {processing ? 'Saving...' : editingCategory ? 'Update Category' : 'Save Category'}
+                        </FormButton>
                         <Button
                             type="button"
                             variant="outline"

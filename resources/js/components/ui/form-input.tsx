@@ -29,7 +29,7 @@ export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
                     type={type}
                     id={inputId}
                     className={cn(
-                        error && 'border-red-500 focus-visible:ring-red-500',
+                        error && 'border-red-500 focus-visible:ring-red-500 focus-visible:ring-offset-0',
                         className
                     )}
                     {...props}

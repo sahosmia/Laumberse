@@ -27,6 +27,7 @@ export default function Employees({ employees, filters }: EmployeesProps) {
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
     const { data, setData, post, put, reset, errors, processing, clearErrors } = useForm({
+        employee_id: '',
         name: '',
         phone: '',
         email: '',
@@ -48,6 +49,7 @@ export default function Employees({ employees, filters }: EmployeesProps) {
         setEditingEmployee(employee);
         clearErrors();
         setData({
+            employee_id: employee.employee_id,
             name: employee.name,
             phone: employee.phone,
             email: employee.email || '',
@@ -117,7 +119,7 @@ export default function Employees({ employees, filters }: EmployeesProps) {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="bg-neutral-50 text-xs tracking-wider text-neutral-500 uppercase dark:bg-neutral-800/50">
-                                    <th className="px-5 py-3 text-left font-semibold">ID</th>
+                                    <th className="px-5 py-3 text-left font-semibold">Employee ID</th>
                                     <th className="px-5 py-3 text-left font-semibold">Name</th>
                                     <th className="px-5 py-3 text-left font-semibold">Designation</th>
                                     <th className="px-5 py-3 text-left font-semibold">Phone</th>
@@ -129,7 +131,7 @@ export default function Employees({ employees, filters }: EmployeesProps) {
                             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                                 {employees.data.map((e) => (
                                     <tr key={e.id} className="transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/30">
-                                        <td className="px-5 py-4 font-mono text-xs text-neutral-400">#{e.id}</td>
+                                        <td className="px-5 py-4 font-mono text-xs text-neutral-400">{e.employee_id}</td>
                                         <td className="px-5 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
                                                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
@@ -189,7 +191,7 @@ export default function Employees({ employees, filters }: EmployeesProps) {
                                     <div>
                                         <div className="flex items-center gap-1.5">
                                             <h4 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">{e.name}</h4>
-                                            <span className="font-mono text-[10px] text-neutral-400">#{e.id}</span>
+                                            <span className="font-mono text-[10px] text-neutral-400">{e.employee_id}</span>
                                         </div>
                                         <p className="text-xs text-neutral-500 dark:text-neutral-400">{e.designation}</p>
                                     </div>
@@ -248,6 +250,13 @@ export default function Employees({ employees, filters }: EmployeesProps) {
                 title={editingEmployee ? 'Edit Employee' : 'New Employee'}
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    <FormInput
+                        label="Employee ID (leave blank to auto-generate)"
+                        value={data.employee_id}
+                        onChange={(e) => setData('employee_id', e.target.value)}
+                        placeholder="e.g. EMP-0001"
+                        error={errors.employee_id}
+                    />
                     <FormInput label="Name" value={data.name} onChange={(e) => setData('name', e.target.value)} required error={errors.name} />
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <FormInput

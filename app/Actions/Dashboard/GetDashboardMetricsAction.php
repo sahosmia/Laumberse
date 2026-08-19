@@ -60,7 +60,7 @@ class GetDashboardMetricsAction
         $dailyRevenue = Invoice::selectRaw("$dateFormat as day, SUM(total) as revenue, SUM(paid) as paid")
             ->where('date', '>=', now()->subDays(7))
             ->groupBy('day')
-            ->orderBy('date')
+            ->orderByRaw('MIN(date) asc')
             ->get();
 
         return [

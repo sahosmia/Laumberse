@@ -1,9 +1,11 @@
 <?php
 
-use App\Models\User;
-use App\Models\ExpenseCategory;
 use App\Models\AssetCategory;
+use App\Models\Category;
+use App\Models\ExpenseCategory;
 use App\Models\Material;
+use App\Models\Product;
+use App\Models\User;
 
 test('expense category name must be unique on store', function () {
     $user = User::factory()->create();
@@ -86,4 +88,47 @@ test('material can be updated without changing its own name', function () {
     ]);
 
     $response->assertSessionHasNoErrors();
+});
+
+test('product name must be unique on store', function () {
+    $user = User::factory()->create();
+    $category = Category::create(['name' => 'Gents Item', 'slug' => 'gents-item']);
+    Product::create(['name' => 'Shirt', 'category_id' => $category->id, 'price' => 15]);
+
+    $response = $this->actingAs($user)->post(route('products.store'), [
+        'name' => 'Shirt',
+        'category_id' => $category->id,
+        'price' => 20,
+    ]);
+
+    $response->assertSessionHasErrors(['name']);
+});
+
+test('product can be updated without changing its own name', function () {
+    $user = User::factory()->create();
+    $category = Category::create(['name' => 'Gents Item', 'slug' => 'gents-item']);
+    $product = Product::create(['name' => 'Shirt', 'category_id' => $category->id, 'price' => 15]);
+
+    $response = $this->actingAs($user)->put(route('products.update', $product), [
+        'name' => 'Shirt',
+        'category_id' => $category->id,
+        'price' => 20,
+    ]);
+
+    $response->assertSessionHasNoErrors();
+});
+
+test('product cannot be updated to another product\'s name', function () {
+    $user = User::factory()->create();
+    $category = Category::create(['name' => 'Gents Item', 'slug' => 'gents-item']);
+    Product::create(['name' => 'Shirt', 'category_id' => $category->id, 'price' => 15]);
+    $product = Product::create(['name' => 'T-Shirt', 'category_id' => $category->id, 'price' => 15]);
+
+    $response = $this->actingAs($user)->put(route('products.update', $product), [
+        'name' => 'Shirt',
+        'category_id' => $category->id,
+        'price' => 15,
+    ]);
+
+    $response->assertSessionHasErrors(['name']);
 });

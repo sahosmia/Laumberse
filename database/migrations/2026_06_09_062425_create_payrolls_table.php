@@ -26,6 +26,11 @@ return new class extends Migration
             $table->text('deduction_note')->nullable();
             $table->timestamps();
         });
+
+        Schema::table('expenses', function (Blueprint $table) {
+            $table->unsignedBigInteger('payroll_id')->nullable()->after('expense_category_id');
+            $table->foreign('payroll_id')->references('id')->on('payrolls')->onDelete('cascade');
+        });
     }
 
     /**
@@ -33,6 +38,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('expenses', function (Blueprint $table) {
+            $table->dropForeign(['payroll_id']);
+            $table->dropColumn('payroll_id');
+        });
+
         Schema::dropIfExists('payrolls');
     }
 };
