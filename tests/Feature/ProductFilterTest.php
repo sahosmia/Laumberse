@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 test('it can see products', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $category = Category::create(['name' => 'Test', 'slug' => 'test']);
 
     Product::create(['name' => 'Product 1', 'category_id' => $category->id, 'price' => 10]);

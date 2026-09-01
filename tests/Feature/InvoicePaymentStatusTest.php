@@ -1,12 +1,14 @@
 <?php
 
+use App\Models\Account;
 use App\Models\User;
 use App\Models\Invoice;
 use App\Models\Client;
 
 beforeEach(function () {
-    $this->user = User::factory()->create();
+    $this->user = User::factory()->admin()->create();
     $this->client = Client::create(['name' => 'John Doe', 'phone' => '123456789', 'total_paid' => 0, 'total_due' => 0]);
+    $this->account = Account::create(['name' => 'Cash', 'opening_balance' => 0, 'current_balance' => 0]);
 });
 
 test('marking a partially paid invoice as Paid settles the full amount and stores a payment date', function () {
@@ -14,6 +16,7 @@ test('marking a partially paid invoice as Paid settles the full amount and store
         'invoice_uuid' => 'INV-PAY-PARTIAL',
         'date' => now()->toDateString(),
         'client_id' => $this->client->id,
+        'account_id' => $this->account->id,
         'total' => 820,
         'paid' => 411,
         'due' => 409,
@@ -30,7 +33,7 @@ test('marking a partially paid invoice as Paid settles the full amount and store
 
     $response->assertRedirect();
     $invoice->refresh();
-    expect($invoice->payment_status)->toBe('Paid');
+    expect($invoice->payment_status->value)->toBe('Paid');
     expect($invoice->payment_date)->toBe(now()->toDateString());
     expect((float) $invoice->paid)->toEqual(820.0);
     expect((float) $invoice->due)->toEqual(0.0);
@@ -45,6 +48,7 @@ test('marking an invoice as Unpaid resets paid to 0 and due to the full total', 
         'invoice_uuid' => 'INV-PAY-CLEAR',
         'date' => now()->toDateString(),
         'client_id' => $this->client->id,
+        'account_id' => $this->account->id,
         'total' => 100,
         'paid' => 100,
         'due' => 0,
@@ -61,7 +65,7 @@ test('marking an invoice as Unpaid resets paid to 0 and due to the full total', 
 
     $response->assertRedirect();
     $invoice->refresh();
-    expect($invoice->payment_status)->toBe('Unpaid');
+    expect($invoice->payment_status->value)->toBe('Unpaid');
     expect($invoice->payment_date)->toBeNull();
     expect((float) $invoice->paid)->toEqual(0.0);
     expect((float) $invoice->due)->toEqual(100.0);

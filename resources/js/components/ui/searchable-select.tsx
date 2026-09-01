@@ -10,7 +10,7 @@ interface Option {
 
 interface SearchableSelectProps {
     options: Option[];
-    value?: string | number;
+    value?: string | number | null;
     onChange: (value: string | number) => void;
     placeholder?: string;
     className?: string;
@@ -40,7 +40,11 @@ export function SearchableSelect({
                       .includes(query.toLowerCase().replace(/\s+/g, '')),
               );
 
-    const handleChange = (val: string | number) => {
+    const handleChange = (val: string | number | null) => {
+        // Headless UI's Combobox always types onChange as `(value: T | null) => void` even in
+        // single-select mode; this component has no "clear" affordance, so null never actually
+        // fires in practice, but we guard it here to keep the public onChange contract non-null.
+        if (val === null) return;
         onChange(val);
         if (inputRef.current) {
             inputRef.current.blur();

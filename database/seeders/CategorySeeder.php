@@ -4,27 +4,23 @@ namespace Database\Seeders;
 
 use App\Models\Category;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class CategorySeeder extends Seeder
 {
     public function run(): void
     {
         $categories = [
-            ['name' => 'Electronics', 'description' => 'Electronic gadgets and devices'],
-            ['name' => 'Clothing', 'description' => 'Apparel and fashion items'],
-            ['name' => 'Home & Garden', 'description' => 'Items for home improvement and gardening'],
-            ['name' => 'Books', 'description' => 'Educational and fictional books'],
-            ['name' => 'Sports', 'description' => 'Sports equipment and accessories'],
+            ['name' => 'Gents Item', 'slug' => 'gents-item', 'description' => 'Laundry items for men'],
+            ['name' => 'Ladies Item', 'slug' => 'ladies-item', 'description' => 'Laundry items for women'],
+            ['name' => 'Kids Item', 'slug' => 'kids-item', 'description' => 'Laundry items for children'],
+            ['name' => 'Household Item', 'slug' => 'household-item', 'description' => 'Household linens and fabrics'],
+            ['name' => 'Others Item', 'slug' => 'others-item', 'description' => 'Everything else'],
         ];
 
         foreach ($categories as $category) {
             Category::firstOrCreate(
                 ['name' => $category['name']],
-                [
-                    'slug' => Str::slug($category['name']),
-                    'description' => $category['description'],
-                ]
+                ['slug' => $category['slug'], 'description' => $category['description']]
             );
         }
     }

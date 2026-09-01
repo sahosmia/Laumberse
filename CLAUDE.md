@@ -1,7 +1,7 @@
 # Frontend conventions (Inertia + React + TypeScript)
 
 These rules exist to stop the admin CRUD pages (products, employees, clients,
-materials, expenses, manage-assets, categories, units, ...) from re-inventing
+materials, expenses, assets, categories, units, ...) from re-inventing
 the same label/input/button markup in every `index.tsx`. Use the shared
 components below instead of raw HTML — they're already built and already used
 across the app.
@@ -23,10 +23,14 @@ across the app.
   `tailwind-merge`, so passing e.g. `rounded-xl border-neutral-200
   bg-transparent` cleanly overrides the shadcn default look — no need to
   fight the base classes).
-- **Selects** — there's no shared `FormSelect` yet; keep using a raw
-  `<select>` but still pair it with `FormLabel` for the label/required-mark,
-  and render its error the same way (`{errors.x && <p className="text-xs
-  text-red-500">...}`) for now.
+- **Selects** — use `FormSelect` (`@/components/ui/form-select`) for
+  create/edit-form dropdowns. Same restyled look as `FilterSelect` (rounded
+  border, chevron indicator, optional leading `icon`), but with `FormInput`-
+  style `label`/`required`/`error`/`helperText` props — don't hand-write a raw
+  `<select>` + separate `<label>`/error `<p>` for form fields anymore. List-page
+  filter bars keep using `FilterSelect` (`@/components/ui/filter-select`)
+  as-is; that one's a different shape (no label/error, just an icon + the
+  select) meant for the `DataView` filters slot, not form fields.
 - **Submit buttons** — use `FormButton` (`@/components/ui/form-button`) with
   `loading={processing}`. It disables itself and swaps in a spinner
   automatically; don't hand-roll an inline `<svg className="animate-spin">`

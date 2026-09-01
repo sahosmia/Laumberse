@@ -11,8 +11,36 @@
 |
 */
 
+/*
+|--------------------------------------------------------------------------
+| Feature test setup
+|--------------------------------------------------------------------------
+|
+| Every route in this app is gated by a Spatie `permission:{module}.{action}` middleware string,
+| so the `roles`/`permissions` tables must exist and be populated before any Feature test can get
+| past that middleware. RefreshDatabase migrates the schema fresh per test but does NOT seed it,
+| so this runs the lightweight, deterministic seeders every Feature test actually depends on (not
+| the full DatabaseSeeder, which also seeds slow, randomized demo business data that has nothing
+| to do with what most tests are exercising).
+|
+| OutletSeeder must run here too (not just in production): UserFactory::definition() reads the
+| first existing Outlet's id for every user it creates, mirroring the real backfill migration's
+| behavior — without a seeded "Main Outlet" here, every factory-created user in every existing
+| test would suddenly have a null outlet_id, and the outlet-scoped modules would treat their
+| requests as "All Outlets" instead of "Main Outlet," breaking dozens of unrelated tests that
+| have nothing to do with outlets.
+|
+*/
+
 pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    ->beforeEach(function () {
+        $this->seed([
+            Database\Seeders\OutletSeeder::class,
+            Database\Seeders\PermissionSeeder::class,
+            Database\Seeders\RoleSeeder::class,
+        ]);
+    })
     ->in('Feature');
 
 /*
@@ -44,4 +72,19 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * Creates a fully-authorized user (real seeded 'Admin' role — see RoleSeeder) and authenticates
+ * the current test as them. Convenience for tests whose subject is business logic, not
+ * authorization itself. Tests that specifically verify a 403 for an under-privileged user should
+ * keep using a bare `User::factory()->create()` (no role) instead of this helper.
+ */
+function actingAsAdmin(): App\Models\User
+{
+    $user = App\Models\User::factory()->admin()->create();
+
+    test()->actingAs($user);
+
+    return $user;
 }

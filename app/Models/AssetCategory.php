@@ -13,6 +13,6 @@ class AssetCategory extends Model
 
     public function assets()
     {
-        return $this->hasMany(ManageAsset::class, 'asset_category_id');
+        return $this->hasMany(Asset::class, 'asset_category_id');
     }
 }

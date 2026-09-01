@@ -10,12 +10,12 @@ class ProductSeeder extends Seeder
 {
     public function run(): void
     {
-        // Categories
-        $gents = Category::firstOrCreate(['name' => 'Gents Item'], ['slug' => 'gents-item']);
-        $ladies = Category::firstOrCreate(['name' => 'Ladies Item'], ['slug' => 'ladies-item']);
-        $kids = Category::firstOrCreate(['name' => 'Kids Item'], ['slug' => 'kids-item']);
-        $household = Category::firstOrCreate(['name' => 'Household Item'], ['slug' => 'household-item']);
-        $others = Category::firstOrCreate(['name' => 'Others Item'], ['slug' => 'others-item']);
+        // Categories are seeded by CategorySeeder, which must run before this seeder.
+        $gents = Category::where('name', 'Gents Item')->firstOrFail();
+        $ladies = Category::where('name', 'Ladies Item')->firstOrFail();
+        $kids = Category::where('name', 'Kids Item')->firstOrFail();
+        $household = Category::where('name', 'Household Item')->firstOrFail();
+        $others = Category::where('name', 'Others Item')->firstOrFail();
 
         $products = [
             // ================= GENTS ITEMS (জেন্টস আইটেম) =================
@@ -139,7 +139,10 @@ class ProductSeeder extends Seeder
         ];
 
         foreach ($products as $pData) {
-            Product::create($pData);
+            Product::firstOrCreate(
+                ['name' => $pData['name']],
+                ['category_id' => $pData['category_id'], 'price' => $pData['price']]
+            );
         }
     }
 }

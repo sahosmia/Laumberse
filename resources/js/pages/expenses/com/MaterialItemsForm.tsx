@@ -205,7 +205,7 @@ export function MaterialItemsForm({ items, materials, errors, onChange }: Materi
                             <button
                                 type="button"
                                 onClick={() => handleRemoveClick(index)}
-                                className="absolute top-3 right-3 p-1.5 text-neutral-400 transition-colors hover:text-red-500"
+                                className="absolute top-2 right-2 flex h-9 w-9 items-center justify-center text-neutral-400 transition-colors hover:text-red-500"
                                 title="Remove item"
                             >
                                 <Trash2 className="h-4 w-4" />

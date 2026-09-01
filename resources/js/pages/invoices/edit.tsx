@@ -4,7 +4,7 @@ import { type BreadcrumbItem } from '@/types';
 import type { EditInvoiceProps } from '@/types/pages/invoices';
 import { Head } from '@inertiajs/react';
 
-export default function EditInvoice({ invoice, products, clients, categories }: EditInvoiceProps) {
+export default function EditInvoice({ invoice, products, clients, categories, accounts }: EditInvoiceProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Invoices',
@@ -19,7 +19,7 @@ export default function EditInvoice({ invoice, products, clients, categories }: 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Edit Invoice ${invoice.invoice_uuid}`} />
-            <InvoiceForm invoice={invoice} products={products} clients={clients} categories={categories} isEdit={true} />
+            <InvoiceForm invoice={invoice} products={products} clients={clients} categories={categories} accounts={accounts} isEdit={true} />
         </AppLayout>
     );
 }

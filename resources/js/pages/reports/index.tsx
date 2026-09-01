@@ -1,9 +1,12 @@
+import { StatCard } from '@/components/ui/stat-card';
+import { useIsDarkMode } from '@/hooks/use-appearance';
 import AppLayout from '@/layouts/app-layout';
 import { formatCurrency } from '@/lib/format';
 import { type BreadcrumbItem } from '@/types';
-import type { ReportsColorKey, ReportsProps, ReportsStatCardProps } from '@/types/pages/reports';
-import { Head } from '@inertiajs/react';
-import { Check, DollarSign, FileText, TrendingUp } from 'lucide-react';
+import { REPORT_PERIODS, type ReportPeriod, type ReportsProps } from '@/types/pages/reports';
+import { Head, router } from '@inertiajs/react';
+import { Calendar, Check, DollarSign, FileText, TrendingUp } from 'lucide-react';
+import { useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -13,43 +16,89 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-function StatCard({ icon: Icon, label, value, sub, color = 'blue' }: ReportsStatCardProps) {
-    const colorMap: Record<ReportsColorKey, string> = {
-        blue: 'from-blue-500 to-blue-600',
-        green: 'from-emerald-500 to-emerald-600',
-        red: 'from-red-500 to-red-600',
-        amber: 'from-amber-500 to-amber-600',
-        purple: 'from-violet-500 to-violet-600',
-    };
-    return (
-        <div className="rounded-2xl border border-neutral-200 bg-white p-5 transition-shadow duration-300 hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
-            <div className="flex items-start justify-between">
-                <div>
-                    <p className="mb-1 text-sm font-medium text-neutral-500">{label}</p>
-                    <p className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">{value}</p>
-                    {sub && <p className="mt-1 text-xs text-neutral-400">{sub}</p>}
-                </div>
-                <div className={`h-11 w-11 rounded-xl bg-gradient-to-br ${colorMap[color]} flex items-center justify-center shadow-lg`}>
-                    <Icon className="h-5 w-5 text-white" />
-                </div>
-            </div>
-        </div>
-    );
-}
+export default function Reports({ monthlyData, categorySplit, totalServices, filters }: ReportsProps) {
+    const [period, setPeriod] = useState<ReportPeriod>(filters.period);
+    const [from, setFrom] = useState(filters.from || '');
+    const [to, setTo] = useState(filters.to || '');
 
-export default function Reports({ monthlyData, categorySplit, totalServices }: ReportsProps) {
     const currentMonth = monthlyData[monthlyData.length - 1] || { revenue: 0, paid: 0, cost: 0 };
+
+    // Recharts needs literal color values, not Tailwind `dark:` classes, so its grid/axis/tooltip
+    // chrome is themed explicitly here instead of relying on the CSS cascade like the rest of the page.
+    const isDark = useIsDarkMode();
+    const chartTheme = {
+        grid: isDark ? '#262626' : '#f1f5f9',
+        tick: isDark ? '#a3a3a3' : '#94a3b8',
+        tooltip: {
+            border: `1px solid ${isDark ? '#262626' : '#e2e8f0'}`,
+            background: isDark ? '#171717' : '#ffffff',
+            color: isDark ? '#e5e5e5' : '#171717',
+        },
+    };
+
+    const selectPeriod = (p: ReportPeriod) => {
+        setPeriod(p);
+        if (p === 'custom') return;
+        router.get(route('reports'), { period: p }, { preserveState: true, preserveScroll: true });
+    };
+
+    const applyCustomRange = () => {
+        router.get(
+            route('reports'),
+            { period: 'custom', from: from || undefined, to: to || undefined },
+            { preserveState: true, preserveScroll: true },
+        );
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Reports" />
             <div className="space-y-6 p-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Reports & Analytics</h1>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">Monthly business performance</p>
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                    <div>
+                        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Reports & Analytics</h1>
+                        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Business performance for the current outlet</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-neutral-200 bg-white p-2 dark:border-neutral-800 dark:bg-neutral-900">
+                        <Calendar className="ml-1 hidden h-4 w-4 text-neutral-400 sm:block" />
+                        <select
+                            value={period}
+                            onChange={(e) => selectPeriod(e.target.value as ReportPeriod)}
+                            className="h-9 rounded-lg border border-neutral-200 bg-transparent px-2 text-xs dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
+                        >
+                            {REPORT_PERIODS.map((p) => (
+                                <option key={p.value} value={p.value}>
+                                    {p.label}
+                                </option>
+                            ))}
+                        </select>
+                        {period === 'custom' && (
+                            <div className="flex items-center gap-2 border-l border-neutral-200 pl-1 dark:border-neutral-800">
+                                <input
+                                    type="date"
+                                    value={from}
+                                    onChange={(e) => setFrom(e.target.value)}
+                                    className="h-9 rounded-lg border border-neutral-200 bg-transparent px-2 text-xs dark:border-neutral-800 dark:text-neutral-100"
+                                />
+                                <span className="text-xs text-neutral-400">to</span>
+                                <input
+                                    type="date"
+                                    value={to}
+                                    onChange={(e) => setTo(e.target.value)}
+                                    className="h-9 rounded-lg border border-neutral-200 bg-transparent px-2 text-xs dark:border-neutral-800 dark:text-neutral-100"
+                                />
+                                <button
+                                    onClick={applyCustomRange}
+                                    className="h-9 rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
+                                >
+                                    Apply
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <StatCard icon={FileText} label="Total Services" value={totalServices.toString()} color="blue" />
                     <StatCard icon={TrendingUp} label="Revenue" value={formatCurrency(currentMonth.revenue)} color="purple" />
                     <StatCard icon={Check} label="Collected" value={formatCurrency(currentMonth.paid)} color="green" />
@@ -58,7 +107,7 @@ export default function Reports({ monthlyData, categorySplit, totalServices }: R
                         label="Profit"
                         value={formatCurrency(currentMonth.revenue - currentMonth.cost)}
                         color="amber"
-                        sub={`Estimated Cost: ${formatCurrency(currentMonth.cost)}`}
+                        sub={`Cost: ${formatCurrency(currentMonth.cost)}`}
                     />
                 </div>
 
@@ -67,11 +116,14 @@ export default function Reports({ monthlyData, categorySplit, totalServices }: R
                         <h3 className="mb-4 text-sm font-semibold text-neutral-700 dark:text-neutral-300">Monthly Revenue vs Paid</h3>
                         <ResponsiveContainer width="100%" height={280}>
                             <BarChart data={monthlyData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                                <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                                <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ borderRadius: 12, fontSize: 12 }} />
-                                <Legend wrapperStyle={{ fontSize: 11 }} />
+                                <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                                <XAxis dataKey="month" tick={{ fontSize: 11, fill: chartTheme.tick }} />
+                                <YAxis tick={{ fontSize: 11, fill: chartTheme.tick }} />
+                                <Tooltip
+                                    formatter={(v) => formatCurrency(Number(v))}
+                                    contentStyle={{ borderRadius: 12, fontSize: 12, ...chartTheme.tooltip }}
+                                />
+                                <Legend wrapperStyle={{ fontSize: 11, color: chartTheme.tick }} />
                                 <Bar dataKey="revenue" fill="#6366f1" name="Revenue" radius={[4, 4, 0, 0]} />
                                 <Bar dataKey="paid" fill="#10b981" name="Paid" radius={[4, 4, 0, 0]} />
                             </BarChart>
@@ -87,7 +139,10 @@ export default function Reports({ monthlyData, categorySplit, totalServices }: R
                                         <Cell key={i} fill={e.fill} />
                                     ))}
                                 </Pie>
-                                <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ borderRadius: 12, fontSize: 12 }} />
+                                <Tooltip
+                                    formatter={(v) => formatCurrency(Number(v))}
+                                    contentStyle={{ borderRadius: 12, fontSize: 12, ...chartTheme.tooltip }}
+                                />
                             </PieChart>
                         </ResponsiveContainer>
                         <div className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1">

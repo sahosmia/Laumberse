@@ -1,10 +1,10 @@
-import type { Client, Invoice, InvoiceItem, Product } from '@/types';
+import type { Client, ClientActivity, Employee, Invoice, InvoiceItem, Product } from '@/types';
 import type { Paginated } from '@/types/pagination';
 
 export interface ClientsProps {
     clients: Paginated<Client>;
     products: Product[];
-    filters: { search?: string };
+    filters: { search?: string; type?: string; sort?: string; per_page?: number };
 }
 
 export interface CustomPrice {
@@ -17,9 +17,22 @@ export interface CustomPrice {
     };
 }
 
+export interface ClientDateFilters {
+    search?: string;
+    per_page?: number;
+    date_filter?: string;
+    start_date?: string;
+    end_date?: string;
+    specific_date?: string;
+}
+
 export interface ClientShowProps {
     client: Client & {
-        invoices: (Invoice & { items: InvoiceItem[] })[];
         custom_prices: CustomPrice[];
     };
+    orders: Paginated<Invoice & { items: InvoiceItem[] }>;
+    activities: Paginated<ClientActivity>;
+    employees: Pick<Employee, 'id' | 'name'>[];
+    orderFilters: ClientDateFilters;
+    activityFilters: ClientDateFilters;
 }

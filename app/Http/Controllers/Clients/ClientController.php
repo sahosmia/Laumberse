@@ -4,59 +4,153 @@ namespace App\Http\Controllers\Clients;
 
 use App\Actions\Clients\CreateClientAction;
 use App\Actions\Clients\UpdateClientAction;
+use App\Exceptions\HasDependentRecordsException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Clients\StoreClientRequest;
 use App\Http\Requests\Clients\UpdateClientRequest;
 use App\Models\Client;
+use App\Models\Employee;
 use App\Models\Product;
+use App\Support\DateRangeFilter;
+use App\Support\OutletContext;
+use App\Support\PerPage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ClientController extends Controller
 {
+    /** value => [column, direction] — whitelisted so the raw `sort` query param never reaches orderBy(). */
+    private const SORTABLE = [
+        'created_at:desc' => ['created_at', 'desc'],
+        'name:asc' => ['name', 'asc'],
+        'name:desc' => ['name', 'desc'],
+        'total_due:desc' => ['total_due', 'desc'],
+        'total_due:asc' => ['total_due', 'asc'],
+    ];
+
     public function index(Request $request)
     {
+        [$sortColumn, $sortDirection] = self::SORTABLE[$request->sort] ?? self::SORTABLE['created_at:desc'];
+        $perPage = PerPage::resolve($request);
+
         $clients = Client::with('customPrices')
-            ->when($request->search, fn($q, $s) => $q->where(function ($q) use ($s) {
+            ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('name', 'like', "%{$s}%")
                     ->orWhere('phone', 'like', "%{$s}%")
                     ->orWhere('client_uuid', 'like', "%{$s}%");
             }))
-            ->orderBy('created_at', 'desc')
-            ->paginate(50)
+            ->when($request->type, fn ($q, $type) => $q->where('type', $type))
+            ->orderBy($sortColumn, $sortDirection)
+            ->orderBy('id', $sortDirection)
+            ->paginate($perPage)
             ->withQueryString();
+
+        // Staff-only field, hidden by default on the model — this is a staff page, so surface it
+        // (the create/edit modal reads a client's current note straight from this list).
+        $clients->getCollection()->makeVisible('internal_note');
 
         return Inertia::render('clients/index', [
             'clients' => $clients,
             'products' => Product::all(),
-            'filters' => ['search' => $request->search],
+            'filters' => [
+                'search' => $request->search,
+                'type' => $request->type,
+                'sort' => $request->sort,
+                'per_page' => $perPage,
+            ],
         ]);
     }
 
     public function store(StoreClientRequest $request, CreateClientAction $action)
     {
-        $action($request->validated());
+        try {
+            $action($request->validated());
 
-        return redirect()->back()->with('success', 'Client created successfully.');
+            return redirect()->back()->with('success', 'Client created successfully.');
+        } catch (\Throwable $e) {
+            report($e);
+
+            return redirect()->back()->with('error', 'Failed to create client.');
+        }
     }
 
-    public function show(Client $client)
+    public function show(Request $request, Client $client)
     {
+        $orderPerPage = PerPage::resolve($request, 20, 'order_per_page');
+        $activityPerPage = PerPage::resolve($request, 20, 'activity_per_page');
+
+        $orders = $client->invoices()
+            ->tap(fn ($q) => OutletContext::scope($q))
+            ->with('items.product')
+            ->when($request->order_search, fn ($q, $s) => $q->where('invoice_uuid', 'like', "%{$s}%"))
+            ->tap(fn ($q) => DateRangeFilter::apply($q, $request, 'date', 'order'))
+            ->latest('date')
+            ->latest('id')
+            ->paginate($orderPerPage, ['*'], 'orders_page')
+            ->withQueryString();
+
+        $activities = $client->activities()
+            ->tap(fn ($q) => OutletContext::scope($q))
+            ->with(['employee', 'creator:id,name'])
+            ->when($request->activity_search, fn ($q, $s) => $q->where('note', 'like', "%{$s}%"))
+            ->tap(fn ($q) => DateRangeFilter::apply($q, $request, 'scheduled_at', 'activity'))
+            ->latest('scheduled_at')
+            ->paginate($activityPerPage, ['*'], 'activities_page')
+            ->withQueryString();
+
         return Inertia::render('clients/show', [
-            'client' => $client->load(['invoices.items.product', 'customPrices.product']),
+            'client' => $client->load('customPrices.product')->makeVisible('internal_note'),
+            'orders' => $orders,
+            'activities' => $activities,
+            'employees' => Employee::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name']),
+            'orderFilters' => [
+                'search' => $request->order_search,
+                'per_page' => $orderPerPage,
+                'date_filter' => $request->order_date_filter,
+                'start_date' => $request->order_start_date,
+                'end_date' => $request->order_end_date,
+                'specific_date' => $request->order_specific_date,
+            ],
+            'activityFilters' => [
+                'search' => $request->activity_search,
+                'per_page' => $activityPerPage,
+                'date_filter' => $request->activity_date_filter,
+                'start_date' => $request->activity_start_date,
+                'end_date' => $request->activity_end_date,
+                'specific_date' => $request->activity_specific_date,
+            ],
         ]);
     }
 
     public function update(UpdateClientRequest $request, Client $client, UpdateClientAction $action)
     {
-        $action($client, $request->validated());
+        try {
+            $action($client, $request->validated());
 
-        return redirect()->back()->with('success', 'Client updated successfully.');
+            return redirect()->back()->with('success', 'Client updated successfully.');
+        } catch (\Throwable $e) {
+            report($e);
+
+            return redirect()->back()->with('error', 'Failed to update client.');
+        }
     }
 
     public function destroy(Client $client)
     {
-        $client->delete();
-        return redirect()->back()->with('success', 'Client deleted successfully.');
+        try {
+            if ($client->invoices()->exists()) {
+                throw new HasDependentRecordsException($client->name, 'existing orders in their history');
+            }
+
+            $client->delete();
+
+            return redirect()->back()->with('success', 'Client deleted successfully.');
+        } catch (HasDependentRecordsException $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return redirect()->back()->with('error', 'Failed to delete client.');
+        }
     }
 }

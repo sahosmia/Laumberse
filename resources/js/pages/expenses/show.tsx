@@ -1,31 +1,27 @@
 import AppLayout from '@/layouts/app-layout';
-import { formatCurrency as baseFormatCurrency } from '@/lib/format';
-import { type BreadcrumbItem, SharedData } from '@/types';
+import { formatCurrency as baseFormatCurrency, formatDate } from '@/lib/format';
+import { type BreadcrumbItem } from '@/types';
 import type { ExpenseShowProps } from '@/types/pages/expenses';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Briefcase, Calendar, CreditCard, Package, Tag, User } from 'lucide-react';
 
 const formatCurrency = (n: number | string) => baseFormatCurrency(n, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function ExpenseShow({ expense }: ExpenseShowProps) {
-    const { settings } = usePage<SharedData>().props;
-    const salaryCategoryId = settings.salary_category_id;
-    const materialExpenseCategoryId = settings.material_expense_category_id;
-
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Expenses', href: '/expenses' },
         { title: `Details ${expense.unique_id || `EXP-${String(expense.id).padStart(4, '0')}`}`, href: `/expenses/${expense.id}` },
     ];
 
-    const isPayroll = Number(expense.expense_category_id) === Number(salaryCategoryId);
-    const isMaterial = Number(expense.expense_category_id) === Number(materialExpenseCategoryId);
-    const isAsset = !!expense.manage_asset_id;
+    const isPayroll = expense.type === 'salary';
+    const isMaterial = expense.type === 'material';
+    const isAsset = expense.type === 'asset';
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Expense Details ${expense.unique_id || `EXP-${String(expense.id).padStart(4, '0')}`}`} />
 
-            <div className="mx-auto max-w-4xl space-y-6 p-4 md:p-6">
+            <div className="space-y-6 p-4 md:p-6">
                 <div className="flex items-center justify-between">
                     <Link
                         href={route('expenses.index')}
@@ -56,13 +52,13 @@ export default function ExpenseShow({ expense }: ExpenseShowProps) {
                                     <span className="flex items-center gap-1.5 text-[10px] font-bold text-neutral-400 uppercase">
                                         <Calendar className="h-3 w-3" /> Date
                                     </span>
-                                    <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">{expense.date}</p>
+                                    <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">{formatDate(expense.date)}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <span className="flex items-center gap-1.5 text-[10px] font-bold text-neutral-400 uppercase">
-                                        <CreditCard className="h-3 w-3" /> Method
+                                        <CreditCard className="h-3 w-3" /> Account
                                     </span>
-                                    <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">{expense.payment_method}</p>
+                                    <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">{expense.account?.name}</p>
                                 </div>
                             </div>
                         </div>
@@ -188,7 +184,7 @@ export default function ExpenseShow({ expense }: ExpenseShowProps) {
                                     <div className="space-y-4">
                                         <div>
                                             <label className="mb-1 block text-[10px] font-bold text-neutral-400 uppercase">Purchase Date</label>
-                                            <p className="text-sm font-semibold">{expense.asset.purchase_date}</p>
+                                            <p className="text-sm font-semibold">{formatDate(expense.asset.purchase_date)}</p>
                                         </div>
                                         <div>
                                             <label className="mb-1 block text-[10px] font-bold text-neutral-400 uppercase">Asset Status</label>

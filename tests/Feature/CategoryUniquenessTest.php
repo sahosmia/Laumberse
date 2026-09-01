@@ -8,7 +8,7 @@ use App\Models\Product;
 use App\Models\User;
 
 test('expense category name must be unique on store', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     ExpenseCategory::create(['name' => 'Utilities', 'description' => 'x']);
 
     $response = $this->actingAs($user)->post(route('expense-categories.store'), [
@@ -20,7 +20,7 @@ test('expense category name must be unique on store', function () {
 });
 
 test('expense category can be updated without changing its own name', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $category = ExpenseCategory::create(['name' => 'Utilities', 'description' => 'x']);
 
     $response = $this->actingAs($user)->put(route('expense-categories.update', $category->id), [
@@ -32,7 +32,7 @@ test('expense category can be updated without changing its own name', function (
 });
 
 test('expense category cannot be updated to another category\'s name', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     ExpenseCategory::create(['name' => 'Utilities', 'description' => 'x']);
     $category = ExpenseCategory::create(['name' => 'Rent', 'description' => 'x']);
 
@@ -45,7 +45,7 @@ test('expense category cannot be updated to another category\'s name', function 
 });
 
 test('asset category name must be unique on store', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     AssetCategory::create(['name' => 'Machinery', 'description' => 'x']);
 
     $response = $this->actingAs($user)->post(route('asset-categories.store'), [
@@ -57,7 +57,7 @@ test('asset category name must be unique on store', function () {
 });
 
 test('asset category can be updated without changing its own name', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $category = AssetCategory::create(['name' => 'Machinery', 'description' => 'x']);
 
     $response = $this->actingAs($user)->put(route('asset-categories.update', $category->id), [
@@ -69,7 +69,7 @@ test('asset category can be updated without changing its own name', function () 
 });
 
 test('material name must be unique on store', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     Material::create(['name' => 'Fabric A']);
 
     $response = $this->actingAs($user)->post(route('materials.store'), [
@@ -80,7 +80,7 @@ test('material name must be unique on store', function () {
 });
 
 test('material can be updated without changing its own name', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $material = Material::create(['name' => 'Fabric A']);
 
     $response = $this->actingAs($user)->put(route('materials.update', $material->id), [
@@ -91,7 +91,7 @@ test('material can be updated without changing its own name', function () {
 });
 
 test('product name must be unique on store', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $category = Category::create(['name' => 'Gents Item', 'slug' => 'gents-item']);
     Product::create(['name' => 'Shirt', 'category_id' => $category->id, 'price' => 15]);
 
@@ -105,7 +105,7 @@ test('product name must be unique on store', function () {
 });
 
 test('product can be updated without changing its own name', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $category = Category::create(['name' => 'Gents Item', 'slug' => 'gents-item']);
     $product = Product::create(['name' => 'Shirt', 'category_id' => $category->id, 'price' => 15]);
 
@@ -119,7 +119,7 @@ test('product can be updated without changing its own name', function () {
 });
 
 test('product cannot be updated to another product\'s name', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $category = Category::create(['name' => 'Gents Item', 'slug' => 'gents-item']);
     Product::create(['name' => 'Shirt', 'category_id' => $category->id, 'price' => 15]);
     $product = Product::create(['name' => 'T-Shirt', 'category_id' => $category->id, 'price' => 15]);

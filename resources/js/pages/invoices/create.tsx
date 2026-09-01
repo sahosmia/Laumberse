@@ -11,11 +11,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function CreateInvoice({ products, clients, categories, invoice }: CreateInvoiceProps) {
+export default function CreateInvoice({ products, clients, categories, accounts, invoice }: CreateInvoiceProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Create Invoice" />
-            <InvoiceForm products={products} clients={clients} categories={categories} invoice={invoice} />
+            <InvoiceForm products={products} clients={clients} categories={categories} accounts={accounts} invoice={invoice} />
         </AppLayout>
     );
 }

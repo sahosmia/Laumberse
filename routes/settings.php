@@ -20,6 +20,6 @@ Route::middleware('auth')->group(function () {
         return Inertia::render('settings/appearance');
     })->name('appearance');
 
-    Route::get('settings/global', [GlobalSettingController::class, 'edit'])->name('settings.global.edit');
-    Route::patch('settings/global', [GlobalSettingController::class, 'update'])->name('settings.global.update');
+    Route::get('settings/global', [GlobalSettingController::class, 'edit'])->name('settings.global.edit')->middleware('permission:settings.view');
+    Route::patch('settings/global', [GlobalSettingController::class, 'update'])->name('settings.global.update')->middleware('permission:settings.edit');
 });

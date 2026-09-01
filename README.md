@@ -113,7 +113,7 @@ An overview of the application architecture, highlighting the clean division bet
 ├── config/
 ├── database/
 │   ├── migrations/                  # Schema blueprints & SQLite-safe dropping constraints
-│   └── seeders/                     # Initial seeders (AssetCategorySeeder, ManageAssetSeeder, etc.)
+│   └── seeders/                     # Initial seeders (AssetCategorySeeder, AssetSeeder, etc.)
 │
 ├── resources/
 │   ├── js/

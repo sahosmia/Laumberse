@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { HelpCircle } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 interface SaveConfirmationModalProps {
     isOpen: boolean;
@@ -10,6 +11,10 @@ interface SaveConfirmationModalProps {
     description?: string;
     confirmText?: string;
     isProcessing?: boolean;
+    /** Extra content rendered below the description — e.g. a required field the confirmation needs. */
+    children?: ReactNode;
+    /** Disables the confirm button independently of isProcessing, e.g. while `children`'s field is still empty. */
+    confirmDisabled?: boolean;
 }
 
 export function SaveConfirmationModal({
@@ -20,6 +25,8 @@ export function SaveConfirmationModal({
     description = 'Are you sure you want to save these changes?',
     confirmText = 'Save Changes',
     isProcessing = false,
+    children,
+    confirmDisabled = false,
 }: SaveConfirmationModalProps) {
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -30,14 +37,20 @@ export function SaveConfirmationModal({
                     </div>
                     <DialogTitle className="text-center text-xl font-bold">{title}</DialogTitle>
                 </DialogHeader>
-                <div className="py-4">
+                <div className="space-y-3 py-4">
                     <p className="text-center text-sm text-neutral-500 dark:text-neutral-400">{description}</p>
+                    {children}
                 </div>
                 <DialogFooter className="flex flex-col-reverse gap-2 sm:flex-row">
                     <Button type="button" variant="outline" onClick={onClose} className="flex-1" disabled={isProcessing}>
                         Cancel
                     </Button>
-                    <Button type="button" onClick={onConfirm} className="flex-1 bg-blue-600 text-white hover:bg-blue-700" disabled={isProcessing}>
+                    <Button
+                        type="button"
+                        onClick={onConfirm}
+                        className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
+                        disabled={isProcessing || confirmDisabled}
+                    >
                         {isProcessing ? 'Saving...' : confirmText}
                     </Button>
                 </DialogFooter>

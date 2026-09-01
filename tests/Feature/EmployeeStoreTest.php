@@ -4,7 +4,7 @@ use App\Models\Employee;
 use App\Models\User;
 
 test('employee id is auto-generated when not provided', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
 
     $response = $this->actingAs($user)->post(route('employees.store'), [
         'name' => 'Jane',
@@ -18,8 +18,31 @@ test('employee id is auto-generated when not provided', function () {
     expect($employee->employee_id)->not->toBeEmpty();
 });
 
+test('an employee can be created with a blank opening balance', function () {
+    // Regression guard: opening_balance is optional in StoreEmployeeRequest ('nullable'), but a
+    // blank value converts to null before it reaches Employee::create(). The employees table
+    // column has a DB-level default(0) but is NOT nullable, so inserting an explicit null used to
+    // fail with a raw SQL "NOT NULL constraint failed" error — swallowed by the controller's
+    // generic \Throwable catch into an unhelpful "Failed to add employee." message.
+    $user = User::factory()->admin()->create();
+
+    $response = $this->actingAs($user)->post(route('employees.store'), [
+        'name' => 'Jane',
+        'phone' => '01700000001',
+        'designation' => 'Staff',
+        'base_salary' => 15000,
+        'opening_balance' => '',
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $employee = Employee::first();
+    expect($employee)->not->toBeNull();
+    expect((float) $employee->opening_balance)->toBe(0.0);
+    expect((float) $employee->current_balance)->toBe(0.0);
+});
+
 test('employee id can be set to a custom value', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
 
     $response = $this->actingAs($user)->post(route('employees.store'), [
         'employee_id' => 'STAFF-007',
@@ -34,7 +57,7 @@ test('employee id can be set to a custom value', function () {
 });
 
 test('employee id must be unique on store', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     Employee::create([
         'employee_id' => 'STAFF-007',
         'name' => 'Existing',
@@ -56,7 +79,7 @@ test('employee id must be unique on store', function () {
 });
 
 test('two auto-generated employee ids do not collide', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
 
     $this->actingAs($user)->post(route('employees.store'), [
         'name' => 'Jane',
@@ -77,7 +100,7 @@ test('two auto-generated employee ids do not collide', function () {
 });
 
 test('employee id is preserved on update when left blank', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $employee = Employee::create([
         'employee_id' => 'STAFF-007',
         'name' => 'Jane',

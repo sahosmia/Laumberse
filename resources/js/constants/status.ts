@@ -13,8 +13,8 @@ export const CLIENT_TYPE_STYLES: Record<ClientType, string> = {
 
 export const INVOICE_STATUSES = ['Pending', 'Processing', 'In House', 'Delivered', 'Cancelled'] as const;
 export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
-/** Statuses settable directly on the invoice create/edit form; Pending/Cancelled are only reachable via the inline status dropdown. */
-export const INVOICE_FORM_STATUSES: readonly InvoiceStatus[] = ['Processing', 'In House', 'Delivered'];
+/** Statuses settable directly on the invoice create/edit form; Pending is only reachable via the inline status dropdown. */
+export const INVOICE_FORM_STATUSES: readonly InvoiceStatus[] = ['Processing', 'In House', 'Delivered', 'Cancelled'];
 export const INVOICE_STATUS_STYLES: Record<InvoiceStatus, string> = {
     Pending: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800',
     Processing: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800',
@@ -47,4 +47,66 @@ export const PAYROLL_STATUS_STYLES: Record<PayrollStatus, string> = {
     completed: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
     partial: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
     pending: 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400',
+};
+
+export const ACCOUNT_TRANSACTION_TYPES = ['credit', 'debit'] as const;
+export type AccountTransactionType = (typeof ACCOUNT_TRANSACTION_TYPES)[number];
+export const ACCOUNT_TRANSACTION_TYPE_STYLES: Record<AccountTransactionType, string> = {
+    credit: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    debit: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+};
+
+export const INVESTOR_TRANSACTION_TYPES = ['invest', 'withdraw'] as const;
+export type InvestorTransactionType = (typeof INVESTOR_TRANSACTION_TYPES)[number];
+export const INVESTOR_TRANSACTION_TYPE_STYLES: Record<InvestorTransactionType, string> = {
+    invest: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    withdraw: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+};
+
+export const COMPANY_LOAN_TRANSACTION_TYPES = ['loan', 'repay', 'interest'] as const;
+export type CompanyLoanTransactionType = (typeof COMPANY_LOAN_TRANSACTION_TYPES)[number];
+export const COMPANY_LOAN_TRANSACTION_TYPE_STYLES: Record<CompanyLoanTransactionType, string> = {
+    loan: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    repay: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    interest: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+};
+
+/**
+ * Selectable options on the "Add Transaction" form. Salary intentionally isn't here — it's paid
+ * through Expenses (category = Salary), which also updates the Payroll ledger; recording it here
+ * too would silently bypass Payroll and let the same month get paid twice. `EmployeeTransactionType`
+ * still includes 'salary' below so any pre-existing historical record of that type keeps rendering.
+ */
+export const EMPLOYEE_TRANSACTION_TYPES = ['advance', 'loan', 'loan_return'] as const;
+export type EmployeeTransactionType = (typeof EMPLOYEE_TRANSACTION_TYPES)[number] | 'salary';
+export const EMPLOYEE_TRANSACTION_TYPE_LABELS: Record<EmployeeTransactionType, string> = {
+    salary: 'Salary',
+    advance: 'Advance',
+    loan: 'Loan',
+    loan_return: 'Loan Return',
+};
+export const EMPLOYEE_TRANSACTION_TYPE_STYLES: Record<EmployeeTransactionType, string> = {
+    salary: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    advance: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    loan: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    loan_return: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+};
+
+export const CLIENT_ACTIVITY_TYPES = ['meeting', 'follow_up'] as const;
+export type ClientActivityType = (typeof CLIENT_ACTIVITY_TYPES)[number];
+export const CLIENT_ACTIVITY_TYPE_LABELS: Record<ClientActivityType, string> = {
+    meeting: 'Meeting',
+    follow_up: 'Follow-up',
+};
+export const CLIENT_ACTIVITY_TYPE_STYLES: Record<ClientActivityType, string> = {
+    meeting: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    follow_up: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+};
+
+export const CLIENT_ACTIVITY_STATUSES = ['pending', 'done', 'cancelled'] as const;
+export type ClientActivityStatus = (typeof CLIENT_ACTIVITY_STATUSES)[number];
+export const CLIENT_ACTIVITY_STATUS_STYLES: Record<ClientActivityStatus, string> = {
+    pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    done: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 };

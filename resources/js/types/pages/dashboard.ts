@@ -1,3 +1,16 @@
+export interface DashboardMeetingItem {
+    id: number;
+    type: 'meeting' | 'follow_up';
+    scheduled_at: string;
+    client: { id: number; name: string } | null;
+    employee: { id: number; name: string } | null;
+}
+
+export interface DashboardMeetingList {
+    items: DashboardMeetingItem[];
+    total: number;
+}
+
 export interface DashboardProps {
     stats: {
         total_orders: number;
@@ -26,6 +39,17 @@ export interface DashboardProps {
         revenue: number;
         paid: number;
     }[];
+    accounts: {
+        items: {
+            id: number;
+            name: string;
+            account_number: string | null;
+            current_balance: number;
+        }[];
+        total: number;
+    };
+    meetings: DashboardMeetingList;
+    followUps: DashboardMeetingList;
     filters: {
         period: DashboardPeriod;
         from: string | null;
@@ -42,14 +66,3 @@ export const DASHBOARD_PERIODS = [
 ] as const;
 
 export type DashboardPeriod = (typeof DASHBOARD_PERIODS)[number]['value'];
-
-export type DashboardColorKey = 'blue' | 'green' | 'red' | 'amber' | 'purple';
-
-export interface DashboardStatCardProps {
-    icon: React.ElementType;
-    label: string;
-    value: string | number;
-    sub?: string;
-    color?: DashboardColorKey;
-    trend?: number;
-}

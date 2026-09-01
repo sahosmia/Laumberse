@@ -215,3 +215,108 @@
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
 }
+
+/*
+  Global custom scrollbar — thin, rounded, theme-aware. Applies everywhere
+  (sidebar, modals, tables, dropdowns) without needing a class on each element.
+*/
+* {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(0, 0%, 78%) transparent;
+}
+
+.dark * {
+    scrollbar-color: hsl(0, 0%, 28%) transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: hsl(0, 0%, 78%);
+    background-clip: padding-box;
+    border: 2px solid transparent;
+    border-radius: 9999px;
+    transition: background-color 0.15s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(0, 0%, 62%);
+}
+
+.dark *::-webkit-scrollbar-thumb {
+    background-color: hsl(0, 0%, 28%);
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(0, 0%, 38%);
+}
+
+*::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* A slightly thinner variant for tight spaces (modal lists, dropdowns). */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+/* Rich text editor (TipTap) content styling — no @tailwindcss/typography plugin installed, so styled by hand. */
+.tiptap-content p {
+    margin: 0 0 0.5em;
+}
+.tiptap-content p:last-child {
+    margin-bottom: 0;
+}
+.tiptap-content ul,
+.tiptap-content ol {
+    padding-left: 1.25rem;
+    margin: 0 0 0.5em;
+}
+.tiptap-content ul {
+    list-style: disc;
+}
+.tiptap-content ol {
+    list-style: decimal;
+}
+.tiptap-content strong {
+    font-weight: 600;
+}
+.tiptap-content p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+    color: hsl(0, 0%, 64%);
+}
+
+/*
+  Inertia page-navigation progress bar (NProgress under the hood). The
+  default is a plain 2px line; thicken it slightly and add a soft glow so
+  it reads clearly as "the page is loading" during navigation.
+*/
+#nprogress .bar {
+    height: 3px !important;
+    box-shadow:
+        0 0 10px #2563eb,
+        0 0 5px #2563eb;
+}
+
+#nprogress .spinner {
+    top: 18px !important;
+    right: 18px !important;
+}
+
+#nprogress .spinner-icon {
+    width: 20px !important;
+    height: 20px !important;
+    border-top-color: #2563eb !important;
+    border-left-color: #2563eb !important;
+}

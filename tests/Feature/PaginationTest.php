@@ -7,7 +7,7 @@ use App\Models\Unit;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('invoice list paginates 50 per page and reports total count', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $client = Client::create(['name' => 'John Doe', 'phone' => '123456789']);
 
     for ($i = 0; $i < 60; $i++) {
@@ -34,7 +34,7 @@ test('invoice list paginates 50 per page and reports total count', function () {
 });
 
 test('invoice list search filters server-side across pages', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $alice = Client::create(['name' => 'Alice Wonderland', 'phone' => '111']);
     $bob = Client::create(['name' => 'Bob Builder', 'phone' => '222']);
 
@@ -69,7 +69,7 @@ test('invoice list search filters server-side across pages', function () {
 });
 
 test('units list paginates and second page is reachable', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
 
     for ($i = 0; $i < 55; $i++) {
         Unit::create(['name' => "Unit {$i}", 'short_name' => "u{$i}"]);

@@ -2,11 +2,9 @@ export const DATE_FILTERS = [
     { value: '', label: 'All Time' },
     { value: 'today', label: 'Today' },
     { value: 'yesterday', label: 'Yesterday' },
-    { value: 'this_month', label: 'This Month' },
-    { value: 'last_month', label: 'Last Month' },
-    { value: 'last_3_months', label: 'Last 3 Months' },
-    { value: 'this_year', label: 'This Year' },
-    { value: 'last_year', label: 'Last Year' },
+    { value: 'this_week', label: 'This Week' },
+    { value: 'previous_week', label: 'Previous Week' },
+    { value: 'specific_date', label: 'Specific Date' },
     { value: 'custom', label: 'Custom Range' },
 ] as const;
 

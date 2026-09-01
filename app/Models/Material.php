@@ -15,4 +15,9 @@ class Material extends Model
     {
         return $this->belongsTo(Unit::class);
     }
+
+    public function expenseMaterials()
+    {
+        return $this->hasMany(ExpenseMaterial::class);
+    }
 }

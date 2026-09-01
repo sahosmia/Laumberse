@@ -2,39 +2,47 @@
 
 namespace App\Http\Requests\Invoices;
 
-use App\Enums\DiscountType;
-use App\Enums\InvoiceStatus;
-use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 
-class UpdateInvoiceRequest extends FormRequest
+/**
+ * Reuses every rule from StoreInvoiceRequest except the ones specific to creating a brand new
+ * invoice. `client_id` becomes a flat "must already exist" requirement — there's no
+ * create-new-client-inline flow on edit (see invoice-form.tsx, where that whole section is
+ * wrapped in `{!isEdit && (...)}`) — and `create_new_client`/`new_client_*` aren't validated at
+ * all, matching this class's original, narrower rule set exactly. `authorize()` is inherited
+ * unchanged from StoreInvoiceRequest (both simply return true).
+ *
+ * `outlet_id` is dropped entirely — an invoice's outlet is fixed at creation
+ * (InvoiceService::updateInvoice() never touches it), so there's nothing here to validate.
+ * `account_id` is also overridden rather than inherited as-is: StoreInvoiceRequest's version
+ * checks against OutletContext::resolvableForWrite(), which is meant for a brand-new record and
+ * would wrongly check the *editor's own current outlet* instead of this invoice's fixed one.
+ */
+class UpdateInvoiceRequest extends StoreInvoiceRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     public function rules(): array
     {
-        return [
-            'date' => 'required|date',
-            'client_id' => 'required|exists:clients,id',
-            'total' => 'required|numeric|min:0',
-            'paid' => 'nullable|numeric|min:0',
-            'due' => 'required|numeric',
-            'status' => ['required', 'string', Rule::in(InvoiceStatus::formValues())],
-            'method' => 'required|string|in:Cash,Bkash,Bank',
-            'remarks' => 'nullable|string',
-            'discount_type' => ['required', 'string', Rule::enum(DiscountType::class)],
-            'discount_amount' => 'nullable|numeric|min:0',
-            'delivery_charge' => 'nullable|numeric|min:0',
-            'items' => 'required|array|min:1',
-            'items.*.productId' => 'required|exists:products,id',
-            'items.*.qty' => 'required|integer|min:1',
-            'items.*.price' => 'required|numeric|min:0',
-        ];
+        $invoice = $this->route('invoice');
+
+        return array_merge(
+            Arr::except(parent::rules(), [
+                'outlet_id',
+                'client_id',
+                'create_new_client',
+                'new_client_name',
+                'new_client_phone',
+                'new_client_address',
+                'new_client_type',
+            ]),
+            [
+                'client_id' => 'required|exists:clients,id',
+                'account_id' => [
+                    Rule::requiredIf(fn () => (float) $this->input('paid') > 0),
+                    'nullable',
+                    Rule::exists('accounts', 'id')->where(fn ($q) => $q->where('outlet_id', $invoice?->outlet_id ?? -1)),
+                ],
+            ],
+        );
     }
 }

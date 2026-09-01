@@ -21,11 +21,6 @@ const sidebarNavItems: NavItem[] = [
         url: '/settings/appearance',
         icon: null,
     },
-    {
-        title: 'Global',
-        url: '/settings/global',
-        icon: null,
-    },
 ];
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {

@@ -1,12 +1,13 @@
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { TableRowActions } from '@/components/table-row-actions';
-import { Button } from '@/components/ui/button';
+import { DataView, type DataViewColumn } from '@/components/ui/data-view';
 import { FormButton } from '@/components/ui/form-button';
 import { FormError } from '@/components/ui/form-error';
 import { FormInput } from '@/components/ui/form-input';
 import { FormLabel } from '@/components/ui/form-label';
 import { Modal } from '@/components/ui/modal';
-import { Pagination } from '@/components/ui/pagination';
+import { useDataViewSearch } from '@/hooks/use-data-view-search';
+import { useTableLoading } from '@/hooks/use-table-loading';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import type { ProductCategory as Category, ProductCategoriesIndexProps as IndexProps } from '@/types/pages/products';
@@ -21,7 +22,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Index({ categories }: IndexProps) {
+export default function Index({ categories, filters }: IndexProps) {
     const [showModal, setShowModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
@@ -31,6 +32,9 @@ export default function Index({ categories }: IndexProps) {
         slug: '',
         description: '',
     });
+
+    const { search, setSearch, perPage, setPerPage, reset: resetDataView } = useDataViewSearch('categories.index', filters);
+    const isLoading = useTableLoading();
 
     const openCreateModal = () => {
         setEditingCategory(null);
@@ -88,6 +92,61 @@ export default function Index({ categories }: IndexProps) {
         }
     };
 
+    const columns: DataViewColumn<Category>[] = [
+        {
+            key: 'actions',
+            label: 'Actions',
+            align: 'center',
+            render: (category) => (
+                <TableRowActions
+                    id={category.id}
+                    label={category.name}
+                    edit={{ onClick: () => openEditModal(category) }}
+                    deleteRoute="categories.destroy"
+                />
+            ),
+        },
+        {
+            key: 'name',
+            label: 'Name',
+            render: (category) => <div className="font-medium text-neutral-900 dark:text-neutral-100">{category.name}</div>,
+        },
+        {
+            key: 'slug',
+            label: 'Slug',
+            render: (category) => <span className="text-neutral-500 dark:text-neutral-400">{category.slug}</span>,
+        },
+        {
+            key: 'description',
+            label: 'Description',
+            className: 'max-w-xs truncate',
+            render: (category) => <span className="text-neutral-500 dark:text-neutral-400">{category.description || '-'}</span>,
+        },
+    ];
+
+    const renderCategoryCard = (category: Category) => (
+        <div className="group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 transition-all hover:shadow-xl dark:border-neutral-800 dark:bg-neutral-900">
+            <div className="absolute top-4 right-4">
+                <TableRowActions
+                    id={category.id}
+                    label={category.name}
+                    edit={{ onClick: () => openEditModal(category) }}
+                    deleteRoute="categories.destroy"
+                />
+            </div>
+            <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-900/20">
+                    <Tag className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="min-w-0">
+                    <h4 className="font-bold text-neutral-900 dark:text-neutral-100">{category.name}</h4>
+                    <p className="font-mono text-xs text-neutral-400">{category.slug}</p>
+                    <p className="mt-1 line-clamp-2 text-sm text-neutral-500 dark:text-neutral-400">{category.description || 'No description'}</p>
+                </div>
+            </div>
+        </div>
+    );
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Categories" />
@@ -101,64 +160,36 @@ export default function Index({ categories }: IndexProps) {
                     isProcessing={processing}
                 />
 
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Categories</h1>
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400">Manage product categories</p>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                            <Tag className="h-4 w-4" />
+                        </div>
+                        <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Categories</h1>
                     </div>
-                    <Button onClick={openCreateModal}>
-                        <Plus className="mr-2 h-4 w-4" /> Add Category
-                    </Button>
+                    <FormButton onClick={openCreateModal} icon={<Plus className="h-4 w-4" />}>
+                        Add Category
+                    </FormButton>
                 </div>
 
-                <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
-                    <div className="overflow-x-auto">
-                        <table className="w-full min-w-[500px] text-sm">
-                            <thead>
-                                <tr className="bg-neutral-50 text-xs tracking-wider text-neutral-500 uppercase dark:bg-neutral-800/50">
-                                    <th className="px-5 py-3 text-left font-semibold">Name</th>
-                                    <th className="px-5 py-3 text-left font-semibold">Slug</th>
-                                    <th className="px-5 py-3 text-left font-semibold">Description</th>
-                                    <th className="px-5 py-3 text-right font-semibold">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                                {categories.data.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={4} className="px-5 py-10 text-center text-neutral-400">
-                                            <Tag className="mx-auto mb-2 h-10 w-10 opacity-20" />
-                                            No categories found.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    categories.data.map((category) => (
-                                        <tr key={category.id} className="transition-colors hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30">
-                                            <td className="px-5 py-4">
-                                                <div className="font-medium text-neutral-900 dark:text-neutral-100">{category.name}</div>
-                                            </td>
-                                            <td className="px-5 py-4 text-neutral-500 dark:text-neutral-400">{category.slug}</td>
-                                            <td className="max-w-xs truncate px-5 py-4 text-neutral-500 dark:text-neutral-400">
-                                                {category.description || '-'}
-                                            </td>
-                                            <td className="px-5 py-4 text-right">
-                                                <div className="flex justify-end">
-                                                    <TableRowActions
-                                                        id={category.id}
-                                                        label={category.name}
-                                                        edit={{ onClick: () => openEditModal(category) }}
-                                                        deleteRoute="categories.destroy"
-                                                    />
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <Pagination links={categories.links} />
+                <DataView
+                    data={categories.data}
+                    getKey={(category) => category.id}
+                    loading={isLoading}
+                    emptyMessage="No categories found"
+                    search={search}
+                    onSearchChange={setSearch}
+                    searchPlaceholder="Search categories..."
+                    onReset={resetDataView}
+                    viewKey="product-categories"
+                    defaultView="table"
+                    columns={columns}
+                    renderCard={renderCategoryCard}
+                    pagination={categories.links}
+                    total={categories.total}
+                    perPage={perPage}
+                    onPerPageChange={setPerPage}
+                />
             </div>
 
             <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingCategory ? 'Edit Category' : 'New Category'} size="lg">

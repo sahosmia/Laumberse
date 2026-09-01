@@ -11,9 +11,7 @@ class UpdateProductAction
 {
     public function __invoke(Product $product, array $data): Product
     {
-        DB::beginTransaction();
-
-        try {
+        return DB::transaction(function () use ($product, $data) {
             if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
                 if ($product->image && Storage::disk('public')->exists($product->image)) {
                     Storage::disk('public')->delete($product->image);
@@ -26,13 +24,12 @@ class UpdateProductAction
 
             $product->update($data);
 
-            DB::commit();
+            $product->outletPrices()->delete();
+            foreach ($data['outlet_prices'] ?? [] as $row) {
+                $product->outletPrices()->create($row);
+            }
 
             return $product;
-        } catch (\Throwable $th) {
-            DB::rollBack();
-
-            throw $th;
-        }
+        });
     }
 }

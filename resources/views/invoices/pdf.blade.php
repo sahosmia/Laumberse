@@ -35,15 +35,15 @@
         /* ১. বাংলা ফন্টটি পিডিএফে রেজিস্টার করা */
         @font-face {
             font-family: 'SolaimanLipi';
-            /* নিশ্চিত করুন public/assets/fonts/ ফোল্ডারে ঠিক এই বানানে ফাইলটি আছে */
-            src: url('{{ public_path("assets/fonts/SolaimanLipi-Normal.ttf") }}') format('truetype');
+            /* নিশ্চিত করুন public/fonts/ ফোল্ডারে ঠিক এই বানানে ফাইলটি আছে */
+            src: url('{{ public_path("fonts/SolaimanLipi-Normal.ttf") }}') format('truetype');
             font-weight: normal;
             font-style: normal;
         }
 
         @font-face {
             font-family: 'SutonnyMJ';
-            src: url('{{ public_path("assets/fonts/SutonnyMJ.ttf") }}') format('truetype');
+            src: url('{{ public_path("fonts/SutonnyMJ.ttf") }}') format('truetype');
             font-weight: normal;
             font-style: normal;
         }
@@ -195,9 +195,22 @@
                     <div style="font-family: monospace;">{{ $invoice->invoice_uuid }}</div>
                 </td>
                 <td class="company-info">
-                    <div style="font-size: 20px; font-weight: bold;">Launverse CRM</div>
-                    <div>Dhaka, Bangladesh</div>
-                    <div>Phone: +880 1234 567890</div>
+                    @php
+                        $businessLogoPath = \App\Models\GlobalSetting::get('logo_path');
+                        $businessName = \App\Models\GlobalSetting::get('business_name') ?: 'Launverse';
+                        $businessAddress = \App\Models\GlobalSetting::get('business_address');
+                        $businessPhone = \App\Models\GlobalSetting::get('business_phone');
+                    @endphp
+                    @if ($businessLogoPath)
+                        <img src="{{ storage_path('app/public/'.$businessLogoPath) }}" style="max-height: 44px; margin-bottom: 6px;">
+                    @endif
+                    <div style="font-size: 20px; font-weight: bold;">{!! renderBanglaInPdf($businessName) !!}</div>
+                    @if ($businessAddress)
+                        <div>{!! renderBanglaInPdf($businessAddress) !!}</div>
+                    @endif
+                    @if ($businessPhone)
+                        <div>Phone: {{ $businessPhone }}</div>
+                    @endif
                 </td>
             </tr>
         </table>
@@ -212,10 +225,10 @@
                 </td>
                 <td class="text-right">
                     <div class="section-title">Invoice Details</div>
-                    <div><strong>Date:</strong> {{ $invoice->date }}</div>
-                    <div><strong>Status:</strong> {{ $invoice->status }}</div>
-                    <div><strong>Method:</strong> {{ $invoice->method }}</div>
-                    <div><strong>Payment:</strong> <span style="color: {{ $invoice->payment_status === 'Paid' ? '#059669' : '#dc2626' }};">{{ $invoice->payment_status }}</span></div>
+                    <div><strong>Date:</strong> {{ \Carbon\Carbon::parse($invoice->date)->format('d M, Y') }}</div>
+                    <div><strong>Status:</strong> {{ $invoice->status->value }}</div>
+                    <div><strong>Method:</strong> {{ $invoice->method ?: 'Not set' }}</div>
+                    <div><strong>Payment:</strong> <span style="color: {{ $invoice->payment_status === \App\Enums\PaymentStatus::Paid ? '#059669' : '#dc2626' }};">{{ $invoice->payment_status->value }}</span></div>
                 </td>
             </tr>
         </table>
@@ -258,7 +271,7 @@
                 @if ($invoice->discount_amount != 0)
                     @php
                         $discountValue = 0;
-                        if ($invoice->discount_type === 'Percentage') {
+                        if ($invoice->discount_type === \App\Enums\DiscountType::Percentage) {
                             $discountValue = ($subtotal * $invoice->discount_amount) / 100;
                         } else {
                             $discountValue = $invoice->discount_amount;
@@ -270,16 +283,16 @@
                     </tr>
                     <tr>
                         <td style="color: #d97706;">
-                            @if ($invoice->discount_type === 'Percentage')
+                            @if ($invoice->discount_type === \App\Enums\DiscountType::Percentage)
                                 Discount (Percentage {{ $invoice->discount_amount }}%)
                             @else
-                                Discount ({{ $invoice->discount_type }})
+                                Discount ({{ $invoice->discount_type->value }})
                             @endif
                         </td>
                         <td class="text-right">-{{ number_format($discountValue, 2) }}</td>
                     </tr>
                 @endif
-                @if ($invoice->delivery_charge != 0 && $invoice->client->type !== 'Corporate')
+                @if ($invoice->delivery_charge != 0 && $invoice->client->type !== \App\Enums\ClientType::Corporate)
                     <tr>
                         <td style="color: #2563eb;">Delivery Charge</td>
                         <td class="text-right">{{ number_format($invoice->delivery_charge, 2) }}</td>
@@ -290,8 +303,8 @@
                     <td class="text-right">{{ number_format($invoice->paid, 2) }}</td>
                 </tr>
                 <tr>
-                    <td style="color: {{ $invoice->payment_status === 'Paid' ? '#059669' : '#dc2626' }};">Payment Status</td>
-                    <td class="text-right">{{ $invoice->payment_status }}</td>
+                    <td style="color: {{ $invoice->payment_status === \App\Enums\PaymentStatus::Paid ? '#059669' : '#dc2626' }};">Payment Status</td>
+                    <td class="text-right">{{ $invoice->payment_status->value }}</td>
                 </tr>
                 <tr class="total-row">
                     <td>Total</td>

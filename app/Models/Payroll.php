@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PayrollStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -21,7 +22,15 @@ class Payroll extends Model
         'paid_amount',
         'status',
         'deduction_note',
+        'note',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'status' => PayrollStatus::class,
+        ];
+    }
 
     public function employee()
     {

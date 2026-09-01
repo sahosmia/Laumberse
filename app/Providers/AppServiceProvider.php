@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +20,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Admin holds every permission implicitly, so new permissions never need re-assigning to it.
+        Gate::before(function ($user, string $ability) {
+            return $user->hasRole('Admin') ? true : null;
+        });
     }
 }

@@ -1,4 +1,6 @@
-import { RequiredMark } from '@/components/ui/required-mark';
+import { FormInput } from '@/components/ui/form-input';
+import { FormLabel } from '@/components/ui/form-label';
+import { FormSelect } from '@/components/ui/form-select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import type { PayrollFormProps } from '@/types/pages/expenses';
 
@@ -15,41 +17,33 @@ export function PayrollForm({
     return (
         <>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-1">
-                    <label htmlFor="month" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                        Month <RequiredMark />
-                    </label>
-                    <select
-                        id="month"
-                        value={data.month}
-                        onChange={(e) => setData('month', parseInt(e.target.value, 10))}
-                        className="h-12 w-full rounded-xl border border-neutral-200 bg-transparent px-3 text-sm md:h-10 dark:border-neutral-800 dark:text-neutral-100"
-                        required
-                    >
-                        {Array.from({ length: 12 }, (_, i) => (
-                            <option key={i + 1} value={i + 1}>
-                                {new Date(0, i).toLocaleString('default', { month: 'long' })}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <div className="space-y-1">
-                    <label htmlFor="year" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                        Year <RequiredMark />
-                    </label>
-                    <input
-                        id="year"
-                        type="number"
-                        value={data.year}
-                        onChange={(e) => setData('year', parseInt(e.target.value, 10))}
-                        className="h-12 w-full rounded-xl border border-neutral-200 bg-transparent px-3 text-sm md:h-10 dark:border-neutral-800 dark:text-neutral-100"
-                        required
-                    />
-                </div>
+                <FormSelect id="month" label="Month" required value={data.month} onChange={(e) => setData('month', parseInt(e.target.value, 10))}>
+                    {Array.from({ length: 12 }, (_, i) => (
+                        <option key={i + 1} value={i + 1}>
+                            {new Date(0, i).toLocaleString('default', { month: 'long' })}
+                        </option>
+                    ))}
+                </FormSelect>
+                <FormInput
+                    id="year"
+                    label="Year"
+                    required
+                    type="number"
+                    value={data.year}
+                    onChange={(e) => {
+                        let val = e.target.value;
+                        if (val.length > 1 && val.startsWith('0')) {
+                            val = val.replace(/^0+/, '');
+                        }
+                        setData('year', val === '' ? '' : parseInt(val, 10));
+                    }}
+                    className="rounded-xl border-neutral-200 bg-transparent dark:border-neutral-800 dark:text-neutral-100"
+                    error={errors.year}
+                />
             </div>
 
             <div className="space-y-1">
-                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Employee</label>
+                <FormLabel>Employee</FormLabel>
                 <SearchableSelect
                     options={eligibleEmployees.map((e) => ({
                         label: `${e.name} (Base: ${e.base_salary})`,
@@ -69,62 +63,62 @@ export function PayrollForm({
                         <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatCurrency(selectedEmployee.base_salary)}</span>
                     </div>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div className="space-y-1">
-                            <label htmlFor="bonus" className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                                Bonus
-                            </label>
-                            <input
-                                id="bonus"
-                                type="number"
-                                value={data.bonus}
-                                onChange={(e) => {
-                                    let val = e.target.value;
-                                    if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
-                                        val = val.replace(/^0+/, '');
-                                    }
-                                    setData('bonus', val === '' ? '' : parseFloat(val));
-                                }}
-                                className="h-12 w-full rounded-lg border border-neutral-200 bg-transparent px-2 text-xs sm:h-9 dark:border-neutral-800 dark:text-neutral-100"
-                                step="any"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label htmlFor="deduction" className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                                Deduction
-                            </label>
-                            <input
-                                id="deduction"
-                                type="number"
-                                value={data.deduction}
-                                onChange={(e) => {
-                                    let val = e.target.value;
-                                    if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
-                                        val = val.replace(/^0+/, '');
-                                    }
-                                    setData('deduction', val === '' ? '' : parseFloat(val));
-                                }}
-                                className="h-12 w-full rounded-lg border border-neutral-200 bg-transparent px-2 text-xs sm:h-9 dark:border-neutral-800 dark:text-neutral-100"
-                                step="any"
-                            />
-                        </div>
+                        <FormInput
+                            id="bonus"
+                            label="Bonus"
+                            type="number"
+                            step="any"
+                            value={data.bonus}
+                            onChange={(e) => {
+                                let val = e.target.value;
+                                if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
+                                    val = val.replace(/^0+/, '');
+                                }
+                                setData('bonus', val === '' ? '' : parseFloat(val));
+                            }}
+                            className="rounded-lg border-neutral-200 bg-transparent text-xs dark:border-neutral-800 dark:text-neutral-100"
+                            error={errors.bonus}
+                        />
+                        <FormInput
+                            id="deduction"
+                            label="Deduction"
+                            type="number"
+                            step="any"
+                            value={data.deduction}
+                            onChange={(e) => {
+                                let val = e.target.value;
+                                if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
+                                    val = val.replace(/^0+/, '');
+                                }
+                                setData('deduction', val === '' ? '' : parseFloat(val));
+                            }}
+                            className="rounded-lg border-neutral-200 bg-transparent text-xs dark:border-neutral-800 dark:text-neutral-100"
+                            error={errors.deduction}
+                        />
                     </div>
                     {typeof data.deduction === 'number' && data.deduction > 0 && (
-                        <div className="space-y-1">
-                            <label htmlFor="deduction_note" className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                                Deduction Note <RequiredMark />
-                            </label>
-                            <input
-                                id="deduction_note"
-                                type="text"
-                                value={data.deduction_note}
-                                onChange={(e) => setData('deduction_note', e.target.value)}
-                                className="h-12 w-full rounded-lg border border-neutral-200 bg-transparent px-2 text-xs sm:h-9 dark:border-neutral-800 dark:text-neutral-100"
-                                required
-                                placeholder="Reason for deduction"
-                            />
-                            {errors.deduction_note && <p className="text-xs text-red-500">{errors.deduction_note}</p>}
-                        </div>
+                        <FormInput
+                            id="deduction_note"
+                            label="Deduction Note"
+                            required
+                            type="text"
+                            value={data.deduction_note}
+                            onChange={(e) => setData('deduction_note', e.target.value)}
+                            className="rounded-lg border-neutral-200 bg-transparent text-xs dark:border-neutral-800 dark:text-neutral-100"
+                            placeholder="Reason for deduction"
+                            error={errors.deduction_note}
+                        />
                     )}
+                    <FormInput
+                        id="note"
+                        label="Note (Optional)"
+                        type="text"
+                        value={data.note}
+                        onChange={(e) => setData('note', e.target.value)}
+                        className="rounded-lg border-neutral-200 bg-transparent text-xs dark:border-neutral-800 dark:text-neutral-100"
+                        placeholder="Shown on the employee's ledger for this payment"
+                        error={errors.note}
+                    />
                     <div className="flex items-center justify-between border-t border-neutral-200 pt-2 dark:border-neutral-700">
                         <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300">Net Salary:</span>
                         <span className="text-sm font-bold text-blue-600">{formatCurrency(netSalary)}</span>

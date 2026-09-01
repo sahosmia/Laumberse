@@ -1,15 +1,16 @@
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { TableRowActions } from '@/components/table-row-actions';
+import { DataView, type DataViewColumn } from '@/components/ui/data-view';
 import { FormButton } from '@/components/ui/form-button';
 import { FormInput } from '@/components/ui/form-input';
 import { Modal } from '@/components/ui/modal';
-import { Pagination } from '@/components/ui/pagination';
-import { useDebouncedSearch } from '@/hooks/use-debounced-search';
+import { useDataViewSearch } from '@/hooks/use-data-view-search';
+import { useTableLoading } from '@/hooks/use-table-loading';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, Unit } from '@/types';
 import type { UnitsProps } from '@/types/pages/units';
 import { Head, useForm } from '@inertiajs/react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Ruler } from 'lucide-react';
 import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -20,7 +21,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Units({ units, filters }: UnitsProps) {
-    const [search, setSearch] = useState(filters.search || '');
     const [showModal, setShowModal] = useState(false);
     const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
@@ -30,7 +30,8 @@ export default function Units({ units, filters }: UnitsProps) {
         short_name: '',
     });
 
-    useDebouncedSearch('units.index', search);
+    const { search, setSearch, perPage, setPerPage, reset: resetDataView } = useDataViewSearch('units.index', filters);
+    const isLoading = useTableLoading();
 
     const openCreateModal = () => {
         setEditingUnit(null);
@@ -77,67 +78,73 @@ export default function Units({ units, filters }: UnitsProps) {
         }
     };
 
+    const columns: DataViewColumn<Unit>[] = [
+        {
+            key: 'actions',
+            label: 'Actions',
+            align: 'center',
+            render: (u) => <TableRowActions id={u.id} label={u.name} edit={{ onClick: () => openEditModal(u) }} deleteRoute="units.destroy" />,
+        },
+        {
+            key: 'name',
+            label: 'Name',
+            render: (u) => <span className="font-medium text-neutral-800 dark:text-neutral-200">{u.name}</span>,
+        },
+        {
+            key: 'short_name',
+            label: 'Short Name',
+            className: 'font-mono text-neutral-600 dark:text-neutral-400',
+            render: (u) => u.short_name,
+        },
+    ];
+
+    const renderUnitCard = (u: Unit) => (
+        <div className="space-y-3 rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+            <div className="flex items-center justify-between">
+                <span className="font-mono text-[10px] text-neutral-500">#{u.id}</span>
+                <TableRowActions id={u.id} label={u.name} edit={{ onClick: () => openEditModal(u) }} deleteRoute="units.destroy" />
+            </div>
+            <div>
+                <p className="font-bold text-neutral-900 dark:text-neutral-100">{u.name}</p>
+                <p className="font-mono text-sm text-neutral-500 dark:text-neutral-400">{u.short_name}</p>
+            </div>
+        </div>
+    );
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Units" />
             <div className="space-y-4 p-4">
                 <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Product Units</h1>
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400">{units.total} units defined</p>
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                            <Ruler className="h-4 w-4" />
+                        </div>
+                        <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Product Units</h1>
                     </div>
                     <FormButton onClick={openCreateModal} icon={<Plus className="h-4 w-4" />}>
                         Add Unit
                     </FormButton>
                 </div>
 
-                <div className="relative">
-                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-                    <input
-                        type="text"
-                        placeholder="Search units..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="min-h-12 w-full rounded-xl border border-neutral-200 bg-transparent py-2.5 pr-4 pl-10 text-sm text-neutral-900 transition-all focus:ring-2 focus:ring-blue-500/30 focus:outline-none sm:w-80 md:min-h-10 dark:border-neutral-800 dark:text-neutral-100"
-                    />
-                </div>
-
-                <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
-                    <div className="overflow-x-auto">
-                        <table className="w-full min-w-[500px] text-sm">
-                            <thead>
-                                <tr className="bg-neutral-50 text-xs tracking-wider text-neutral-500 uppercase dark:bg-neutral-800/50">
-                                    <th className="px-5 py-3 text-left font-semibold">Name</th>
-                                    <th className="px-3 py-3 text-left font-semibold">Short Name</th>
-                                    <th className="px-3 py-3 text-center font-semibold">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {units.data.map((u) => (
-                                    <tr
-                                        key={u.id}
-                                        className="border-b border-neutral-50 transition-colors hover:bg-neutral-50/50 dark:border-neutral-800 dark:hover:bg-neutral-800/30"
-                                    >
-                                        <td className="px-5 py-3 font-medium text-neutral-800 dark:text-neutral-200">{u.name}</td>
-                                        <td className="px-3 py-3 font-mono text-neutral-600 dark:text-neutral-400">{u.short_name}</td>
-                                        <td className="px-3 py-3">
-                                            <div className="flex items-center justify-center">
-                                                <TableRowActions
-                                                    id={u.id}
-                                                    label={u.name}
-                                                    edit={{ onClick: () => openEditModal(u) }}
-                                                    deleteRoute="units.destroy"
-                                                />
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <Pagination links={units.links} />
+                <DataView
+                    data={units.data}
+                    getKey={(u) => u.id}
+                    loading={isLoading}
+                    emptyMessage="No units found"
+                    search={search}
+                    onSearchChange={setSearch}
+                    searchPlaceholder="Search units..."
+                    onReset={resetDataView}
+                    viewKey="units"
+                    defaultView="table"
+                    columns={columns}
+                    renderCard={renderUnitCard}
+                    pagination={units.links}
+                    total={units.total}
+                    perPage={perPage}
+                    onPerPageChange={setPerPage}
+                />
             </div>
 
             <SaveConfirmationModal

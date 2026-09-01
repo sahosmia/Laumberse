@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Account;
 use App\Models\Category;
 use App\Models\Client;
 use App\Models\Invoice;
@@ -7,7 +8,7 @@ use App\Models\Product;
 use App\Models\User;
 
 beforeEach(function () {
-    $this->user = User::factory()->create();
+    $this->user = User::factory()->admin()->create();
     $this->category = Category::create(['name' => 'Services', 'slug' => 'services']);
     $this->product = Product::create([
         'name' => 'Test Product',
@@ -15,6 +16,7 @@ beforeEach(function () {
         'category_id' => $this->category->id,
     ]);
     $this->client = Client::create(['name' => 'John Doe', 'phone' => '123456789']);
+    $this->account = Account::create(['name' => 'Cash', 'opening_balance' => 0, 'current_balance' => 0]);
 });
 
 test('invoice can be updated successfully', function () {
@@ -37,6 +39,7 @@ test('invoice can be updated successfully', function () {
         'due' => 50,
         'status' => 'Delivered',
         'method' => 'Bank',
+        'account_id' => $this->account->id,
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
@@ -73,6 +76,7 @@ test('invoice_uuid stays the same and is not editable through an update', functi
         'due' => 0,
         'status' => 'Processing',
         'method' => 'Cash',
+        'account_id' => $this->account->id,
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
@@ -110,6 +114,7 @@ test('editing an invoice to be fully paid updates its payment status', function 
         'due' => 0,
         'status' => 'Processing',
         'method' => 'Cash',
+        'account_id' => $this->account->id,
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
@@ -119,7 +124,7 @@ test('editing an invoice to be fully paid updates its payment status', function 
 
     $response->assertRedirect(route('history'));
     $invoice->refresh();
-    expect($invoice->payment_status)->toBe('Paid');
+    expect($invoice->payment_status->value)->toBe('Paid');
     expect($invoice->payment_date)->toBe(now()->toDateString());
 });
 
@@ -145,6 +150,7 @@ test('editing a paid invoice back to having a balance reverts its payment status
         'due' => 500,
         'status' => 'Processing',
         'method' => 'Cash',
+        'account_id' => $this->account->id,
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
@@ -154,7 +160,7 @@ test('editing a paid invoice back to having a balance reverts its payment status
 
     $response->assertRedirect(route('history'));
     $invoice->refresh();
-    expect($invoice->payment_status)->toBe('Unpaid');
+    expect($invoice->payment_status->value)->toBe('Unpaid');
     expect($invoice->payment_date)->toBeNull();
 });
 
@@ -180,6 +186,7 @@ test('editing an already-paid invoice preserves its original payment date', func
         'due' => 0,
         'status' => 'Delivered',
         'method' => 'Cash',
+        'account_id' => $this->account->id,
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
@@ -189,6 +196,6 @@ test('editing an already-paid invoice preserves its original payment date', func
 
     $response->assertRedirect(route('history'));
     $invoice->refresh();
-    expect($invoice->payment_status)->toBe('Paid');
+    expect($invoice->payment_status->value)->toBe('Paid');
     expect($invoice->payment_date)->toBe('2026-01-01');
 });

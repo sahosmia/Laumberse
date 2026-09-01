@@ -1,54 +1,33 @@
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { Checkbox } from '@/components/ui/checkbox';
+import { FormSelect } from '@/components/ui/form-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RequiredMark } from '@/components/ui/required-mark';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { CLIENT_TYPES, DISCOUNT_TYPES, INVOICE_FORM_STATUSES, type ClientType, type DiscountType, type InvoiceStatus } from '@/constants/status';
 import { formatCurrency } from '@/lib/format';
-import { Category, Client, Product } from '@/types';
-import { useForm } from '@inertiajs/react';
+import { Account, Category, Client, Invoice as InvoiceRecord, Product, SharedData } from '@/types';
+import { useForm, usePage } from '@inertiajs/react';
 import { Calendar, CreditCard, Package, Printer, Search, Trash2, UserPlus, Users } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 
+/** The form's own working shape for a line item, distinct from the API's `InvoiceItem` (`@/types`). */
 export interface InvoiceItem {
     productId: number;
     name: string;
-    price: number;
-    qty: number;
+    price: number | '';
+    qty: number | '';
     imageUrl?: string | null;
 }
 
-export interface Invoice {
-    id?: number;
-    invoice_uuid: string;
-    date: string;
-    client_id: number | string | null;
-    total: number;
-    paid: string | number;
-    due: number;
-    status: InvoiceStatus;
-    method: string;
-    remarks: string;
-    discount_type: DiscountType;
-    discount_amount: number;
-    items: {
-        product_id: number;
-        qty: number;
-        price: number;
-        product?: {
-            name: string;
-            image_url?: string | null;
-        };
-    }[];
-}
-
 interface InvoiceFormProps {
-    invoice?: Invoice;
+    invoice?: InvoiceRecord;
     products: Product[];
     clients: Client[];
     categories: Category[];
+    accounts: Pick<Account, 'id' | 'name' | 'account_number'>[];
     isEdit?: boolean;
 }
 
@@ -62,7 +41,7 @@ interface InvoiceTotalsInput {
 }
 
 function computeInvoiceTotals({ items, paid, discountType, discountAmount, deliveryCharge, isCorporate }: InvoiceTotalsInput) {
-    const subtotal = items.reduce((s, i) => s + i.price * (Number(i.qty) || 0), 0);
+    const subtotal = items.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.qty) || 0), 0);
     const disc = Number(discountAmount) || 0;
     const discountValue = discountType === 'Percentage' ? (subtotal * disc) / 100 : disc;
     const deliv = isCorporate ? 0 : Number(deliveryCharge) || 0;
@@ -71,7 +50,8 @@ function computeInvoiceTotals({ items, paid, discountType, discountAmount, deliv
     return { subtotal, discountValue, total, due };
 }
 
-export default function InvoiceForm({ invoice, products, clients, isEdit = false }: InvoiceFormProps) {
+export default function InvoiceForm({ invoice, products, clients, accounts, isEdit = false }: InvoiceFormProps) {
+    const { outlet } = usePage<SharedData>().props;
     const [searchTerm, setSearchTerm] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
     const [selectedCategory] = useState('All');
@@ -81,8 +61,22 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
     const [highlightedIndex, setHighlightedIndex] = useState(0);
     const productOptionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
+    // Briefly flags whichever product line was just added/incremented so its row can flash a
+    // highlight — the newest row already animates in via slide/fade on mount, but that alone
+    // doesn't help when the "add" just bumped an *existing* row's quantity instead of creating a
+    // new DOM node, so nothing would otherwise visibly change.
+    const [justAddedProductId, setJustAddedProductId] = useState<number | null>(null);
+    const justAddedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const flashJustAdded = (productId: number) => {
+        if (justAddedTimeoutRef.current) clearTimeout(justAddedTimeoutRef.current);
+        setJustAddedProductId(productId);
+        justAddedTimeoutRef.current = setTimeout(() => setJustAddedProductId(null), 1200);
+    };
+
     const { data, setData, post, put, processing, errors } = useForm({
         date: invoice?.date || new Date().toISOString().split('T')[0],
+        outlet_id: '' as number | '',
         client_id: invoice?.client_id || (null as string | number | null),
         create_new_client: false,
         new_client_name: '',
@@ -93,13 +87,14 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
         paid: invoice?.paid ? invoice.paid : ('' as string | number),
         due: invoice?.due || 0,
         status: invoice?.status || ('Processing' as InvoiceStatus),
-        method: invoice?.method || 'Cash',
+        account_id: invoice?.account_id || ('' as string | number),
         remarks: invoice?.remarks || '',
+        internal_note: invoice?.internal_note || '',
         discount_type: invoice?.discount_type || ('Fixed' as DiscountType),
         discount_amount: invoice?.discount_amount ? invoice.discount_amount : ('' as string | number),
         delivery_charge: invoice?.delivery_charge ? invoice.delivery_charge : ('' as string | number),
         items:
-            invoice?.items.map((item) => ({
+            invoice?.items?.map((item) => ({
                 productId: item.product_id,
                 name: item.product?.name || 'Unknown Product',
                 price: Number(item.price),
@@ -120,6 +115,32 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
 
     const selectedClient = clients.find((c) => c.id == data.client_id);
     const isCorporate = data.create_new_client ? data.new_client_type === 'Corporate' : selectedClient?.type === 'Corporate';
+
+    // Precedence: client custom price (Corporate only) > this outlet's price override > the
+    // product's plain default price. `client`/`isCreatingNewClient` default to the currently
+    // selected client, but the client-switch handler below needs to resolve prices against the
+    // *newly* picked client before that becomes `selectedClient` on the next render.
+    const resolveProductPrice = (
+        product: Product,
+        client: Client | undefined = selectedClient,
+        isCreatingNewClient: boolean = data.create_new_client,
+    ): number => {
+        let price = Number(product.price);
+
+        const outletPrice = product.outlet_prices?.find((op) => op.outlet_id === outlet?.current?.id)?.price;
+        if (outletPrice !== undefined) {
+            price = Number(outletPrice);
+        }
+
+        if (!isCreatingNewClient && client?.type === 'Corporate') {
+            const customPrice = client.custom_prices?.find((cp) => cp.product_id === product.id)?.custom_price;
+            if (customPrice !== undefined) {
+                price = Number(customPrice);
+            }
+        }
+
+        return price;
+    };
 
     const handleDeliveryChargeChange = (val: string) => {
         const { total, due } = computeInvoiceTotals({
@@ -142,17 +163,10 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
         const existingIdx = data.items.findIndex((i) => i.productId === product.id);
         const newItems = [...data.items];
 
-        let price = Number(product.price);
-
-        if (!data.create_new_client && selectedClient?.type === 'Corporate') {
-            const customPrice = selectedClient.custom_prices?.find((cp) => cp.product_id === product.id)?.custom_price;
-            if (customPrice !== undefined) {
-                price = Number(customPrice);
-            }
-        }
+        const price = resolveProductPrice(product);
 
         if (existingIdx > -1) {
-            newItems[existingIdx].qty += 1;
+            newItems[existingIdx].qty = Number(newItems[existingIdx].qty) + 1;
             newItems[existingIdx].price = price;
         } else {
             newItems.push({
@@ -178,6 +192,7 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
             total,
             due,
         }));
+        flashJustAdded(product.id);
 
         setSearchTerm('');
         setShowDropdown(false);
@@ -231,7 +246,7 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
         }));
     };
 
-    const updatePrice = (idx: number, newPrice: number) => {
+    const updatePrice = (idx: number, newPrice: number | '') => {
         const newItems = [...data.items];
         newItems[idx].price = newPrice;
 
@@ -445,9 +460,14 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
                                         value={data.client_id}
                                         onChange={(val) => {
                                             const newClient = clients.find((c) => c.id == val);
-                                            if (newClient?.type === 'Corporate') {
-                                                // Automatically populate items with custom prices for Corporate clients
-                                                const corporateItems = (newClient.custom_prices || [])
+                                            const newIsCorporate = newClient?.type === 'Corporate';
+                                            const newDeliveryCharge = newIsCorporate ? '' : data.delivery_charge;
+
+                                            let newItems: InvoiceItem[];
+                                            if (newIsCorporate && data.items.length === 0) {
+                                                // Convenience for a fresh, empty invoice: pre-fill with the corporate
+                                                // client's full custom price list instead of leaving it empty.
+                                                newItems = (newClient?.custom_prices || [])
                                                     .map((cp) => {
                                                         const product = products.find((p) => p.id === cp.product_id);
                                                         if (!product) return null;
@@ -460,40 +480,32 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
                                                         };
                                                     })
                                                     .filter(Boolean) as InvoiceItem[];
-
-                                                const { total, due } = computeInvoiceTotals({
-                                                    items: corporateItems,
-                                                    paid: data.paid,
-                                                    discountType: data.discount_type,
-                                                    discountAmount: data.discount_amount,
-                                                    deliveryCharge: 0,
-                                                    isCorporate: true,
-                                                });
-                                                setData((d) => ({
-                                                    ...d,
-                                                    client_id: val,
-                                                    items: corporateItems,
-                                                    delivery_charge: '',
-                                                    total,
-                                                    due,
-                                                }));
                                             } else {
-                                                const { total, due } = computeInvoiceTotals({
-                                                    items: [],
-                                                    paid: data.paid,
-                                                    discountType: data.discount_type,
-                                                    discountAmount: data.discount_amount,
-                                                    deliveryCharge: data.delivery_charge,
-                                                    isCorporate: false,
+                                                // Keep whatever's already selected (or already on the invoice, when
+                                                // editing) — just re-price each line for the new client instead of
+                                                // discarding the selection.
+                                                newItems = data.items.map((item) => {
+                                                    const product = products.find((p) => p.id === item.productId);
+                                                    return product ? { ...item, price: resolveProductPrice(product, newClient, false) } : item;
                                                 });
-                                                setData((d) => ({
-                                                    ...d,
-                                                    client_id: val,
-                                                    items: [],
-                                                    total,
-                                                    due,
-                                                }));
                                             }
+
+                                            const { total, due } = computeInvoiceTotals({
+                                                items: newItems,
+                                                paid: data.paid,
+                                                discountType: data.discount_type,
+                                                discountAmount: data.discount_amount,
+                                                deliveryCharge: newDeliveryCharge,
+                                                isCorporate: newIsCorporate,
+                                            });
+                                            setData((d) => ({
+                                                ...d,
+                                                client_id: val,
+                                                items: newItems,
+                                                delivery_charge: newDeliveryCharge,
+                                                total,
+                                                due,
+                                            }));
                                         }}
                                         placeholder="Select Client"
                                         error={errors.client_id}
@@ -535,7 +547,7 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
                                             <Label htmlFor="new_client_type" className="text-[10px] tracking-wider text-neutral-500 uppercase">
                                                 Type
                                             </Label>
-                                            <select
+                                            <FormSelect
                                                 id="new_client_type"
                                                 value={data.new_client_type}
                                                 onChange={(e) => {
@@ -558,14 +570,14 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
                                                         due,
                                                     }));
                                                 }}
-                                                className="h-12 w-full rounded-xl border border-neutral-200 bg-transparent px-3 text-sm md:h-9 md:text-xs dark:border-neutral-800 dark:text-neutral-100"
+                                                className="md:h-9 md:text-xs"
                                             >
                                                 {CLIENT_TYPES.map((t) => (
                                                     <option key={t} value={t}>
                                                         {t}
                                                     </option>
                                                 ))}
-                                            </select>
+                                            </FormSelect>
                                             {errors.new_client_type && <p className="text-[10px] text-red-500">{errors.new_client_type}</p>}
                                         </div>
                                     </div>
@@ -603,7 +615,7 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
                                         }}
                                         onFocus={() => setShowDropdown(true)}
                                         onKeyDown={handleProductSearchKeyDown}
-                                        className="w-full rounded-xl border border-neutral-200 bg-transparent py-2.5 pr-4 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500/30 focus:outline-none dark:border-neutral-800"
+                                        className="h-12 w-full rounded-xl border border-neutral-200 bg-transparent pr-4 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500/30 focus:outline-none md:h-10 dark:border-neutral-800"
                                     />
                                     {showDropdown && (searchTerm.length > 0 || selectedCategory !== 'All') && (
                                         <div className="absolute top-full right-0 left-0 z-30 mt-1 max-h-72 overflow-y-auto rounded-xl border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-900">
@@ -637,15 +649,7 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
                                                         </div>
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-sm font-bold text-blue-600">
-                                                                {(() => {
-                                                                    if (isCorporate && !data.create_new_client) {
-                                                                        const cp = selectedClient?.custom_prices?.find(
-                                                                            (cp) => cp.product_id === p.id,
-                                                                        );
-                                                                        return formatCurrency(cp ? Number(cp.custom_price) : Number(p.price));
-                                                                    }
-                                                                    return formatCurrency(Number(p.price));
-                                                                })()}
+                                                                {formatCurrency(resolveProductPrice(p))}
                                                             </span>
                                                         </div>
                                                     </button>
@@ -667,7 +671,7 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
                                 </div>
                             ) : (
                                 <>
-                                    {/* Desktop Table View */}
+                                    {/* Desktop Table View — most recently added item first */}
                                     <div className="hidden overflow-x-auto lg:block">
                                         <table className="w-full text-sm">
                                             <thead>
@@ -681,36 +685,146 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {data.items.map((item, idx: number) => (
-                                                    <tr
-                                                        key={idx}
-                                                        className="border-b border-neutral-50 transition-colors hover:bg-neutral-50/50 dark:border-neutral-800 dark:hover:bg-neutral-800/30"
-                                                    >
-                                                        <td className="px-5 py-3 font-mono text-xs text-neutral-400">{idx + 1}</td>
-                                                        <td className="px-3 py-3">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-800">
-                                                                    {item.imageUrl ? (
-                                                                        <img
-                                                                            src={item.imageUrl}
-                                                                            alt={item.name}
-                                                                            className="h-full w-full object-cover"
-                                                                        />
-                                                                    ) : (
-                                                                        <div className="flex h-full w-full items-center justify-center text-xs font-bold text-neutral-400 uppercase">
-                                                                            {item.name.charAt(0)}
-                                                                        </div>
-                                                                    )}
+                                                {data.items
+                                                    .map((item, idx) => ({ item, idx }))
+                                                    .slice()
+                                                    .reverse()
+                                                    .map(({ item, idx }) => (
+                                                        <tr
+                                                            key={idx}
+                                                            className={`animate-in fade-in slide-in-from-top-2 border-b-2 border-neutral-200 transition-colors duration-500 last:border-b-0 hover:bg-neutral-50/50 dark:border-neutral-700 dark:hover:bg-neutral-800/30 ${
+                                                                item.productId === justAddedProductId ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''
+                                                            }`}
+                                                        >
+                                                            <td className="px-5 py-3 font-mono text-xs text-neutral-400">{idx + 1}</td>
+                                                            <td className="px-3 py-3">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-800">
+                                                                        {item.imageUrl ? (
+                                                                            <img
+                                                                                src={item.imageUrl}
+                                                                                alt={item.name}
+                                                                                className="h-full w-full object-cover"
+                                                                            />
+                                                                        ) : (
+                                                                            <div className="flex h-full w-full items-center justify-center text-xs font-bold text-neutral-400 uppercase">
+                                                                                {item.name.charAt(0)}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="font-medium text-neutral-800 dark:text-neutral-200">
+                                                                        {item.name}
+                                                                    </div>
                                                                 </div>
-                                                                <div className="font-medium text-neutral-800 dark:text-neutral-200">{item.name}</div>
+                                                            </td>
+                                                            <td className="px-3 py-3 text-center">
+                                                                <div className="flex items-center justify-center gap-1">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => updateQty(idx, (Number(item.qty) || 0) - 1)}
+                                                                        className="h-7 w-7 rounded-lg bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+                                                                    >
+                                                                        −
+                                                                    </button>
+                                                                    <Input
+                                                                        type="number"
+                                                                        value={item.qty}
+                                                                        onChange={(e) => {
+                                                                            const val = e.target.value;
+                                                                            const num = val === '' ? '' : Math.max(1, parseInt(val, 10));
+                                                                            updateQty(idx, num);
+                                                                        }}
+                                                                        className="h-8 w-12 [appearance:textfield] bg-transparent p-0 text-center font-semibold text-neutral-800 focus-visible:ring-1 dark:text-neutral-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                                                    />
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => updateQty(idx, (Number(item.qty) || 0) + 1)}
+                                                                        className="h-7 w-7 rounded-lg bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+                                                                    >
+                                                                        +
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-3 py-3 text-right font-medium">
+                                                                <Input
+                                                                    type="number"
+                                                                    value={item.price}
+                                                                    onChange={(e) => {
+                                                                        let val = e.target.value;
+                                                                        if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
+                                                                            val = val.replace(/^0+/, '');
+                                                                        }
+                                                                        updatePrice(idx, val === '' ? '' : parseFloat(val));
+                                                                    }}
+                                                                    className="h-8 w-24 text-right text-xs"
+                                                                />
+                                                            </td>
+                                                            <td className="px-3 py-3 text-right font-bold text-neutral-900 dark:text-neutral-100">
+                                                                {formatCurrency((Number(item.price) || 0) * Number(item.qty))}
+                                                            </td>
+                                                            <td className="px-3 py-3 text-center">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleRemoveClick(idx)}
+                                                                    className="p-1.5 text-red-400 hover:text-red-600"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {/* Mobile List View — most recently added item first, each in its own bordered card */}
+                                    <div className="space-y-3 p-3 lg:hidden">
+                                        {data.items
+                                            .map((item, idx) => ({ item, idx }))
+                                            .slice()
+                                            .reverse()
+                                            .map(({ item, idx }) => (
+                                                <div
+                                                    key={idx}
+                                                    className={`animate-in fade-in slide-in-from-top-2 space-y-4 rounded-xl border border-neutral-200 p-4 transition-colors duration-500 dark:border-neutral-700 ${
+                                                        item.productId === justAddedProductId ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-800">
+                                                                {item.imageUrl ? (
+                                                                    <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
+                                                                ) : (
+                                                                    <div className="flex h-full w-full items-center justify-center text-sm font-bold text-neutral-400 uppercase">
+                                                                        {item.name.charAt(0)}
+                                                                    </div>
+                                                                )}
                                                             </div>
-                                                        </td>
-                                                        <td className="px-3 py-3 text-center">
-                                                            <div className="flex items-center justify-center gap-1">
+                                                            <div>
+                                                                <p className="font-bold text-neutral-900 dark:text-neutral-100">{item.name}</p>
+                                                                <p className="font-mono text-xs text-neutral-500">Item #{idx + 1}</p>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveClick(idx)}
+                                                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-500 dark:bg-red-900/20"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">
+                                                                Quantity
+                                                            </label>
+                                                            <div className="flex w-fit items-center gap-3 rounded-xl bg-neutral-50 p-1.5 dark:bg-neutral-800/50">
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => updateQty(idx, (Number(item.qty) || 0) - 1)}
-                                                                    className="h-7 w-7 rounded-lg bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+                                                                    className="flex h-12 w-12 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-600 shadow-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
                                                                 >
                                                                     −
                                                                 </button>
@@ -722,131 +836,50 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
                                                                         const num = val === '' ? '' : Math.max(1, parseInt(val, 10));
                                                                         updateQty(idx, num);
                                                                     }}
-                                                                    className="h-8 w-12 [appearance:textfield] bg-transparent p-0 text-center font-semibold text-neutral-800 focus-visible:ring-1 dark:text-neutral-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                                                    className="h-12 w-12 [appearance:textfield] border-none bg-transparent p-0 text-center font-bold text-neutral-900 shadow-none focus-visible:ring-0 dark:text-neutral-100 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                                                                 />
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => updateQty(idx, (Number(item.qty) || 0) + 1)}
-                                                                    className="h-7 w-7 rounded-lg bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+                                                                    className="flex h-12 w-12 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-600 shadow-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
                                                                 >
                                                                     +
                                                                 </button>
                                                             </div>
-                                                        </td>
-                                                        <td className="px-3 py-3 text-right font-medium">
+                                                        </div>
+                                                        <div className="space-y-1 text-right">
+                                                            <label className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">
+                                                                Unit Price
+                                                            </label>
                                                             <Input
                                                                 type="number"
                                                                 value={item.price}
-                                                                onChange={(e) => updatePrice(idx, Number(e.target.value))}
-                                                                className="h-8 w-24 text-right text-xs"
-                                                            />
-                                                        </td>
-                                                        <td className="px-3 py-3 text-right font-bold text-neutral-900 dark:text-neutral-100">
-                                                            {formatCurrency(item.price * item.qty)}
-                                                        </td>
-                                                        <td className="px-3 py-3 text-center">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleRemoveClick(idx)}
-                                                                className="p-1.5 text-red-400 hover:text-red-600"
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                    {/* Mobile List View */}
-                                    <div className="divide-y divide-neutral-100 lg:hidden dark:divide-neutral-800">
-                                        {data.items.map((item, idx: number) => (
-                                            <div key={idx} className="space-y-4 p-4">
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-800">
-                                                            {item.imageUrl ? (
-                                                                <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
-                                                            ) : (
-                                                                <div className="flex h-full w-full items-center justify-center text-sm font-bold text-neutral-400 uppercase">
-                                                                    {item.name.charAt(0)}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-bold text-neutral-900 dark:text-neutral-100">{item.name}</p>
-                                                            <p className="font-mono text-xs text-neutral-500">Item #{idx + 1}</p>
-                                                        </div>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleRemoveClick(idx)}
-                                                        className="rounded-lg bg-red-50 p-2 text-red-500 dark:bg-red-900/20"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </button>
-                                                </div>
-
-                                                <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
-                                                    <div className="space-y-1">
-                                                        <label className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">
-                                                            Quantity
-                                                        </label>
-                                                        <div className="flex w-fit items-center gap-3 rounded-xl bg-neutral-50 p-1.5 dark:bg-neutral-800/50">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => updateQty(idx, (Number(item.qty) || 0) - 1)}
-                                                                className="flex h-12 w-12 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-600 shadow-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
-                                                            >
-                                                                −
-                                                            </button>
-                                                            <Input
-                                                                type="number"
-                                                                value={item.qty}
                                                                 onChange={(e) => {
-                                                                    const val = e.target.value;
-                                                                    const num = val === '' ? '' : Math.max(1, parseInt(val, 10));
-                                                                    updateQty(idx, num);
+                                                                    let val = e.target.value;
+                                                                    if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
+                                                                        val = val.replace(/^0+/, '');
+                                                                    }
+                                                                    updatePrice(idx, val === '' ? '' : parseFloat(val));
                                                                 }}
-                                                                className="h-12 w-12 [appearance:textfield] border-none bg-transparent p-0 text-center font-bold text-neutral-900 shadow-none focus-visible:ring-0 dark:text-neutral-100 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                                                className="h-12 bg-transparent text-right font-bold text-blue-600"
                                                             />
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => updateQty(idx, (Number(item.qty) || 0) + 1)}
-                                                                className="flex h-12 w-12 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-600 shadow-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
-                                                            >
-                                                                +
-                                                            </button>
                                                         </div>
                                                     </div>
-                                                    <div className="space-y-1 text-right">
-                                                        <label className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">
-                                                            Unit Price
-                                                        </label>
-                                                        <Input
-                                                            type="number"
-                                                            value={item.price}
-                                                            onChange={(e) => updatePrice(idx, Number(e.target.value))}
-                                                            className="h-12 bg-transparent text-right font-bold text-blue-600"
-                                                        />
+                                                    <div className="flex items-center justify-between border-t border-neutral-50 pt-2 dark:border-neutral-800/50">
+                                                        <span className="text-sm font-medium text-neutral-500">Subtotal</span>
+                                                        <span className="text-lg font-black text-neutral-900 dark:text-neutral-100">
+                                                            {formatCurrency((Number(item.price) || 0) * Number(item.qty))}
+                                                        </span>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center justify-between border-t border-neutral-50 pt-2 dark:border-neutral-800/50">
-                                                    <span className="text-sm font-medium text-neutral-500">Subtotal</span>
-                                                    <span className="text-lg font-black text-neutral-900 dark:text-neutral-100">
-                                                        {formatCurrency(item.price * item.qty)}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            ))}
                                     </div>
                                 </>
                             )}
                         </div>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
                         <div className="space-y-3 rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
                             <h3 className="flex items-center gap-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                                 <Calendar className="h-4 w-4" /> Order Details
@@ -859,17 +892,31 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
                                 placeholder="Select Date"
                                 required
                             />
-                            <select
-                                value={data.status}
-                                onChange={(e) => setData('status', e.target.value as InvoiceStatus)}
-                                className="h-12 w-full rounded-xl border border-neutral-200 bg-transparent px-3 text-sm md:h-10 dark:border-neutral-800 dark:text-neutral-100"
-                            >
+                            <FormSelect value={data.status} onChange={(e) => setData('status', e.target.value as InvoiceStatus)}>
                                 {INVOICE_FORM_STATUSES.map((s) => (
                                     <option key={s} value={s}>
                                         {s}
                                     </option>
                                 ))}
-                            </select>
+                            </FormSelect>
+                            {!isEdit && outlet?.isAll && (
+                                <FormSelect
+                                    label="Outlet"
+                                    required
+                                    value={data.outlet_id}
+                                    onChange={(e) => setData('outlet_id', e.target.value ? Number(e.target.value) : '')}
+                                    className="md:h-9 md:text-xs"
+                                    error={errors.outlet_id}
+                                    helperText='This invoice needs a specific outlet — "All Outlets" is a view, not a place to save new records.'
+                                >
+                                    <option value="">Select an outlet</option>
+                                    {outlet.available.map((o) => (
+                                        <option key={o.id} value={o.id}>
+                                            {o.name}
+                                        </option>
+                                    ))}
+                                </FormSelect>
+                            )}
                         </div>
 
                         <div className="space-y-3 rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
@@ -883,7 +930,7 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
                                             key={t}
                                             type="button"
                                             onClick={() => handleDiscountTypeChange(t)}
-                                            className={`flex-1 rounded-lg border py-1.5 text-[10px] font-bold tracking-wider uppercase ${data.discount_type === t ? 'border-amber-300 bg-amber-50 text-amber-600' : 'border-neutral-200 text-neutral-500 dark:border-neutral-800'}`}
+                                            className={`flex h-11 flex-1 items-center justify-center rounded-lg border text-[10px] font-bold tracking-wider uppercase md:h-8 ${data.discount_type === t ? 'border-amber-300 bg-amber-50 text-amber-600' : 'border-neutral-200 text-neutral-500 dark:border-neutral-800'}`}
                                         >
                                             {t}
                                         </button>
@@ -914,19 +961,26 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
                                 </div>
                             )}
 
-                            <div className="border-t border-neutral-100 pt-2 dark:border-neutral-800">
-                                <div className="mb-3 flex gap-2">
-                                    {['Cash', 'Bkash', 'Bank'].map((m) => (
-                                        <button
-                                            key={m}
-                                            type="button"
-                                            onClick={() => setData('method', m)}
-                                            className={`flex-1 rounded-xl border py-2 text-xs font-semibold ${data.method === m ? 'border-blue-300 bg-blue-50 text-blue-600' : 'border-neutral-200 text-neutral-500 dark:border-neutral-800'}`}
-                                        >
-                                            {m}
-                                        </button>
+                            <div className="space-y-1 border-t border-neutral-100 pt-2 dark:border-neutral-800">
+                                <Label htmlFor="account_id" className="text-[10px] font-bold tracking-wider text-neutral-500 uppercase">
+                                    Payment Account {Number(data.paid) > 0 && <RequiredMark />}
+                                </Label>
+                                <FormSelect
+                                    id="account_id"
+                                    value={data.account_id}
+                                    onChange={(e) => setData('account_id', e.target.value === '' ? '' : Number(e.target.value))}
+                                    className="md:h-9 md:text-xs"
+                                    required={Number(data.paid) > 0}
+                                    error={errors.account_id}
+                                >
+                                    <option value="">{Number(data.paid) > 0 ? 'Select Account' : 'Select Account (optional — not yet paid)'}</option>
+                                    {accounts.map((a) => (
+                                        <option key={a.id} value={a.id}>
+                                            {a.name}
+                                            {a.account_number ? ` (${a.account_number})` : ''}
+                                        </option>
                                     ))}
-                                </div>
+                                </FormSelect>
                                 <Input
                                     type="number"
                                     placeholder="Paid Amount"
@@ -934,6 +988,36 @@ export default function InvoiceForm({ invoice, products, clients, isEdit = false
                                     onChange={(e) => handlePaidChange(e.target.value)}
                                     className="h-12 text-sm md:h-9 md:text-xs"
                                 />
+                            </div>
+
+                            <div className="space-y-1 border-t border-neutral-100 pt-2 dark:border-neutral-800">
+                                <Label htmlFor="remarks" className="text-[10px] font-bold tracking-wider text-neutral-500 uppercase">
+                                    Remarks
+                                </Label>
+                                <textarea
+                                    id="remarks"
+                                    value={data.remarks}
+                                    onChange={(e) => setData('remarks', e.target.value)}
+                                    className="w-full rounded-xl border border-neutral-200 bg-transparent px-3 py-2 text-xs dark:border-neutral-800 dark:text-neutral-100"
+                                    rows={2}
+                                    placeholder="Shown to the client on the invoice/PDF"
+                                />
+                                {errors.remarks && <p className="text-xs text-red-500">{errors.remarks}</p>}
+                            </div>
+
+                            <div className="space-y-1 border-t border-neutral-100 pt-2 dark:border-neutral-800">
+                                <Label htmlFor="internal_note" className="text-[10px] font-bold tracking-wider text-neutral-500 uppercase">
+                                    Internal Note
+                                </Label>
+                                <textarea
+                                    id="internal_note"
+                                    value={data.internal_note}
+                                    onChange={(e) => setData('internal_note', e.target.value)}
+                                    className="w-full rounded-xl border border-neutral-200 bg-transparent px-3 py-2 text-xs dark:border-neutral-800 dark:text-neutral-100"
+                                    rows={2}
+                                    placeholder="Staff-only — never shown to the client"
+                                />
+                                {errors.internal_note && <p className="text-xs text-red-500">{errors.internal_note}</p>}
                             </div>
                         </div>
 

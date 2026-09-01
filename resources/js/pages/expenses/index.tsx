@@ -1,19 +1,22 @@
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { TableRowActions } from '@/components/table-row-actions';
+import { DataView, type DataViewColumn } from '@/components/ui/data-view';
+import { DateFilterBar } from '@/components/ui/date-filter-bar';
+import { FilterSelect } from '@/components/ui/filter-select';
 import { FormButton } from '@/components/ui/form-button';
 import { FormInput } from '@/components/ui/form-input';
 import { FormLabel } from '@/components/ui/form-label';
+import { FormSelect } from '@/components/ui/form-select';
 import { Modal } from '@/components/ui/modal';
-import { Pagination } from '@/components/ui/pagination';
-import { DATE_FILTERS } from '@/constants/date-filters';
-import { useDebouncedSearch } from '@/hooks/use-debounced-search';
+import { useDataViewSearch } from '@/hooks/use-data-view-search';
+import { useTableLoading } from '@/hooks/use-table-loading';
 import AppLayout from '@/layouts/app-layout';
-import { formatCurrency } from '@/lib/format';
+import { formatCurrency, formatDate } from '@/lib/format';
 import { type BreadcrumbItem, Expense, SharedData } from '@/types';
 import type { EligibleEmployee, ExpensesProps } from '@/types/pages/expenses';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
-import { Plus, Search, Tag } from 'lucide-react';
+import { Plus, Receipt, Tag } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { MaterialItemsForm } from './com/MaterialItemsForm';
 import { PayrollForm } from './com/PayrollForm';
@@ -25,12 +28,13 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Expenses({ expenses, categories, materials, filters }: ExpensesProps) {
-    const [search, setSearch] = useState(filters.search || '');
+export default function Expenses({ expenses, categories, accounts, materials, filters }: ExpensesProps) {
     const [dateFilter, setDateFilter] = useState(filters.date_filter || '');
     const [startDate, setStartDate] = useState(filters.start_date || '');
     const [endDate, setEndDate] = useState(filters.end_date || '');
+    const [specificDate, setSpecificDate] = useState(filters.specific_date || '');
     const isCustomRange = dateFilter === 'custom';
+    const isSpecificDate = dateFilter === 'specific_date';
     const [showModal, setShowModal] = useState(false);
     const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
@@ -45,14 +49,16 @@ export default function Expenses({ expenses, categories, materials, filters }: E
         setData('date', `${year || new Date().getFullYear()}-${formattedMonth}-${formattedDay}`);
     }, [day, month, year]);
 
-    const { settings } = usePage<SharedData>().props;
+    const { settings, outlet } = usePage<SharedData>().props;
     const salaryCategoryId = settings.salary_category_id;
     const materialExpenseCategoryId = settings.material_expense_category_id;
+    const assetPurchaseCategoryId = settings.asset_purchase_category_id;
 
     const { data, setData, post, put, reset, errors, processing, clearErrors } = useForm({
         expense_category_id: '' as string | number,
         amount: '' as string | number,
-        payment_method: 'Cash',
+        account_id: '' as string | number,
+        outlet_id: '' as number | '',
         date: new Date().toISOString().split('T')[0],
         description: '',
         // Payroll fields
@@ -62,6 +68,7 @@ export default function Expenses({ expenses, categories, materials, filters }: E
         bonus: 0,
         deduction: 0,
         deduction_note: '',
+        note: '',
         // Material fields
         items: [] as { material_id: string | number; quantity: number | ''; unit_price: number | '' }[],
     });
@@ -147,10 +154,35 @@ export default function Expenses({ expenses, categories, materials, filters }: E
         }
     }, [isPayroll, netSalary]);
 
-    useDebouncedSearch('expenses.index', search, 300, {
-        date_filter: dateFilter,
-        ...(isCustomRange ? { start_date: startDate, end_date: endDate } : {}),
-    });
+    const {
+        search,
+        setSearch,
+        perPage,
+        setPerPage,
+        filterValues,
+        setFilter,
+        reset: resetDataView,
+    } = useDataViewSearch(
+        'expenses.index',
+        filters,
+        {
+            date_filter: dateFilter,
+            ...(isCustomRange ? { start_date: startDate, end_date: endDate } : {}),
+            ...(isSpecificDate ? { specific_date: specificDate } : {}),
+        },
+        'created_at:desc',
+        300,
+        { category_id: filters.category_id || '' },
+    );
+    const isLoading = useTableLoading();
+
+    const handleReset = () => {
+        resetDataView();
+        setDateFilter('');
+        setStartDate('');
+        setEndDate('');
+        setSpecificDate('');
+    };
 
     const openCreateModal = () => {
         setEditingExpense(null);
@@ -161,6 +193,13 @@ export default function Expenses({ expenses, categories, materials, filters }: E
         setYear(new Date().getFullYear());
         setShowModal(true);
     };
+
+    useEffect(() => {
+        if (new URLSearchParams(window.location.search).get('action') === 'create') {
+            openCreateModal();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const openEditModal = (expense: Expense) => {
         setEditingExpense(expense);
@@ -176,7 +215,7 @@ export default function Expenses({ expenses, categories, materials, filters }: E
         setData({
             expense_category_id: expense.expense_category_id,
             amount: expense.amount,
-            payment_method: expense.payment_method,
+            account_id: expense.account_id,
             date: expense.date,
             description: expense.description || '',
             employee_id: expense.payroll?.employee_id || '',
@@ -185,6 +224,7 @@ export default function Expenses({ expenses, categories, materials, filters }: E
             bonus: expense.payroll?.bonus || 0,
             deduction: expense.payroll?.deduction || 0,
             deduction_note: expense.payroll?.deduction_note || '',
+            note: expense.payroll?.note || '',
             items:
                 expense.materials?.map((m) => ({
                     material_id: m.material_id,
@@ -224,14 +264,103 @@ export default function Expenses({ expenses, categories, materials, filters }: E
         }
     };
 
+    const columns: DataViewColumn<Expense>[] = [
+        {
+            key: 'id',
+            label: 'Expense ID',
+            className: 'font-mono text-xs whitespace-nowrap text-neutral-400',
+            render: (e) => e.unique_id || `EXP-${String(e.id).padStart(4, '0')}`,
+        },
+        {
+            key: 'actions',
+            label: 'Actions',
+            align: 'center',
+            render: (e) => (
+                <TableRowActions
+                    id={e.id}
+                    label={e.description || 'expense'}
+                    view={{ href: route('expenses.show', e.id) }}
+                    edit={{ onClick: () => openEditModal(e) }}
+                    deleteRoute="expenses.destroy"
+                />
+            ),
+        },
+        {
+            key: 'date',
+            label: 'Date',
+            className: 'whitespace-nowrap text-neutral-600 dark:text-neutral-400',
+            render: (e) => formatDate(e.date),
+        },
+        {
+            key: 'category',
+            label: 'Category',
+            render: (e) => (
+                <span className="rounded-md bg-neutral-100 px-2 py-1 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
+                    {e.category?.name}
+                </span>
+            ),
+        },
+        {
+            key: 'description',
+            label: 'Description',
+            className: 'text-neutral-900 dark:text-neutral-100',
+            render: (e) => e.description || '-',
+        },
+        {
+            key: 'account',
+            label: 'Account',
+            className: 'text-neutral-600 dark:text-neutral-400',
+            render: (e) => e.account?.name,
+        },
+        {
+            key: 'amount',
+            label: 'Amount',
+            align: 'right',
+            className: 'font-bold text-neutral-900 dark:text-neutral-100',
+            render: (e) => formatCurrency(Number(e.amount)),
+        },
+    ];
+
+    const renderExpenseCard = (e: Expense) => (
+        <div className="group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 transition-all hover:shadow-xl dark:border-neutral-800 dark:bg-neutral-900">
+            <div className="absolute top-4 right-4">
+                <TableRowActions
+                    id={e.id}
+                    label={e.description || 'expense'}
+                    view={{ href: route('expenses.show', e.id) }}
+                    edit={{ onClick: () => openEditModal(e) }}
+                    deleteRoute="expenses.destroy"
+                />
+            </div>
+            <div className="mb-3 flex items-start gap-4 pr-8">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-900/20">
+                    <Tag className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="min-w-0">
+                    <h4 className="truncate font-bold text-neutral-900 dark:text-neutral-100">{e.category?.name}</h4>
+                    <p className="font-mono text-xs text-neutral-400">{e.unique_id || `EXP-${String(e.id).padStart(4, '0')}`}</p>
+                </div>
+            </div>
+            {e.description && <p className="mb-3 line-clamp-2 text-sm text-neutral-500 dark:text-neutral-400">{e.description}</p>}
+            <div className="flex items-center justify-between border-t border-neutral-100 pt-3 text-xs text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                <span>
+                    {formatDate(e.date)} · {e.account?.name}
+                </span>
+                <span className="text-sm font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(Number(e.amount))}</span>
+            </div>
+        </div>
+    );
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Expenses" />
             <div className="space-y-4 p-4">
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                    <div>
-                        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Expenses</h1>
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400">Manage shop expenditures</p>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                            <Receipt className="h-4 w-4" />
+                        </div>
+                        <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Expenses</h1>
                     </div>
                     <div className="flex gap-2">
                         <Link
@@ -240,112 +369,59 @@ export default function Expenses({ expenses, categories, materials, filters }: E
                         >
                             <Tag className="h-4 w-4" /> Categories
                         </Link>
-                        <button
-                            onClick={openCreateModal}
-                            className="flex items-center gap-2 rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white shadow-lg dark:bg-neutral-100 dark:text-neutral-900"
-                        >
-                            <Plus className="h-4 w-4" /> Add Expense
-                        </button>
+                        <FormButton onClick={openCreateModal} icon={<Plus className="h-4 w-4" />}>
+                            Add Expense
+                        </FormButton>
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row">
-                    <div className="relative flex-1 sm:flex-none">
-                        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-                        <input
-                            type="text"
-                            placeholder="Search expenses..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-full rounded-xl border border-neutral-200 bg-transparent py-2.5 pr-4 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500/30 focus:outline-none sm:w-80 dark:border-neutral-800"
-                        />
-                    </div>
-                    <select
-                        value={dateFilter}
-                        onChange={(e) => setDateFilter(e.target.value)}
-                        className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm transition-all focus:ring-2 focus:ring-blue-500/30 focus:outline-none sm:w-44 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
-                    >
-                        {DATE_FILTERS.map((f) => (
-                            <option key={f.value} value={f.value}>
-                                {f.label}
-                            </option>
-                        ))}
-                    </select>
-                    {isCustomRange && (
+                <DataView
+                    data={expenses.data}
+                    getKey={(e) => e.id}
+                    loading={isLoading}
+                    emptyMessage="No expenses found"
+                    search={search}
+                    onSearchChange={setSearch}
+                    searchPlaceholder="Search expenses..."
+                    filters={
                         <>
-                            <input
-                                type="date"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm transition-all focus:ring-2 focus:ring-blue-500/30 focus:outline-none sm:w-40 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
-                            />
-                            <input
-                                type="date"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm transition-all focus:ring-2 focus:ring-blue-500/30 focus:outline-none sm:w-40 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
+                            <FilterSelect
+                                icon={<Tag className="h-4 w-4" />}
+                                containerClassName="w-full sm:w-56"
+                                value={filterValues.category_id ?? ''}
+                                onChange={(e) => setFilter('category_id', e.target.value)}
+                            >
+                                <option value="">All Categories</option>
+                                {categories.map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.name}
+                                    </option>
+                                ))}
+                            </FilterSelect>
+                            <DateFilterBar
+                                dateFilter={dateFilter}
+                                onDateFilterChange={setDateFilter}
+                                isCustomRange={isCustomRange}
+                                startDate={startDate}
+                                onStartDateChange={setStartDate}
+                                endDate={endDate}
+                                onEndDateChange={setEndDate}
+                                isSpecificDate={isSpecificDate}
+                                specificDate={specificDate}
+                                onSpecificDateChange={setSpecificDate}
                             />
                         </>
-                    )}
-                </div>
-
-                <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
-                    <div className="overflow-x-auto">
-                        <table className="w-full min-w-[600px] text-sm">
-                            <thead>
-                                <tr className="bg-neutral-50 text-xs tracking-wider text-neutral-500 uppercase dark:bg-neutral-800/50">
-                                    <th className="px-5 py-3 text-left font-semibold">Expense ID</th>
-                                    <th className="px-5 py-3 text-left font-semibold">Date</th>
-                                    <th className="px-5 py-3 text-left font-semibold">Category</th>
-                                    <th className="px-5 py-3 text-left font-semibold">Description</th>
-                                    <th className="px-5 py-3 text-left font-semibold">Method</th>
-                                    <th className="px-5 py-3 text-right font-semibold">Amount</th>
-                                    <th className="px-5 py-3 text-center font-semibold">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                                {expenses.data.map((e) => (
-                                    <tr key={e.id} className="transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/30">
-                                        <td className="px-5 py-4 font-mono text-xs whitespace-nowrap text-neutral-400">
-                                            {e.unique_id || `EXP-${String(e.id).padStart(4, '0')}`}
-                                        </td>
-                                        <td className="px-5 py-4 whitespace-nowrap text-neutral-600 dark:text-neutral-400">{e.date}</td>
-                                        <td className="px-5 py-4">
-                                            <span className="rounded-md bg-neutral-100 px-2 py-1 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
-                                                {e.category?.name}
-                                            </span>
-                                        </td>
-                                        <td className="px-5 py-4 text-neutral-900 dark:text-neutral-100">{e.description || '-'}</td>
-                                        <td className="px-5 py-4 text-neutral-600 dark:text-neutral-400">{e.payment_method}</td>
-                                        <td className="px-5 py-4 text-right font-bold text-neutral-900 dark:text-neutral-100">
-                                            {formatCurrency(Number(e.amount))}
-                                        </td>
-                                        <td className="px-5 py-4 text-center">
-                                            <div className="flex items-center justify-center">
-                                                <TableRowActions
-                                                    id={e.id}
-                                                    label={e.description || 'expense'}
-                                                    view={{ href: route('expenses.show', e.id) }}
-                                                    edit={{ onClick: () => openEditModal(e) }}
-                                                    deleteRoute="expenses.destroy"
-                                                />
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {expenses.data.length === 0 && (
-                                    <tr>
-                                        <td colSpan={7} className="px-5 py-10 text-center text-neutral-400 italic">
-                                            No expenses found
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <Pagination links={expenses.links} />
+                    }
+                    onReset={handleReset}
+                    viewKey="expenses"
+                    defaultView="table"
+                    columns={columns}
+                    renderCard={renderExpenseCard}
+                    pagination={expenses.links}
+                    total={expenses.total}
+                    perPage={perPage}
+                    onPerPageChange={setPerPage}
+                />
             </div>
 
             <SaveConfirmationModal
@@ -376,21 +452,33 @@ export default function Expenses({ expenses, categories, materials, filters }: E
                             <FormLabel htmlFor="expense_category_id" required>
                                 Category
                             </FormLabel>
-                            <select
+                            <FormSelect
                                 id="expense_category_id"
                                 value={data.expense_category_id}
                                 onChange={(e) => setData('expense_category_id', Number(e.target.value))}
-                                className="h-12 w-full rounded-xl border border-neutral-200 bg-transparent px-3 text-sm md:h-10 dark:border-neutral-800 dark:text-neutral-100"
                                 required
                             >
                                 <option value="">Select Category</option>
-                                {categories.map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                        {c.name}
-                                    </option>
-                                ))}
-                            </select>
+                                {categories
+                                    .filter(
+                                        (c) =>
+                                            editingExpense ||
+                                            (Number(c.id) !== Number(salaryCategoryId) &&
+                                                Number(c.id) !== Number(materialExpenseCategoryId) &&
+                                                Number(c.id) !== Number(assetPurchaseCategoryId)),
+                                    )
+                                    .map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.name}
+                                        </option>
+                                    ))}
+                            </FormSelect>
                             {errors.expense_category_id && <p className="text-xs text-red-500">{errors.expense_category_id}</p>}
+                            {!editingExpense && (
+                                <p className="text-xs text-neutral-400">
+                                    Salary payments, material purchases, and asset purchases are now made from their own pages.
+                                </p>
+                            )}
                         </div>
                         {!isPayroll && (
                             <FormInput
@@ -459,10 +547,10 @@ export default function Expenses({ expenses, categories, materials, filters }: E
                                     />
                                 </div>
                                 <div>
-                                    <select
+                                    <FormSelect
                                         value={month}
                                         onChange={(e) => setMonth(parseInt(e.target.value, 10))}
-                                        className="h-12 w-full rounded-xl border border-neutral-200 bg-transparent px-1 text-xs md:h-10 dark:border-neutral-800 dark:text-neutral-100"
+                                        className="px-1 text-xs"
                                         required
                                     >
                                         {Array.from({ length: 12 }, (_, i) => (
@@ -470,7 +558,7 @@ export default function Expenses({ expenses, categories, materials, filters }: E
                                                 {new Date(0, i).toLocaleString('default', { month: 'short' })}
                                             </option>
                                         ))}
-                                    </select>
+                                    </FormSelect>
                                 </div>
                                 <div>
                                     <input
@@ -494,19 +582,41 @@ export default function Expenses({ expenses, categories, materials, filters }: E
                             {errors.date && <p className="text-xs text-red-500">{errors.date}</p>}
                         </div>
                         <div className="space-y-1">
-                            <FormLabel required>Method</FormLabel>
-                            <select
-                                value={data.payment_method}
-                                onChange={(e) => setData('payment_method', e.target.value)}
-                                className="h-12 w-full rounded-xl border border-neutral-200 bg-transparent px-3 text-sm md:h-10 dark:border-neutral-800 dark:text-neutral-100"
+                            <FormLabel required>Payment Account</FormLabel>
+                            <FormSelect
+                                value={data.account_id}
+                                onChange={(e) => setData('account_id', e.target.value)}
                                 required
                             >
-                                <option value="Cash">Cash</option>
-                                <option value="Bkash">Bkash</option>
-                                <option value="Bank">Bank</option>
-                            </select>
+                                <option value="">Select Account</option>
+                                {accounts.map((a) => (
+                                    <option key={a.id} value={a.id}>
+                                        {a.name} {a.account_number ? `(${a.account_number})` : ''}
+                                    </option>
+                                ))}
+                            </FormSelect>
+                            {errors.account_id && <p className="text-xs text-red-500">{errors.account_id}</p>}
                         </div>
                     </div>
+
+                    {!editingExpense && outlet?.isAll && (
+                        <div className="space-y-1">
+                            <FormLabel required>Outlet</FormLabel>
+                            <FormSelect
+                                value={data.outlet_id}
+                                onChange={(e) => setData('outlet_id', e.target.value ? Number(e.target.value) : '')}
+                                required
+                            >
+                                <option value="">Select an outlet</option>
+                                {outlet.available.map((o) => (
+                                    <option key={o.id} value={o.id}>
+                                        {o.name}
+                                    </option>
+                                ))}
+                            </FormSelect>
+                            {errors.outlet_id && <p className="text-xs text-red-500">{errors.outlet_id}</p>}
+                        </div>
+                    )}
                     <div className="space-y-1">
                         <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Description</label>
                         <textarea

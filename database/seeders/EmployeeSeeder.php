@@ -59,7 +59,8 @@ class EmployeeSeeder extends Seeder
             ],
         ];
 
-        // Using insert() is much faster than running a foreach loop with Eloquent::create()
-        Employee::insert($employees);
+        foreach ($employees as $employee) {
+            Employee::firstOrCreate(['employee_id' => $employee['employee_id']], $employee);
+        }
     }
 }

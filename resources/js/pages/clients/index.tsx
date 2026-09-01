@@ -1,20 +1,25 @@
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { TableRowActions } from '@/components/table-row-actions';
+import { DataView, type DataViewColumn } from '@/components/ui/data-view';
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { FilterSelect } from '@/components/ui/filter-select';
 import { FormButton } from '@/components/ui/form-button';
 import { FormInput } from '@/components/ui/form-input';
+import { FormSelect } from '@/components/ui/form-select';
 import { Modal } from '@/components/ui/modal';
-import { Pagination } from '@/components/ui/pagination';
+import { PasswordInput } from '@/components/ui/password-input';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { CLIENT_TYPES, CLIENT_TYPE_STYLES, type ClientType } from '@/constants/status';
-import { useDebouncedSearch } from '@/hooks/use-debounced-search';
+import { useDataViewSearch } from '@/hooks/use-data-view-search';
+import { useTableLoading } from '@/hooks/use-table-loading';
 import AppLayout from '@/layouts/app-layout';
 import { formatCurrency } from '@/lib/format';
 import { type BreadcrumbItem, Client } from '@/types';
 import type { ClientsProps } from '@/types/pages/clients';
-import { Head, useForm } from '@inertiajs/react';
-import { PackagePlus, Plus, Search, Settings2, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { Bell, CalendarClock, Lock, MapPin, PackagePlus, Phone, Plus, Settings2, Tag, Trash2, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -26,22 +31,33 @@ const breadcrumbs: BreadcrumbItem[] = [
 const typeBadgeClass = (type: ClientType) => CLIENT_TYPE_STYLES[type] ?? CLIENT_TYPE_STYLES.Consumer;
 
 export default function Clients({ clients, products, filters }: ClientsProps) {
-    const [search, setSearch] = useState(filters.search || '');
     const [showModal, setShowModal] = useState(false);
     const [editingClient, setEditingClient] = useState<Client | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
     const [priceIndexToDelete, setPriceIndexToDelete] = useState<number | null>(null);
 
-    const { data, setData, post, put, reset, errors, processing, clearErrors } = useForm({
+    const { data, setData, post, put, transform, reset, errors, processing, clearErrors } = useForm({
         name: '',
         phone: '',
         type: 'Consumer' as ClientType,
         address: '',
+        internal_note: '',
+        username: '',
+        password: '',
         custom_prices: [] as { product_id: number; custom_price: string | number }[],
     });
 
-    useDebouncedSearch('clients.index', search);
+    const {
+        search,
+        setSearch,
+        perPage,
+        setPerPage,
+        filterValues,
+        setFilter,
+        reset: resetDataView,
+    } = useDataViewSearch('clients.index', filters, {}, 'created_at:desc', 300, { type: filters.type || '' });
+    const isLoading = useTableLoading();
 
     const openCreateModal = () => {
         setEditingClient(null);
@@ -49,6 +65,13 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
         clearErrors();
         setShowModal(true);
     };
+
+    useEffect(() => {
+        if (new URLSearchParams(window.location.search).get('action') === 'create') {
+            openCreateModal();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const openEditModal = (client: Client) => {
         setEditingClient(client);
@@ -58,6 +81,9 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
             phone: client.phone,
             type: client.type,
             address: client.address || '',
+            internal_note: client.internal_note || '',
+            username: client.username || '',
+            password: '',
             custom_prices: client.custom_prices?.map((cp) => ({ product_id: cp.product_id, custom_price: cp.custom_price })) || [],
         });
         setShowModal(true);
@@ -69,12 +95,11 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
         if (editingClient) {
             setShowSaveConfirm(true);
         } else {
-            const payload = {
+            transform((data) => ({
                 ...data,
                 custom_prices: data.custom_prices.filter((cp) => cp.product_id && cp.custom_price !== ''),
-            };
+            }));
             post(route('clients.store'), {
-                data: payload,
                 onSuccess: () => {
                     setShowModal(false);
                     reset();
@@ -85,12 +110,11 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
 
     const confirmSave = () => {
         if (editingClient) {
-            const payload = {
+            transform((data) => ({
                 ...data,
                 custom_prices: data.custom_prices.filter((cp) => cp.product_id && cp.custom_price !== ''),
-            };
+            }));
             put(route('clients.update', editingClient.id), {
-                data: payload,
                 onSuccess: () => {
                     setShowSaveConfirm(false);
                     setShowModal(false);
@@ -102,92 +126,195 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
         }
     };
 
+    const clientQuickActions = (c: Client) => (
+        <>
+            <DropdownMenuItem asChild>
+                <Link href={`${route('clients.show', c.id)}?action=add-meeting`}>
+                    <CalendarClock className="mr-2 h-4 w-4" /> Add Meeting
+                </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+                <Link href={`${route('clients.show', c.id)}?action=add-follow-up`}>
+                    <Bell className="mr-2 h-4 w-4" /> Add Follow-up
+                </Link>
+            </DropdownMenuItem>
+        </>
+    );
+
+    const columns: DataViewColumn<Client>[] = [
+        {
+            key: 'actions',
+            label: 'Actions',
+            align: 'center',
+            render: (c) => (
+                <TableRowActions
+                    id={c.id}
+                    label={c.name}
+                    view={{ href: route('clients.show', c.id) }}
+                    edit={{ onClick: () => openEditModal(c) }}
+                    deleteRoute="clients.destroy"
+                    customActions={clientQuickActions(c)}
+                />
+            ),
+        },
+        {
+            key: 'name',
+            label: 'Name',
+            render: (c) => (
+                <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20">
+                        <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{c.name.charAt(0)}</span>
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="font-medium text-neutral-800 dark:text-neutral-200">{c.name}</span>
+                            <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase ${typeBadgeClass(c.type)}`}>{c.type}</span>
+                        </div>
+                        <p className="font-mono text-xs font-semibold text-blue-600">{c.client_uuid}</p>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            key: 'phone',
+            label: 'Phone',
+            className: 'text-neutral-600 dark:text-neutral-400',
+            render: (c) => c.phone,
+        },
+        {
+            key: 'address',
+            label: 'Address',
+            className: 'max-w-xs truncate text-neutral-600 dark:text-neutral-400',
+            render: (c) => c.address || '-',
+        },
+        {
+            key: 'orders',
+            label: 'Orders',
+            align: 'right',
+            className: 'font-semibold text-neutral-900 dark:text-neutral-100',
+            render: (c) => c.total_orders ?? 0,
+        },
+        {
+            key: 'paid',
+            label: 'Paid',
+            align: 'right',
+            className: 'font-semibold text-emerald-600',
+            render: (c) => formatCurrency(Number(c.total_paid || 0)),
+        },
+        {
+            key: 'due',
+            label: 'Due',
+            align: 'right',
+            className: 'font-semibold text-red-500',
+            render: (c) => formatCurrency(Number(c.total_due || 0)),
+        },
+    ];
+
+    const renderClientCard = (c: Client) => (
+        <div className="group overflow-hidden rounded-2xl border border-neutral-200 bg-white transition-shadow duration-300 hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
+            <div className="flex items-start gap-3 p-5">
+                <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/20">
+                    <span className="text-sm font-bold text-white">{c.name.charAt(0).toUpperCase()}</span>
+                </div>
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                            <h4 className="truncate font-bold text-neutral-900 dark:text-neutral-100">{c.name}</h4>
+                            <p className="font-mono text-xs font-semibold text-blue-600">{c.client_uuid}</p>
+                        </div>
+                        <TableRowActions
+                            id={c.id}
+                            label={c.name}
+                            view={{ href: route('clients.show', c.id) }}
+                            edit={{ onClick: () => openEditModal(c) }}
+                            deleteRoute="clients.destroy"
+                            customActions={clientQuickActions(c)}
+                        />
+                    </div>
+                    <span className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${typeBadgeClass(c.type)}`}>
+                        {c.type}
+                    </span>
+                </div>
+            </div>
+
+            <div className="space-y-1.5 px-5 pb-4 text-xs text-neutral-500 dark:text-neutral-400">
+                <p className="flex items-center gap-1.5">
+                    <Phone className="h-3 w-3 flex-shrink-0 text-neutral-400" /> {c.phone}
+                </p>
+                {c.address && (
+                    <p className="flex items-center gap-1.5">
+                        <MapPin className="h-3 w-3 flex-shrink-0 text-neutral-400" />
+                        <span className="line-clamp-1">{c.address}</span>
+                    </p>
+                )}
+            </div>
+
+            <div className="grid grid-cols-3 divide-x divide-neutral-100 border-t border-neutral-100 bg-neutral-50/50 dark:divide-neutral-800 dark:border-neutral-800 dark:bg-neutral-800/20">
+                <div className="p-3 text-center">
+                    <p className="truncate text-sm font-bold text-neutral-900 dark:text-neutral-100">{c.total_orders ?? 0}</p>
+                    <p className="truncate text-[9px] font-medium tracking-wider text-neutral-400 uppercase">Orders</p>
+                </div>
+                <div className="p-3 text-center">
+                    <p className="truncate text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(Number(c.total_paid || 0))}</p>
+                    <p className="truncate text-[9px] font-medium tracking-wider text-neutral-400 uppercase">Paid</p>
+                </div>
+                <div className="p-3 text-center">
+                    <p className="truncate text-sm font-bold text-red-500 dark:text-red-400">{formatCurrency(Number(c.total_due || 0))}</p>
+                    <p className="truncate text-[9px] font-medium tracking-wider text-neutral-400 uppercase">Due</p>
+                </div>
+            </div>
+        </div>
+    );
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Clients" />
             <div className="space-y-4 p-4">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Clients</h1>
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400">{clients.total} registered clients</p>
-                    </div>
-                    <button
-                        onClick={openCreateModal}
-                        className="flex items-center gap-2 rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white shadow-lg dark:bg-neutral-100 dark:text-neutral-900"
-                    >
-                        <Plus className="h-4 w-4" /> Add Client
-                    </button>
-                </div>
-
-                <div className="relative">
-                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-                    <input
-                        type="text"
-                        placeholder="Search clients..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full rounded-xl border border-neutral-200 bg-transparent py-2.5 pr-4 pl-10 text-sm transition-all focus:ring-2 focus:ring-blue-500/30 focus:outline-none sm:w-80 dark:border-neutral-800"
-                    />
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {clients.data.map((c) => (
-                        <div
-                            key={c.id}
-                            className="group relative rounded-2xl border border-neutral-200 bg-white p-5 transition-shadow duration-300 hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900"
-                        >
-                            <div className="absolute top-4 right-4 z-10">
-                                <TableRowActions
-                                    id={c.id}
-                                    label={c.name}
-                                    view={{ href: route('clients.show', c.id) }}
-                                    edit={{ onClick: () => openEditModal(c) }}
-                                    deleteRoute="clients.destroy"
-                                />
-                            </div>
-                            <div className="mb-3 flex items-start justify-between">
-                                <div className="pr-16">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <h4 className="text-sm font-bold break-words text-neutral-900 sm:text-base dark:text-neutral-100">
-                                            {c.name}
-                                        </h4>
-                                        <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase ${typeBadgeClass(c.type)}`}>
-                                            {c.type}
-                                        </span>
-                                    </div>
-                                    <p className="mt-0.5 font-mono text-xs font-semibold text-blue-600">{c.client_uuid}</p>
-                                    <p className="mt-0.5 text-xs break-all text-neutral-400">{c.phone}</p>
-                                    <p className="mt-0.5 line-clamp-2 text-xs text-neutral-400">{c.address || '-'}</p>
-                                </div>
-                                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/20">
-                                    <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{c.name.charAt(0)}</span>
-                                </div>
-                            </div>
-                            <div className="mt-4 grid grid-cols-3 gap-2">
-                                <div className="min-w-0 rounded-xl bg-neutral-50 p-2.5 text-center dark:bg-neutral-800/50">
-                                    <p className="truncate text-sm font-bold text-neutral-900 sm:text-base lg:text-lg dark:text-neutral-100">
-                                        {c.total_orders}
-                                    </p>
-                                    <p className="truncate text-[9px] font-medium tracking-wider text-neutral-500 uppercase sm:text-[10px]">Orders</p>
-                                </div>
-                                <div className="min-w-0 rounded-xl bg-emerald-50 p-2.5 text-center dark:bg-emerald-900/20">
-                                    <p className="truncate text-sm font-bold text-emerald-600 sm:text-base lg:text-lg dark:text-emerald-400">
-                                        {formatCurrency(Number(c.total_paid))}
-                                    </p>
-                                    <p className="truncate text-[9px] font-medium tracking-wider text-emerald-600 uppercase sm:text-[10px]">Paid</p>
-                                </div>
-                                <div className="min-w-0 rounded-xl bg-red-50 p-2.5 text-center dark:bg-red-900/20">
-                                    <p className="truncate text-sm font-bold text-red-500 sm:text-base lg:text-lg dark:text-red-400">
-                                        {formatCurrency(Number(c.total_due))}
-                                    </p>
-                                    <p className="truncate text-[9px] font-medium tracking-wider text-red-500 uppercase sm:text-[10px]">Due</p>
-                                </div>
-                            </div>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                            <Users className="h-4 w-4" />
                         </div>
-                    ))}
+                        <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Clients</h1>
+                    </div>
+                    <FormButton onClick={openCreateModal} icon={<Plus className="h-4 w-4" />}>
+                        Add Client
+                    </FormButton>
                 </div>
 
-                <Pagination links={clients.links} />
+                <DataView
+                    data={clients.data}
+                    getKey={(c) => c.id}
+                    loading={isLoading}
+                    emptyMessage="No clients found"
+                    search={search}
+                    onSearchChange={setSearch}
+                    searchPlaceholder="Search clients..."
+                    filters={
+                        <FilterSelect
+                            icon={<Tag className="h-4 w-4" />}
+                            containerClassName="w-full sm:w-48"
+                            value={filterValues.type ?? ''}
+                            onChange={(e) => setFilter('type', e.target.value)}
+                        >
+                            <option value="">All Types</option>
+                            {CLIENT_TYPES.map((t) => (
+                                <option key={t} value={t}>
+                                    {t}
+                                </option>
+                            ))}
+                        </FilterSelect>
+                    }
+                    onReset={resetDataView}
+                    viewKey="clients"
+                    defaultView="card"
+                    columns={columns}
+                    renderCard={renderClientCard}
+                    pagination={clients.links}
+                    total={clients.total}
+                    perPage={perPage}
+                    onPerPageChange={setPerPage}
+                />
             </div>
 
             <SaveConfirmationModal
@@ -257,19 +384,19 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
                             <label htmlFor="client_type" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                                 Type
                             </label>
-                            <select
+                            <FormSelect
                                 id="client_type"
                                 value={data.type}
                                 disabled={processing}
                                 onChange={(e) => setData('type', e.target.value as ClientType)}
-                                className="mt-1 h-12 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none disabled:opacity-60 md:h-10 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
+                                className="mt-1"
                             >
                                 {CLIENT_TYPES.map((t) => (
                                     <option key={t} value={t} className="bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100">
                                         {t}
                                     </option>
                                 ))}
-                            </select>
+                            </FormSelect>
                             {errors.type && <p className="mt-1 text-xs font-medium text-red-500">{errors.type}</p>}
                         </div>
                     </div>
@@ -289,6 +416,59 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
                             placeholder="Street details, City, Postcode"
                         />
                         {errors.address && <p className="mt-1 text-xs font-medium text-red-500">{errors.address}</p>}
+                    </div>
+
+                    {/* Internal Note */}
+                    <div>
+                        <label
+                            htmlFor="client_internal_note"
+                            className="flex items-center gap-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300"
+                        >
+                            <Lock className="h-3.5 w-3.5 text-neutral-400" /> Internal Note
+                        </label>
+                        <textarea
+                            id="client_internal_note"
+                            value={data.internal_note}
+                            disabled={processing}
+                            onChange={(e) => setData('internal_note', e.target.value)}
+                            className="mt-1 w-full rounded-xl border border-neutral-200 bg-transparent px-3 py-2 text-sm transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none disabled:opacity-60 dark:border-neutral-800 dark:text-neutral-100"
+                            rows={2}
+                            placeholder="Staff-only — never shown to the client"
+                        />
+                        {errors.internal_note && <p className="mt-1 text-xs font-medium text-red-500">{errors.internal_note}</p>}
+                    </div>
+
+                    {/* Client Portal Access */}
+                    <div className="space-y-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-800/40">
+                        <p className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase dark:text-neutral-500">
+                            Client Portal Access (Optional)
+                        </p>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <FormInput
+                                id="client_username"
+                                label="Username"
+                                value={data.username}
+                                disabled={processing}
+                                onChange={(e) => setData('username', e.target.value)}
+                                className="h-11 rounded-xl border-neutral-200 bg-white disabled:opacity-60 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
+                                placeholder="e.g. acme-corp"
+                                error={errors.username}
+                            />
+                            <PasswordInput
+                                id="client_password"
+                                label={editingClient ? 'New Password' : 'Password'}
+                                value={data.password}
+                                disabled={processing}
+                                onChange={(e) => setData('password', e.target.value)}
+                                className="h-11 rounded-xl border-neutral-200 bg-white disabled:opacity-60 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
+                                placeholder={editingClient ? 'Leave blank to keep current' : 'Password'}
+                                error={errors.password}
+                            />
+                        </div>
+                        <p className="text-xs text-neutral-400">
+                            Fill both to let this client log in at <span className="font-mono">/portal</span> and view their own invoices and prices.
+                            Leave both blank for no portal access.
+                        </p>
                     </div>
 
                     {/* Conditional Corporate section */}

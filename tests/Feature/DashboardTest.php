@@ -1,11 +1,12 @@
 <?php
 
-use App\Models\User;
 use App\Models\Client;
-use App\Models\Invoice;
+use App\Models\ClientActivity;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\GlobalSetting;
+use App\Models\Invoice;
+use App\Models\User;
 
 test('guests are redirected to the login page', function () {
     $this->get('/dashboard')->assertRedirect('/login');
@@ -193,6 +194,31 @@ test('dashboard period=this_year excludes invoices from last year', function () 
     );
 });
 
+test('dashboard pending count only includes Processing invoices', function () {
+    // Regression guard for the InvoiceStatus::Processing enum fix (P1.6): 'pending' must count
+    // exactly the invoices whose status is Processing, not every invoice regardless of status.
+    $user = User::factory()->create();
+    $client = Client::create(['name' => 'John Doe', 'phone' => '123456789']);
+
+    Invoice::create([
+        'invoice_uuid' => 'INV-PENDING-1', 'date' => now()->toDateString(), 'client_id' => $client->id,
+        'total' => 100, 'paid' => 0, 'due' => 100, 'status' => 'Processing', 'method' => 'Cash',
+    ]);
+    Invoice::create([
+        'invoice_uuid' => 'INV-PENDING-2', 'date' => now()->toDateString(), 'client_id' => $client->id,
+        'total' => 200, 'paid' => 0, 'due' => 200, 'status' => 'Processing', 'method' => 'Cash',
+    ]);
+    Invoice::create([
+        'invoice_uuid' => 'INV-DELIVERED', 'date' => now()->toDateString(), 'client_id' => $client->id,
+        'total' => 300, 'paid' => 300, 'due' => 0, 'status' => 'Delivered', 'method' => 'Cash',
+    ]);
+
+    $response = $this->actingAs($user)->get('/dashboard');
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page->where('stats.pending', 2));
+});
+
 test('dashboard reports transportation cost broken down by business and delivery', function () {
     $user = User::factory()->create();
 
@@ -223,5 +249,56 @@ test('dashboard reports transportation cost broken down by business and delivery
         ->where('transportExpense.business', 3000)
         ->where('transportExpense.delivery', 2000)
         ->where('transportExpense.total', 5000)
+    );
+});
+
+test('dashboard splits pending activities into meetings vs follow-ups', function () {
+    $user = User::factory()->create();
+    $client = Client::create(['name' => 'John Doe', 'phone' => '123456789']);
+
+    ClientActivity::create([
+        'outlet_id' => $user->outlet_id, 'client_id' => $client->id, 'type' => 'meeting',
+        'scheduled_at' => now()->addDay(), 'status' => 'pending',
+    ]);
+    ClientActivity::create([
+        'outlet_id' => $user->outlet_id, 'client_id' => $client->id, 'type' => 'follow_up',
+        'scheduled_at' => now()->subDay(), 'status' => 'pending',
+    ]);
+    // Neither done nor cancelled activities count regardless of their type/date.
+    ClientActivity::create([
+        'outlet_id' => $user->outlet_id, 'client_id' => $client->id, 'type' => 'meeting',
+        'scheduled_at' => now()->subDay(), 'status' => 'done',
+    ]);
+
+    $response = $this->actingAs($user)->get('/dashboard');
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->where('meetings.total', 1)
+        ->has('meetings.items', 1)
+        ->where('followUps.total', 1)
+        ->has('followUps.items', 1)
+    );
+});
+
+test('dashboard meeting widgets are limited and omitted when empty', function () {
+    $user = User::factory()->create();
+    $client = Client::create(['name' => 'John Doe', 'phone' => '123456789']);
+
+    for ($i = 0; $i < 8; $i++) {
+        ClientActivity::create([
+            'outlet_id' => $user->outlet_id, 'client_id' => $client->id, 'type' => 'meeting',
+            'scheduled_at' => now()->addDays($i + 1), 'status' => 'pending',
+        ]);
+    }
+
+    $response = $this->actingAs($user)->get('/dashboard');
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->where('meetings.total', 8)
+        ->has('meetings.items', 5) // capped, even though 8 exist
+        ->where('followUps.total', 0)
+        ->has('followUps.items', 0)
     );
 });

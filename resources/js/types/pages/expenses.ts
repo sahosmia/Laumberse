@@ -1,11 +1,21 @@
-import type { Expense, ExpenseCategory, Material } from '@/types';
+import type { Account, Expense, ExpenseCategory, Material } from '@/types';
 import type { Paginated } from '@/types/pagination';
 
 export interface ExpensesProps {
     expenses: Paginated<Expense>;
     categories: ExpenseCategory[];
+    accounts: Pick<Account, 'id' | 'name' | 'account_number'>[];
     materials: Material[];
-    filters: { search?: string; date_filter?: string; start_date?: string; end_date?: string };
+    filters: {
+        search?: string;
+        category_id?: string;
+        date_filter?: string;
+        start_date?: string;
+        end_date?: string;
+        specific_date?: string;
+        sort?: string;
+        per_page?: number;
+    };
 }
 
 export interface EligibleEmployee {
@@ -25,7 +35,7 @@ export interface ExpenseShowProps {
 
 export interface ExpenseCategoriesProps {
     categories: Paginated<ExpenseCategory>;
-    filters: { search?: string };
+    filters: { search?: string; sort?: string; per_page?: number };
 }
 
 export interface MaterialItem {
@@ -45,11 +55,12 @@ export interface MaterialItemsFormProps {
 export interface PayrollFormProps {
     data: {
         month: number;
-        year: number;
+        year: number | '';
         employee_id: string | number;
         bonus: number | '';
         deduction: number | '';
         deduction_note: string;
+        note: string;
     };
     // Alignment with Inertia's useForm signature without using any
     setData: (key: string, value: string | number | boolean | null | undefined) => void;

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Account;
 use App\Models\User;
 use App\Models\Client;
 use App\Models\Product;
@@ -7,7 +8,7 @@ use App\Models\Category;
 use App\Models\Invoice;
 
 test('invoice can be stored with existing client', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $category = Category::create(['name' => 'Test Category', 'slug' => 'test-category']);
     $product = Product::create([
         'name' => 'Test Product',
@@ -19,6 +20,7 @@ test('invoice can be stored with existing client', function () {
         'phone' => '01700000000',
         'address' => 'Test Address'
     ]);
+    $account = Account::create(['name' => 'Cash', 'opening_balance' => 0, 'current_balance' => 0]);
 
     $data = [
         'date' => now()->format('Y-m-d'),
@@ -29,6 +31,7 @@ test('invoice can be stored with existing client', function () {
         'due' => 0,
         'status' => 'Processing',
         'method' => 'Cash',
+        'account_id' => $account->id,
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
@@ -50,7 +53,7 @@ test('invoice can be stored without ever touching the discount amount field', fu
     // Regression test: the create form used to default discount_amount to an empty
     // string, which failed the old `required` rule and silently blocked creation
     // with no visible error, making the invoice appear to "not show up" afterward.
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $category = Category::create(['name' => 'Test Category', 'slug' => 'test-category']);
     $product = Product::create([
         'name' => 'Test Product',
@@ -61,6 +64,7 @@ test('invoice can be stored without ever touching the discount amount field', fu
         'name' => 'Existing Client',
         'phone' => '01700000000',
     ]);
+    $account = Account::create(['name' => 'Cash', 'opening_balance' => 0, 'current_balance' => 0]);
 
     $data = [
         'date' => now()->format('Y-m-d'),
@@ -71,6 +75,7 @@ test('invoice can be stored without ever touching the discount amount field', fu
         'due' => 0,
         'status' => 'Processing',
         'method' => 'Cash',
+        'account_id' => $account->id,
         'discount_type' => 'Fixed',
         // discount_amount intentionally omitted
         'items' => [
@@ -89,8 +94,10 @@ test('invoice can be stored without ever touching the discount amount field', fu
 test('invoice can be stored without ever touching the paid amount field', function () {
     // Regression test: same class of bug as discount_amount above — paid used to
     // default to an empty string and was `required`, so leaving it blank silently
-    // blocked creation.
-    $user = User::factory()->create();
+    // blocked creation. paid is intentionally omitted (defaults to 0), so no account
+    // is required here — this is the one case in this file where account_id genuinely
+    // isn't needed, per StoreInvoiceRequest's `requiredIf(paid > 0)` rule.
+    $user = User::factory()->admin()->create();
     $category = Category::create(['name' => 'Test Category', 'slug' => 'test-category']);
     $product = Product::create([
         'name' => 'Test Product',
@@ -127,7 +134,7 @@ test('invoice can be stored without ever touching the paid amount field', functi
 });
 
 test('invoice is assigned an INV-prefixed 4-digit zero-padded serial number based on its id', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $category = Category::create(['name' => 'Test Category', 'slug' => 'test-category']);
     $product = Product::create([
         'name' => 'Test Product',
@@ -138,6 +145,7 @@ test('invoice is assigned an INV-prefixed 4-digit zero-padded serial number base
         'name' => 'Existing Client',
         'phone' => '01700000000',
     ]);
+    $account = Account::create(['name' => 'Cash', 'opening_balance' => 0, 'current_balance' => 0]);
 
     $data = [
         'date' => now()->format('Y-m-d'),
@@ -148,6 +156,7 @@ test('invoice is assigned an INV-prefixed 4-digit zero-padded serial number base
         'due' => 0,
         'status' => 'Processing',
         'method' => 'Cash',
+        'account_id' => $account->id,
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
@@ -168,7 +177,7 @@ test('invoice is assigned an INV-prefixed 4-digit zero-padded serial number base
 });
 
 test('invoice can be stored with a delivery charge and defaults to 0 if blank', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $category = Category::create(['name' => 'Test Category', 'slug' => 'test-category']);
     $product = Product::create([
         'name' => 'Test Product',
@@ -180,6 +189,7 @@ test('invoice can be stored with a delivery charge and defaults to 0 if blank', 
         'phone' => '01700000000',
         'address' => 'Test Address'
     ]);
+    $account = Account::create(['name' => 'Cash', 'opening_balance' => 0, 'current_balance' => 0]);
 
     $data = [
         'date' => now()->format('Y-m-d'),
@@ -190,6 +200,7 @@ test('invoice can be stored with a delivery charge and defaults to 0 if blank', 
         'due' => 0,
         'status' => 'Processing',
         'method' => 'Cash',
+        'account_id' => $account->id,
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'delivery_charge' => 50,
@@ -212,7 +223,7 @@ test('invoice can be stored with a delivery charge and defaults to 0 if blank', 
 });
 
 test('invoice cannot be stored with empty client id when create_new_client is false', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
 
     $data = [
         'date' => now()->format('Y-m-d'),
@@ -236,13 +247,14 @@ test('invoice cannot be stored with empty client id when create_new_client is fa
 });
 
 test('invoice can be stored with new client', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $category = Category::create(['name' => 'Test Category', 'slug' => 'test-category']);
     $product = Product::create([
         'name' => 'Test Product',
         'category_id' => $category->id,
         'price' => 100,
     ]);
+    $account = Account::create(['name' => 'Cash', 'opening_balance' => 0, 'current_balance' => 0]);
 
     $data = [
         'date' => now()->format('Y-m-d'),
@@ -257,6 +269,7 @@ test('invoice can be stored with new client', function () {
         'due' => 0,
         'status' => 'Processing',
         'method' => 'Cash',
+        'account_id' => $account->id,
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
@@ -275,13 +288,14 @@ test('invoice can be stored with new client', function () {
 });
 
 test('invoice can be stored with a new B2B client', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $category = Category::create(['name' => 'Test Category', 'slug' => 'test-category']);
     $product = Product::create([
         'name' => 'Test Product',
         'category_id' => $category->id,
         'price' => 100,
     ]);
+    $account = Account::create(['name' => 'Cash', 'opening_balance' => 0, 'current_balance' => 0]);
 
     $data = [
         'date' => now()->format('Y-m-d'),
@@ -296,6 +310,7 @@ test('invoice can be stored with a new B2B client', function () {
         'due' => 0,
         'status' => 'Processing',
         'method' => 'Cash',
+        'account_id' => $account->id,
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
@@ -318,7 +333,7 @@ test('invoice can be stored with a new B2B client', function () {
 });
 
 test('delivery charge is ignored when the client is Corporate', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $category = Category::create(['name' => 'Test Category', 'slug' => 'test-category']);
     $product = Product::create([
         'name' => 'Test Product',
@@ -330,6 +345,7 @@ test('delivery charge is ignored when the client is Corporate', function () {
         'phone' => '01700000001',
         'type' => 'Corporate',
     ]);
+    $account = Account::create(['name' => 'Cash', 'opening_balance' => 0, 'current_balance' => 0]);
 
     $data = [
         'date' => now()->format('Y-m-d'),
@@ -340,6 +356,7 @@ test('delivery charge is ignored when the client is Corporate', function () {
         'due' => 0,
         'status' => 'Processing',
         'method' => 'Cash',
+        'account_id' => $account->id,
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'delivery_charge' => 50,
@@ -360,7 +377,7 @@ test('delivery charge is ignored when the client is Corporate', function () {
 });
 
 test('a fully paid invoice is automatically marked Paid on creation', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $category = Category::create(['name' => 'Test Category', 'slug' => 'test-category']);
     $product = Product::create([
         'name' => 'Test Product',
@@ -371,6 +388,7 @@ test('a fully paid invoice is automatically marked Paid on creation', function (
         'name' => 'Existing Client',
         'phone' => '01700000000',
     ]);
+    $account = Account::create(['name' => 'Cash', 'opening_balance' => 0, 'current_balance' => 0]);
 
     $data = [
         'date' => now()->format('Y-m-d'),
@@ -381,6 +399,7 @@ test('a fully paid invoice is automatically marked Paid on creation', function (
         'due' => 0,
         'status' => 'Processing',
         'method' => 'Cash',
+        'account_id' => $account->id,
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
@@ -392,12 +411,12 @@ test('a fully paid invoice is automatically marked Paid on creation', function (
 
     $response->assertSessionHasNoErrors();
     $invoice = Invoice::latest('id')->first();
-    expect($invoice->payment_status)->toBe('Paid');
+    expect($invoice->payment_status->value)->toBe('Paid');
     expect($invoice->payment_date)->toBe($data['date']);
 });
 
 test('an invoice with a remaining due is automatically marked Unpaid on creation', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $category = Category::create(['name' => 'Test Category', 'slug' => 'test-category']);
     $product = Product::create([
         'name' => 'Test Product',
@@ -408,6 +427,7 @@ test('an invoice with a remaining due is automatically marked Unpaid on creation
         'name' => 'Existing Client',
         'phone' => '01700000000',
     ]);
+    $account = Account::create(['name' => 'Cash', 'opening_balance' => 0, 'current_balance' => 0]);
 
     $data = [
         'date' => now()->format('Y-m-d'),
@@ -418,6 +438,7 @@ test('an invoice with a remaining due is automatically marked Unpaid on creation
         'due' => 60,
         'status' => 'Processing',
         'method' => 'Cash',
+        'account_id' => $account->id,
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
@@ -429,6 +450,6 @@ test('an invoice with a remaining due is automatically marked Unpaid on creation
 
     $response->assertSessionHasNoErrors();
     $invoice = Invoice::latest('id')->first();
-    expect($invoice->payment_status)->toBe('Unpaid');
+    expect($invoice->payment_status->value)->toBe('Unpaid');
     expect($invoice->payment_date)->toBeNull();
 });

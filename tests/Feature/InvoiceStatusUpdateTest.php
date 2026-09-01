@@ -5,7 +5,7 @@ use App\Models\Invoice;
 use App\Models\Client;
 
 beforeEach(function () {
-    $this->user = User::factory()->create();
+    $this->user = User::factory()->admin()->create();
     $this->client = Client::create(['name' => 'John Doe', 'phone' => '123456789']);
 });
 

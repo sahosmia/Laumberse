@@ -21,7 +21,7 @@ class AssetCategorySeeder extends Seeder
         ];
 
         foreach ($categories as $category) {
-            AssetCategory::create($category);
+            AssetCategory::firstOrCreate(['name' => $category['name']], $category);
         }
     }
 }

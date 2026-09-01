@@ -2,8 +2,11 @@
 
 namespace App\Http\Requests\Expenses;
 
-use App\Models\GlobalSetting;
+use App\Enums\ExpenseType;
+use App\Models\Expense;
+use App\Support\OutletContext;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreExpenseRequest extends FormRequest
 {
@@ -14,16 +17,31 @@ class StoreExpenseRequest extends FormRequest
 
     public function rules(): array
     {
-        $salaryCategoryId = GlobalSetting::get('salary_category_id');
-        $materialCategoryId = GlobalSetting::get('material_expense_category_id');
+        $categoryId = $this->input('expense_category_id') !== null ? (int) $this->input('expense_category_id') : null;
+        $type = Expense::classifyType($categoryId, $this->boolean('is_asset_purchase'));
 
-        $isPayroll = $this->input('expense_category_id') == $salaryCategoryId;
-        $isMaterial = $this->input('expense_category_id') == $materialCategoryId;
+        $isPayroll = $type === ExpenseType::Salary;
+        $isMaterial = $type === ExpenseType::Material;
 
         return [
+            // Only meaningful for a switch-capable user currently viewing "All Outlets" — see
+            // App\Support\OutletContext::resolveForWrite.
+            'outlet_id' => [
+                Rule::requiredIf(fn () => OutletContext::isAll()),
+                'nullable',
+                Rule::exists('outlets', 'id')->where('status', 'active'),
+            ],
             'expense_category_id' => 'required|exists:expense_categories,id',
+            // The account must belong to the same outlet this expense is being written to —
+            // otherwise the expense and the money it actually moved end up attributed to two
+            // different outlets' books (see OutletContext::resolvableForWrite).
+            'account_id' => [
+                'required',
+                Rule::exists('accounts', 'id')->where(
+                    fn ($q) => $q->where('outlet_id', OutletContext::resolvableForWrite($this->input('outlet_id')) ?? -1)
+                ),
+            ],
             'amount' => 'required|numeric|gt:0',
-            'payment_method' => 'required|string|max:255',
             'date' => 'required|date',
             'description' => 'nullable|string|max:500',
 

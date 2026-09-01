@@ -4,7 +4,8 @@ import type { Paginated } from '@/types/pagination';
 export interface ProductsProps {
     products: Paginated<Product>;
     categories: Category[];
-    filters: { search?: string };
+    outlets: { id: number; name: string }[];
+    filters: { search?: string; category_id?: string; sort?: string; per_page?: number };
 }
 
 /** Local shape used by the product-categories list/form (description is nullable, not optional, unlike the core Category type). */
@@ -17,6 +18,7 @@ export interface ProductCategory {
 
 export interface ProductCategoriesIndexProps {
     categories: Paginated<ProductCategory>;
+    filters: { search?: string; sort?: string; per_page?: number };
 }
 
 export interface ProductCategoryFormProps {

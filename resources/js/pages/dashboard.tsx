@@ -1,17 +1,73 @@
+import { StatCard } from '@/components/ui/stat-card';
+import { useIsDarkMode } from '@/hooks/use-appearance';
 import AppLayout from '@/layouts/app-layout';
-import { formatCurrency } from '@/lib/format';
+import { formatCurrency, formatDateTime } from '@/lib/format';
 import { type BreadcrumbItem } from '@/types';
-import {
-    DASHBOARD_PERIODS,
-    type DashboardColorKey,
-    type DashboardPeriod,
-    type DashboardProps,
-    type DashboardStatCardProps,
-} from '@/types/pages/dashboard';
-import { Head, router } from '@inertiajs/react';
-import { AlertCircle, ArrowDownRight, ArrowUpRight, Calendar, Check, Clock, DollarSign, Package, Receipt, Truck } from 'lucide-react';
+import { DASHBOARD_PERIODS, type DashboardMeetingList, type DashboardPeriod, type DashboardProps } from '@/types/pages/dashboard';
+import { Head, Link, router } from '@inertiajs/react';
+import { AlertCircle, ArrowRight, Calendar, CalendarClock, Check, Clock, DollarSign, Landmark, Package, Receipt, Truck } from 'lucide-react';
 import { useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+
+/**
+ * One card per activity type (Meeting / Follow-up), shown side by side on the dashboard. Each
+ * table mixes upcoming and overdue rows together (ordered soonest/oldest-first by the backend) and
+ * flags anything already past with a "Missed" badge, rather than splitting into separate tabs.
+ */
+function ActivityTable({ title, type, list }: { title: string; type: 'meeting' | 'follow_up'; list: DashboardMeetingList }) {
+    // Hidden entirely when there's nothing pending of this type — not worth a card of empty state.
+    if (list.total === 0) return null;
+
+    return (
+        <div className="min-w-0 rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+            <div className="mb-4 flex items-center justify-between gap-3">
+                <h3 className="flex items-center gap-1.5 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                    <CalendarClock className="h-4 w-4" /> {title} ({list.total})
+                </h3>
+            </div>
+
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                    <thead>
+                        <tr className="border-b border-neutral-100 text-left text-[10px] font-bold tracking-wider text-neutral-400 uppercase dark:border-neutral-800">
+                            <th className="pr-3 pb-2">Client</th>
+                            <th className="pr-3 pb-2">Date & Time</th>
+                            <th className="pb-2">Assigned</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                        {list.items.map((a) => {
+                            const isMissed = new Date(a.scheduled_at) < new Date();
+                            return (
+                                <tr key={a.id}>
+                                    <td className="py-2.5 pr-3 font-medium text-neutral-800 dark:text-neutral-200">{a.client?.name ?? '—'}</td>
+                                    <td className="py-2.5 pr-3 whitespace-nowrap text-neutral-600 dark:text-neutral-400">
+                                        <div className="flex items-center gap-1.5">
+                                            {formatDateTime(a.scheduled_at)}
+                                            {isMissed && (
+                                                <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                                                    Missed
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="py-2.5 text-neutral-600 dark:text-neutral-400">{a.employee?.name ?? 'Unassigned'}</td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+
+            <Link
+                href={route('meetings.index', { status: 'pending', type })}
+                className="mt-3 flex items-center gap-1 text-xs font-semibold text-blue-600 hover:underline dark:text-blue-400"
+            >
+                View all <ArrowRight className="h-3 w-3" />
+            </Link>
+        </div>
+    );
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -20,40 +76,33 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-function StatCard({ icon: Icon, label, value, sub, color = 'blue', trend }: DashboardStatCardProps) {
-    const colorMap: Record<DashboardColorKey, string> = {
-        blue: 'from-blue-500 to-blue-600',
-        green: 'from-emerald-500 to-emerald-600',
-        red: 'from-red-500 to-red-600',
-        amber: 'from-amber-500 to-amber-600',
-        purple: 'from-violet-500 to-violet-600',
-    };
-    return (
-        <div className="rounded-2xl border border-neutral-200 bg-white p-5 transition-shadow duration-300 hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
-            <div className="flex items-start justify-between">
-                <div>
-                    <p className="mb-1 text-sm font-medium text-neutral-500 dark:text-neutral-400">{label}</p>
-                    <p className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">{value}</p>
-                    {sub && <p className="mt-1 text-xs text-neutral-400">{sub}</p>}
-                </div>
-                <div className={`h-11 w-11 rounded-xl bg-gradient-to-br ${colorMap[color]} flex items-center justify-center shadow-lg`}>
-                    <Icon className="h-5 w-5 text-white" />
-                </div>
-            </div>
-            {trend && (
-                <div className={`mt-3 flex items-center gap-1 text-xs font-medium ${trend > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                    {trend > 0 ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
-                    {Math.abs(trend)}% from last week
-                </div>
-            )}
-        </div>
-    );
-}
-
-export default function Dashboard({ stats, transportExpense, paymentStatusSplit, top_clients, dailyRevenue, filters }: DashboardProps) {
+export default function Dashboard({
+    stats,
+    transportExpense,
+    paymentStatusSplit,
+    top_clients,
+    dailyRevenue,
+    accounts,
+    meetings,
+    followUps,
+    filters,
+}: DashboardProps) {
     const [period, setPeriod] = useState<DashboardPeriod>(filters.period);
     const [from, setFrom] = useState(filters.from || '');
     const [to, setTo] = useState(filters.to || '');
+
+    // Recharts needs literal color values, not Tailwind `dark:` classes, so its grid/axis/tooltip
+    // chrome is themed explicitly here instead of relying on the CSS cascade like the rest of the page.
+    const isDark = useIsDarkMode();
+    const chartTheme = {
+        grid: isDark ? '#262626' : '#f1f5f9',
+        tick: isDark ? '#a3a3a3' : '#94a3b8',
+        tooltip: {
+            border: `1px solid ${isDark ? '#262626' : '#e2e8f0'}`,
+            background: isDark ? '#171717' : '#ffffff',
+            color: isDark ? '#e5e5e5' : '#171717',
+        },
+    };
 
     const pieData = [
         { name: 'Paid', value: Number(paymentStatusSplit.paid), fill: '#10b981' },
@@ -136,37 +185,90 @@ export default function Dashboard({ stats, transportExpense, paymentStatusSplit,
                     <StatCard icon={Clock} label="Pending" value={stats.pending} sub="deliveries" color="amber" />
                 </div>
 
-                <div className="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
-                    <div className="flex items-start justify-between">
-                        <div>
-                            <h3 className="mb-1 text-sm font-semibold text-neutral-700 dark:text-neutral-300">Total Transportation Cost</h3>
-                            <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(transportExpense.total)}</p>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <div className="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <h3 className="mb-1 text-sm font-semibold text-neutral-700 dark:text-neutral-300">Cash Position</h3>
+                                <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(accounts.total)}</p>
+                                <p className="mt-1 text-xs text-neutral-400">
+                                    across {accounts.items.length} account{accounts.items.length === 1 ? '' : 's'}
+                                </p>
+                            </div>
+                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg">
+                                <Landmark className="h-5 w-5 text-white" />
+                            </div>
                         </div>
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
-                            <Truck className="h-5 w-5 text-white" />
-                        </div>
+
+                        {accounts.items.length > 0 && (
+                            <div className="mt-4 divide-y divide-neutral-100 border-t border-neutral-100 dark:divide-neutral-800 dark:border-neutral-800">
+                                {accounts.items.map((a) => (
+                                    <div key={a.id} className="flex items-center justify-between py-2.5 text-sm">
+                                        <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
+                                            <span className="font-medium text-neutral-800 dark:text-neutral-200">{a.name}</span>
+                                            {a.account_number && <span className="text-xs text-neutral-400">({a.account_number})</span>}
+                                        </div>
+                                        <span
+                                            className={`font-semibold ${a.current_balance < 0 ? 'text-red-500' : 'text-neutral-900 dark:text-neutral-100'}`}
+                                        >
+                                            {formatCurrency(a.current_balance)}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <Link
+                            href={route('accounts.index')}
+                            className="mt-3 flex items-center gap-1 text-xs font-semibold text-blue-600 hover:underline dark:text-blue-400"
+                        >
+                            View all accounts <ArrowRight className="h-3 w-3" />
+                        </Link>
                     </div>
-                    <div className="mt-4 grid grid-cols-1 gap-3 border-t border-neutral-100 pt-4 sm:grid-cols-2 dark:border-neutral-800">
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="text-neutral-500 dark:text-neutral-400">Business Transportation</span>
-                            <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatCurrency(transportExpense.business)}</span>
+
+                    <div className="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <h3 className="mb-1 text-sm font-semibold text-neutral-700 dark:text-neutral-300">Total Transportation Cost</h3>
+                                <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(transportExpense.total)}</p>
+                            </div>
+                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+                                <Truck className="h-5 w-5 text-white" />
+                            </div>
                         </div>
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="text-neutral-500 dark:text-neutral-400">Delivery Transportation</span>
-                            <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatCurrency(transportExpense.delivery)}</span>
+                        <div className="mt-4 grid grid-cols-1 gap-3 border-t border-neutral-100 pt-4 sm:grid-cols-2 dark:border-neutral-800">
+                            <div className="flex items-center justify-between text-sm">
+                                <span className="text-neutral-500 dark:text-neutral-400">Business Transportation</span>
+                                <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                                    {formatCurrency(transportExpense.business)}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                                <span className="text-neutral-500 dark:text-neutral-400">Delivery Transportation</span>
+                                <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                                    {formatCurrency(transportExpense.delivery)}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                {(meetings.total > 0 || followUps.total > 0) && (
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <ActivityTable title="Meetings" type="meeting" list={meetings} />
+                        <ActivityTable title="Follow-ups" type="follow_up" list={followUps} />
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                     <div className="min-w-0 rounded-2xl border border-neutral-200 bg-white p-5 lg:col-span-2 dark:border-neutral-800 dark:bg-neutral-900">
                         <h3 className="mb-4 text-sm font-semibold text-neutral-700 dark:text-neutral-300">Daily Revenue (Last 7 Days)</h3>
                         <ResponsiveContainer width="100%" height={260}>
                             <LineChart data={dailyRevenue}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                                <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                                <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                                <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} />
+                                <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                                <XAxis dataKey="day" tick={{ fontSize: 11, fill: chartTheme.tick }} />
+                                <YAxis tick={{ fontSize: 11, fill: chartTheme.tick }} />
+                                <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12, ...chartTheme.tooltip }} />
                                 <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 4, fill: '#3b82f6' }} />
                                 <Line type="monotone" dataKey="paid" stroke="#10b981" strokeWidth={2} dot={false} strokeDasharray="5 5" />
                             </LineChart>
@@ -182,7 +284,10 @@ export default function Dashboard({ stats, transportExpense, paymentStatusSplit,
                                         <Cell key={i} fill={e.fill} />
                                     ))}
                                 </Pie>
-                                <Tooltip formatter={(v: number) => `${v} invoices`} contentStyle={{ borderRadius: 12, fontSize: 12 }} />
+                                <Tooltip
+                                    formatter={(v) => `${Number(v)} invoices`}
+                                    contentStyle={{ borderRadius: 12, fontSize: 12, ...chartTheme.tooltip }}
+                                />
                             </PieChart>
                         </ResponsiveContainer>
                         <div className="mt-2 flex flex-col justify-center gap-2">
@@ -202,10 +307,13 @@ export default function Dashboard({ stats, transportExpense, paymentStatusSplit,
                     <h3 className="mb-4 text-sm font-semibold text-neutral-700 dark:text-neutral-300">Top Clients by Revenue</h3>
                     <ResponsiveContainer width="100%" height={200}>
                         <BarChart data={barData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                            <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                            <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                            <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ borderRadius: 12, fontSize: 12 }} />
+                            <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                            <XAxis dataKey="name" tick={{ fontSize: 11, fill: chartTheme.tick }} />
+                            <YAxis tick={{ fontSize: 11, fill: chartTheme.tick }} />
+                            <Tooltip
+                                formatter={(v) => formatCurrency(Number(v))}
+                                contentStyle={{ borderRadius: 12, fontSize: 12, ...chartTheme.tooltip }}
+                            />
                             <Bar dataKey="total" fill="#6366f1" radius={[6, 6, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>

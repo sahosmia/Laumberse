@@ -1,17 +1,22 @@
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { TableRowActions } from '@/components/table-row-actions';
+import { Checkbox } from '@/components/ui/checkbox';
+import { DataView, type DataViewColumn } from '@/components/ui/data-view';
+import { FilterSelect } from '@/components/ui/filter-select';
 import { FormButton } from '@/components/ui/form-button';
 import { FormInput } from '@/components/ui/form-input';
+import { FormLabel } from '@/components/ui/form-label';
+import { FormSelect } from '@/components/ui/form-select';
 import { Modal } from '@/components/ui/modal';
-import { Pagination } from '@/components/ui/pagination';
-import { useDebouncedSearch } from '@/hooks/use-debounced-search';
+import { useDataViewSearch } from '@/hooks/use-data-view-search';
+import { useTableLoading } from '@/hooks/use-table-loading';
 import AppLayout from '@/layouts/app-layout';
 import { formatCurrency } from '@/lib/format';
-import { type BreadcrumbItem, Employee } from '@/types';
+import { type BreadcrumbItem, Employee, SharedData } from '@/types';
 import type { EmployeesProps } from '@/types/pages/employees';
-import { Head, useForm } from '@inertiajs/react';
-import { Plus, Search, User } from 'lucide-react';
-import { useState } from 'react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { CircleCheck, Plus, User, UserCheck, UserCog, Users, Wallet } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -20,8 +25,8 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Employees({ employees, filters }: EmployeesProps) {
-    const [search, setSearch] = useState(filters.search || '');
+export default function Employees({ employees, filters, summary }: EmployeesProps) {
+    const { outlet } = usePage<SharedData>().props;
     const [showModal, setShowModal] = useState(false);
     const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
@@ -33,10 +38,21 @@ export default function Employees({ employees, filters }: EmployeesProps) {
         email: '',
         designation: '',
         base_salary: '' as string | number,
+        opening_balance: '' as string | number,
+        outlet_id: '' as number | '',
         is_active: true,
     });
 
-    useDebouncedSearch('employees.index', search);
+    const {
+        search,
+        setSearch,
+        perPage,
+        setPerPage,
+        filterValues,
+        setFilter,
+        reset: resetDataView,
+    } = useDataViewSearch('employees.index', filters, {}, 'created_at:desc', 300, { status: filters.status || '' });
+    const isLoading = useTableLoading();
 
     const openCreateModal = () => {
         setEditingEmployee(null);
@@ -44,6 +60,13 @@ export default function Employees({ employees, filters }: EmployeesProps) {
         clearErrors();
         setShowModal(true);
     };
+
+    useEffect(() => {
+        if (new URLSearchParams(window.location.search).get('action') === 'create') {
+            openCreateModal();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const openEditModal = (employee: Employee) => {
         setEditingEmployee(employee);
@@ -88,148 +111,206 @@ export default function Employees({ employees, filters }: EmployeesProps) {
         }
     };
 
+    const columns: DataViewColumn<Employee>[] = [
+        {
+            key: 'actions',
+            label: 'Actions',
+            align: 'center',
+            render: (e) => (
+                <TableRowActions
+                    id={e.id}
+                    label={e.name}
+                    view={{ href: route('employees.show', e.id), label: 'View Ledger' }}
+                    edit={{ onClick: () => openEditModal(e) }}
+                    deleteRoute="employees.destroy"
+                />
+            ),
+        },
+        {
+            key: 'employee_id',
+            label: 'Employee ID',
+            className: 'font-mono text-xs text-neutral-400',
+            render: (e) => e.employee_id,
+        },
+        {
+            key: 'name',
+            label: 'Name',
+            render: (e) => (
+                <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                        <User className="h-4 w-4" />
+                    </div>
+                    <div className="font-medium text-neutral-900 dark:text-neutral-100">{e.name}</div>
+                </div>
+            ),
+        },
+        {
+            key: 'designation',
+            label: 'Designation',
+            className: 'text-neutral-600 dark:text-neutral-400',
+            render: (e) => e.designation,
+        },
+        {
+            key: 'phone',
+            label: 'Phone',
+            className: 'text-neutral-600 dark:text-neutral-400',
+            render: (e) => e.phone,
+        },
+        {
+            key: 'status',
+            label: 'Status',
+            render: (e) => (
+                <span
+                    className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase ${e.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}
+                >
+                    {e.is_active ? 'Active' : 'Inactive'}
+                </span>
+            ),
+        },
+        {
+            key: 'base_salary',
+            label: 'Base Salary',
+            align: 'right',
+            className: 'font-bold text-neutral-900 dark:text-neutral-100',
+            render: (e) => formatCurrency(e.base_salary),
+        },
+        {
+            key: 'balance',
+            label: 'Balance',
+            align: 'right',
+            className: 'font-semibold',
+            render: (e) => (
+                <span className={e.current_balance > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-neutral-500'}>
+                    {formatCurrency(e.current_balance)}
+                </span>
+            ),
+        },
+    ];
+
+    const renderEmployeeCard = (e: Employee) => (
+        <div className="space-y-3 rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                        <User className="h-4 w-4" />
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-1.5">
+                            <h4 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">{e.name}</h4>
+                            <span className="font-mono text-[10px] text-neutral-400">{e.employee_id}</span>
+                        </div>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400">{e.designation}</p>
+                    </div>
+                </div>
+                <span
+                    className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${e.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}
+                >
+                    {e.is_active ? 'Active' : 'Inactive'}
+                </span>
+            </div>
+            <div className="flex items-center justify-between border-t border-neutral-100 pt-2.5 text-xs dark:border-neutral-800">
+                <div>
+                    <p className="font-medium text-neutral-400">Phone</p>
+                    <p className="font-semibold text-neutral-700 dark:text-neutral-300">{e.phone}</p>
+                </div>
+                <div className="text-right">
+                    <p className="font-medium text-neutral-400">Base Salary</p>
+                    <p className="font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(e.base_salary)}</p>
+                </div>
+            </div>
+            <div className="flex items-center justify-between border-t border-neutral-100 pt-2.5 text-xs dark:border-neutral-800">
+                <div>
+                    <p className="font-medium text-neutral-400">Balance</p>
+                    <p className={`font-bold ${e.current_balance > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-neutral-500'}`}>
+                        {formatCurrency(e.current_balance)}
+                    </p>
+                </div>
+                <Link href={route('employees.show', e.id)} className="font-semibold text-blue-600 hover:underline dark:text-blue-400">
+                    View Ledger
+                </Link>
+            </div>
+            <div className="flex justify-end border-t border-neutral-100 pt-2.5 dark:border-neutral-800">
+                <TableRowActions id={e.id} label={e.name} edit={{ onClick: () => openEditModal(e) }} deleteRoute="employees.destroy" />
+            </div>
+        </div>
+    );
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Employees" />
             <div className="space-y-4 p-4">
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                    <div>
-                        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Employees</h1>
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400">Manage shop staff</p>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                            <Users className="h-4 w-4" />
+                        </div>
+                        <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Employees</h1>
                     </div>
                     <FormButton onClick={openCreateModal} icon={<Plus className="h-4 w-4" />}>
                         Add Employee
                     </FormButton>
                 </div>
 
-                <div className="relative">
-                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-                    <input
-                        type="text"
-                        placeholder="Search employees..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="min-h-12 w-full rounded-xl border border-neutral-200 bg-transparent py-2.5 pr-4 pl-10 text-sm text-neutral-900 transition-all focus:ring-2 focus:ring-blue-500/30 focus:outline-none sm:w-80 md:min-h-10 dark:border-neutral-800 dark:text-neutral-100"
-                    />
-                </div>
-
-                {/* Desktop view */}
-                <div className="hidden overflow-hidden rounded-2xl border border-neutral-200 bg-white md:block dark:border-neutral-800 dark:bg-neutral-900">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="bg-neutral-50 text-xs tracking-wider text-neutral-500 uppercase dark:bg-neutral-800/50">
-                                    <th className="px-5 py-3 text-left font-semibold">Employee ID</th>
-                                    <th className="px-5 py-3 text-left font-semibold">Name</th>
-                                    <th className="px-5 py-3 text-left font-semibold">Designation</th>
-                                    <th className="px-5 py-3 text-left font-semibold">Phone</th>
-                                    <th className="px-5 py-3 text-left font-semibold">Status</th>
-                                    <th className="px-5 py-3 text-right font-semibold">Base Salary</th>
-                                    <th className="px-5 py-3 text-center font-semibold">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                                {employees.data.map((e) => (
-                                    <tr key={e.id} className="transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/30">
-                                        <td className="px-5 py-4 font-mono text-xs text-neutral-400">{e.employee_id}</td>
-                                        <td className="px-5 py-4 whitespace-nowrap">
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                                                    <User className="h-4 w-4" />
-                                                </div>
-                                                <div className="font-medium text-neutral-900 dark:text-neutral-100">{e.name}</div>
-                                            </div>
-                                        </td>
-                                        <td className="px-5 py-4 text-neutral-600 dark:text-neutral-400">{e.designation}</td>
-                                        <td className="px-5 py-4 text-neutral-600 dark:text-neutral-400">{e.phone}</td>
-                                        <td className="px-5 py-4">
-                                            <span
-                                                className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase ${e.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}
-                                            >
-                                                {e.is_active ? 'Active' : 'Inactive'}
-                                            </span>
-                                        </td>
-                                        <td className="px-5 py-4 text-right font-bold text-neutral-900 dark:text-neutral-100">
-                                            {formatCurrency(e.base_salary)}
-                                        </td>
-                                        <td className="px-5 py-4 text-center">
-                                            <div className="flex items-center justify-center">
-                                                <TableRowActions
-                                                    id={e.id}
-                                                    label={e.name}
-                                                    edit={{ onClick: () => openEditModal(e) }}
-                                                    deleteRoute="employees.destroy"
-                                                />
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {employees.data.length === 0 && (
-                                    <tr>
-                                        <td colSpan={7} className="px-5 py-10 text-center text-neutral-400 italic">
-                                            No employees found
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                            <UserCog className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Total Staff</p>
+                            <p className="text-xl font-bold text-neutral-900 dark:text-neutral-100">{summary.total_staff}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+                            <UserCheck className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Active Staff</p>
+                            <p className="text-xl font-bold text-neutral-900 dark:text-neutral-100">{summary.active_staff}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                            <Wallet className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Pending Advances / Loans</p>
+                            <p className="text-xl font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(summary.pending_advances)}</p>
+                        </div>
                     </div>
                 </div>
 
-                {/* Mobile view */}
-                <div className="block space-y-4 md:hidden">
-                    {employees.data.map((e) => (
-                        <div
-                            key={e.id}
-                            className="space-y-3 rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
+                <DataView
+                    data={employees.data}
+                    getKey={(e) => e.id}
+                    loading={isLoading}
+                    emptyMessage="No employees found"
+                    search={search}
+                    onSearchChange={setSearch}
+                    searchPlaceholder="Search employees..."
+                    filters={
+                        <FilterSelect
+                            icon={<CircleCheck className="h-4 w-4" />}
+                            containerClassName="w-full sm:w-44"
+                            value={filterValues.status ?? ''}
+                            onChange={(e) => setFilter('status', e.target.value)}
                         >
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2.5">
-                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                                        <User className="h-4 w-4" />
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-1.5">
-                                            <h4 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">{e.name}</h4>
-                                            <span className="font-mono text-[10px] text-neutral-400">{e.employee_id}</span>
-                                        </div>
-                                        <p className="text-xs text-neutral-500 dark:text-neutral-400">{e.designation}</p>
-                                    </div>
-                                </div>
-                                <span
-                                    className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${e.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}
-                                >
-                                    {e.is_active ? 'Active' : 'Inactive'}
-                                </span>
-                            </div>
-                            <div className="flex items-center justify-between border-t border-neutral-100 pt-2.5 text-xs dark:border-neutral-800">
-                                <div>
-                                    <p className="font-medium text-neutral-400">Phone</p>
-                                    <p className="font-semibold text-neutral-700 dark:text-neutral-300">{e.phone}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-medium text-neutral-400">Base Salary</p>
-                                    <p className="font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(e.base_salary)}</p>
-                                </div>
-                            </div>
-                            <div className="flex justify-end border-t border-neutral-100 pt-2.5 dark:border-neutral-800">
-                                <TableRowActions
-                                    id={e.id}
-                                    label={e.name}
-                                    edit={{ onClick: () => openEditModal(e) }}
-                                    deleteRoute="employees.destroy"
-                                />
-                            </div>
-                        </div>
-                    ))}
-                    {employees.data.length === 0 && (
-                        <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-neutral-400 italic dark:border-neutral-800 dark:bg-neutral-900">
-                            No employees found
-                        </div>
-                    )}
-                </div>
-
-                <Pagination links={employees.links} />
+                            <option value="">All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </FilterSelect>
+                    }
+                    onReset={resetDataView}
+                    viewKey="employees"
+                    defaultView="table"
+                    columns={columns}
+                    renderCard={renderEmployeeCard}
+                    pagination={employees.links}
+                    total={employees.total}
+                    perPage={perPage}
+                    onPerPageChange={setPerPage}
+                />
             </div>
 
             <SaveConfirmationModal
@@ -289,14 +370,43 @@ export default function Employees({ employees, filters }: EmployeesProps) {
                         required
                         error={errors.base_salary}
                     />
+                    {!editingEmployee && (
+                        <FormInput
+                            label="Opening Balance (Optional)"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={data.opening_balance}
+                            onChange={(e) => setData('opening_balance', e.target.value)}
+                            helperText="Any outstanding advance/loan balance carried over for this staff member"
+                            error={errors.opening_balance}
+                        />
+                    )}
+                    {!editingEmployee && outlet?.isAll && (
+                        <div className="space-y-1">
+                            <FormLabel required>Outlet</FormLabel>
+                            <FormSelect
+                                value={data.outlet_id}
+                                onChange={(e) => setData('outlet_id', e.target.value ? Number(e.target.value) : '')}
+                                required
+                            >
+                                <option value="">Select an outlet</option>
+                                {outlet.available.map((o) => (
+                                    <option key={o.id} value={o.id}>
+                                        {o.name}
+                                    </option>
+                                ))}
+                            </FormSelect>
+                            {errors.outlet_id && <p className="text-xs text-red-500">{errors.outlet_id}</p>}
+                        </div>
+                    )}
                     {editingEmployee && (
                         <div className="flex items-center gap-2 py-1">
-                            <input
-                                type="checkbox"
+                            <Checkbox
                                 id="is_active"
                                 checked={data.is_active}
-                                onChange={(e) => setData('is_active', e.target.checked)}
-                                className="min-h-12 min-w-12 cursor-pointer rounded border-neutral-300 md:min-h-5 md:min-w-5"
+                                onCheckedChange={(checked) => setData('is_active', checked === true)}
+                                className="min-h-12 min-w-12 cursor-pointer md:min-h-5 md:min-w-5"
                             />
                             <label
                                 htmlFor="is_active"
