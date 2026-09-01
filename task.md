@@ -7,6 +7,6 @@
 - tumi amake akta md file dao jekane system kivabe use hoi, kon ta taka kothai jai, financiyal report kivabe hoi, logic gulo bolo jate user bujte pare se akta input dile shei gulo kothai kothai impect felbe, ata bangla te dibe
 
 
-- invoice e kono kisu na thakle sekane N/A dekanor dorkar nei, akane jemon address nai tai N/A dekacche, amra akane
+- invoice er print e kono kisu na thakle sekane N/A dekanor dorkar nei, akane jemon address nai tai N/A dekacche, ata not only address
 
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Invoices;
 
+use App\Actions\Invoices\PrepareInvoicePdfDataAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Invoices\StoreInvoiceRequest;
 use App\Http\Requests\Invoices\UpdateInvoiceRequest;
@@ -189,12 +190,11 @@ class InvoiceController extends Controller
         }
     }
 
-    public function print(Request $request, Invoice $invoice)
+    public function print(Request $request, Invoice $invoice, PrepareInvoicePdfDataAction $preparePdfData)
     {
         $this->ensureAccessible($invoice);
 
-        $invoice->load(['client', 'items.product']);
-        $pdf = Pdf::loadView('invoices.pdf', compact('invoice'));
+        $pdf = Pdf::loadView('invoices.pdf', $preparePdfData($invoice));
         $filename = 'invoice-'.$invoice->invoice_uuid.'.pdf';
 
         // Print opens the PDF inline so the browser's own viewer can print it; Download

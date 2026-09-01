@@ -1,36 +1,10 @@
-@php
-    if (!function_exists('renderBanglaInPdf')) {
-        function renderBanglaInPdf($text) {
-            if (empty($text)) return '';
-            
-            // Split into Bengali character sequences and non-Bengali sequences
-            $parts = preg_split('/([\x{0980}-\x{09FF}]+)/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
-            
-            static $translator = null;
-            if ($translator === null) {
-                $translator = new \MirazMac\BanglaString\Translator\AvroToBijoy\Translator();
-            }
-            
-            $output = '';
-            foreach ($parts as $part) {
-                if (preg_match('/[\x{0980}-\x{09FF}]/u', $part)) {
-                    $bijoy = $translator->translate($part);
-                    $output .= '<span style="font-family: \'SutonnyMJ\'; font-size: 16px;">' . htmlspecialchars($bijoy, ENT_QUOTES, 'UTF-8') . '</span>';
-                } else {
-                    $output .= htmlspecialchars($part, ENT_QUOTES, 'UTF-8');
-                }
-            }
-            return $output;
-        }
-    }
-@endphp
 <!DOCTYPE html>
 <html>
 
 <head>
     <!-- Dompdf এর জন্য প্রপার মেটা ট্যাগ -->
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Invoice - {{ $invoice->invoice_uuid }}</title>
+    <title>Invoice - {{ $invoiceUuid }}</title>
     <style>
         /* ১. বাংলা ফন্টটি পিডিএফে রেজিস্টার করা */
         @font-face {
@@ -48,98 +22,32 @@
             font-style: normal;
         }
 
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             /* ২. ডিফল্ট ফন্ট হিসেবে বাংলা ফন্ট সেট করা এবং ফলব্যাক হিসেবে Helvetica রাখা */
             font-family: 'SolaimanLipi', 'Helvetica', sans-serif;
-            color: #333;
+            color: #1f2937;
             line-height: 1.5;
-            font-size: 14px;
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .top-bar {
+            height: 6px;
+            background: #2563eb;
         }
 
         .invoice-box {
             max-width: 800px;
             margin: auto;
-            padding: 30px;
+            padding: 36px 40px 30px;
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 40px;
-        }
-
-        .title {
-            color: #2563eb;
-            font-size: 32px;
-            font-weight: bold;
-        }
-
-        .company-info {
-            text-align: right;
-        }
-
-        .details-grid {
+        .w-full {
             width: 100%;
-            margin-bottom: 40px;
-            border-top: 1px solid #eee;
-            border-bottom: 1px solid #eee;
-            padding: 20px 0;
-        }
-
-        .details-grid td {
-            vertical-align: top;
-            width: 50%;
-        }
-
-        .section-title {
-            font-size: 10px;
-            font-weight: bold;
-            text-transform: uppercase;
-            color: #999;
-            margin-bottom: 10px;
-        }
-
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 40px;
-        }
-
-        .items-table th {
-            text-align: left;
-            background: #f9fafb;
-            color: #666;
-            font-weight: 600;
-            padding: 12px 8px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .items-table td {
-            padding: 12px 8px;
-            border-bottom: 1px solid #f3f4f6;
-            vertical-align: middle;
-        }
-
-        .product-image {
-            width: 40px;
-            height: 40px;
-            border-radius: 4px;
-            object-fit: cover;
-            margin-right: 10px;
-        }
-
-        .product-placeholder {
-            width: 40px;
-            height: 40px;
-            border-radius: 4px;
-            background: #f3f4f6;
-            color: #9ca3af;
-            text-align: center;
-            line-height: 40px;
-            font-weight: bold;
-            display: inline-block;
-            margin-right: 10px;
-            text-transform: uppercase;
         }
 
         .text-right {
@@ -150,178 +58,331 @@
             text-align: center;
         }
 
-        .summary-wrapper {
+        .align-top {
+            vertical-align: top;
+        }
+
+        /* ৩. হেডার */
+        .brand-title {
+            color: #2563eb;
+            font-size: 30px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin: 0 0 4px;
+        }
+
+        .invoice-number {
+            font-family: monospace;
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .company-info {
             text-align: right;
         }
 
+        .company-name {
+            font-size: 17px;
+            font-weight: bold;
+            color: #111827;
+            margin-bottom: 3px;
+        }
+
+        .company-info div {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        /* ৪. বিলিং ও ইনভয়েস ডিটেইলস কার্ড */
+        .details-wrap {
+            margin: 28px 0;
+        }
+
+        .info-card {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 16px 20px;
+            vertical-align: top;
+        }
+
+        .info-card-gap {
+            width: 16px;
+        }
+
+        .section-title {
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+
+        .client-name {
+            font-size: 15px;
+            font-weight: bold;
+            color: #111827;
+            margin-bottom: 2px;
+        }
+
+        .info-line {
+            color: #4b5563;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .detail-row {
+            font-size: 12px;
+            color: #4b5563;
+            margin-top: 6px;
+        }
+
+        .detail-row strong {
+            color: #111827;
+            font-weight: bold;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        /* ৫. আইটেম টেবিল */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 4px;
+        }
+
+        .items-table th {
+            text-align: left;
+            background: #f8fafc;
+            color: #6b7280;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .items-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        .product-image {
+            width: 38px;
+            height: 38px;
+            border-radius: 6px;
+            object-fit: cover;
+            margin-right: 10px;
+        }
+
+        .product-placeholder {
+            width: 38px;
+            height: 38px;
+            border-radius: 6px;
+            background: #eff6ff;
+            color: #2563eb;
+            text-align: center;
+            line-height: 38px;
+            font-weight: bold;
+            display: inline-block;
+            margin-right: 10px;
+            text-transform: uppercase;
+        }
+
+        .product-name {
+            padding-top: 8px;
+            font-size: 13px;
+            color: #111827;
+        }
+
+        /* ৬. সামারি সেকশন */
+        .summary-wrapper {
+            text-align: right;
+            margin-top: 8px;
+        }
+
         .summary-table {
-            width: 250px;
+            width: 280px;
             margin-left: auto;
         }
 
         .summary-table td {
-            padding: 8px 0;
+            padding: 7px 0;
+            font-size: 12.5px;
+            color: #4b5563;
         }
 
-        .total-row {
-            font-size: 18px;
+        .total-row td {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 12px;
+        }
+
+        .total-row .total-label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .total-row .total-value {
+            font-size: 20px;
             font-weight: bold;
             color: #2563eb;
-            border-top: 1px solid #eee;
         }
 
+        /* ৭. রিমার্কস */
         .remarks {
-            margin-top: 40px;
-            font-style: italic;
-            color: #666;
+            margin-top: 34px;
+            background: #f8fafc;
+            border-left: 3px solid #2563eb;
+            border-radius: 0 6px 6px 0;
+            padding: 12px 16px;
+            color: #4b5563;
             font-size: 12px;
         }
 
+        /* ৮. ফুটার */
         .footer {
-            margin-top: 50px;
+            margin-top: 44px;
+            padding-top: 14px;
+            border-top: 1px solid #e5e7eb;
             text-align: center;
             font-size: 10px;
-            color: #999;
+            color: #9ca3af;
         }
     </style>
 </head>
 
 <body>
+    {{-- <div class="top-bar"></div> --}}
+
     <div class="invoice-box">
-        <table style="width: 100%;">
+        <!-- Header: বাম পাশে ইনভয়েস টাইটেল ও নাম্বার, ডান পাশে বিজনেস তথ্য -->
+        <table class="w-full">
             <tr>
-                <td>
-                    <div class="title">INVOICE</div>
-                    <div style="font-family: monospace;">{{ $invoice->invoice_uuid }}</div>
+                <td class="align-top">
+                    <p class="brand-title">INVOICE</p>
+                    <div class="invoice-number">#{{ $invoiceUuid }}</div>
                 </td>
-                <td class="company-info">
-                    @php
-                        $businessLogoPath = \App\Models\GlobalSetting::get('logo_path');
-                        $businessName = \App\Models\GlobalSetting::get('business_name') ?: 'Launverse';
-                        $businessAddress = \App\Models\GlobalSetting::get('business_address');
-                        $businessPhone = \App\Models\GlobalSetting::get('business_phone');
-                    @endphp
-                    @if ($businessLogoPath)
-                        <img src="{{ storage_path('app/public/'.$businessLogoPath) }}" style="max-height: 44px; margin-bottom: 6px;">
+                <td class="company-info align-top">
+                    @if ($business['logoPath'])
+                        <img src="{{ $business['logoPath'] }}" style="max-height: 42px; margin-bottom: 6px;">
                     @endif
-                    <div style="font-size: 20px; font-weight: bold;">{!! renderBanglaInPdf($businessName) !!}</div>
-                    @if ($businessAddress)
-                        <div>{!! renderBanglaInPdf($businessAddress) !!}</div>
+                    <div class="company-name">@bn($business['name'])</div>
+                    @if ($business['address'])
+                        <div>@bn($business['address'])</div>
                     @endif
-                    @if ($businessPhone)
-                        <div>Phone: {{ $businessPhone }}</div>
+                    @if ($business['phone'])
+                        <div>Phone: {{ $business['phone'] }}</div>
                     @endif
                 </td>
             </tr>
         </table>
 
-        <table class="details-grid">
+        <!-- Billing & Customer Info -->
+        <table class="w-full details-wrap">
             <tr>
-                <td>
+                <td class="info-card" style="width: 50%;">
                     <div class="section-title">Billed To</div>
-                    <div style="font-size: 16px; font-weight: bold;">{!! renderBanglaInPdf($invoice->client->name) !!}</div>
-                    <div>{!! renderBanglaInPdf($invoice->client->phone) !!}</div>
-                    <div>{!! renderBanglaInPdf($invoice->client->address ?? 'N/A') !!}</div>
+                    <div class="client-name">@bn($client['name'])</div>
+                    <div class="info-line">@bn($client['phone'])</div>
+                    @if ($client['address'])
+                        <div class="info-line">@bn($client['address'])</div>
+                    @endif
                 </td>
-                <td class="text-right">
+                <td class="info-card-gap"></td>
+                <td class="info-card text-right" style="width: 50%;">
                     <div class="section-title">Invoice Details</div>
-                    <div><strong>Date:</strong> {{ \Carbon\Carbon::parse($invoice->date)->format('d M, Y') }}</div>
-                    <div><strong>Status:</strong> {{ $invoice->status->value }}</div>
-                    <div><strong>Method:</strong> {{ $invoice->method ?: 'Not set' }}</div>
-                    <div><strong>Payment:</strong> <span style="color: {{ $invoice->payment_status === \App\Enums\PaymentStatus::Paid ? '#059669' : '#dc2626' }};">{{ $invoice->payment_status->value }}</span></div>
+                    <div class="detail-row"><strong>Date:</strong> {{ $invoiceDate }}</div>
+                    <div class="detail-row"><strong>Status:</strong> {{ $status }}</div>
+                    @if ($method)
+                        <div class="detail-row"><strong>Method:</strong> {{ $method }}</div>
+                    @endif
+                    <div class="detail-row">
+                        <strong>Payment:</strong>
+                        <span class="badge" style="background-color: {{ $paymentStatusColor }}1a; color: {{ $paymentStatusColor }};">{{ $paymentStatus }}</span>
+                    </div>
                 </td>
             </tr>
         </table>
 
+        <!-- Product Item Table -->
         <table class="items-table">
             <thead>
                 <tr>
-                    <th>Description</th>
-                    <th class="text-center">Qty</th>
-                    <th class="text-right">Price</th>
-                    <th class="text-right">Amount</th>
+                    <th style="width: 52%;">Description</th>
+                    <th class="text-center" style="width: 12%;">Qty</th>
+                    <th class="text-right" style="width: 18%;">Unit Price</th>
+                    <th class="text-right" style="width: 18%;">Amount</th>
                 </tr>
             </thead>
             <tbody>
-                @php $subtotal = 0; @endphp
-                @foreach ($invoice->items as $item)
-                    @php
-                        $itemAmount = $item->qty * $item->price;
-                        $subtotal += $itemAmount;
-                    @endphp
+                @foreach ($items as $item)
                     <tr>
                         <td>
-                            @if ($item->product->image)
-                                <img src="{{ public_path('storage/' . $item->product->image) }}" class="product-image" align="left">
+                            @if ($item['productImagePath'])
+                                <img src="{{ $item['productImagePath'] }}" class="product-image" align="left">
                             @else
-                                <div class="product-placeholder" style="float: left;">{!! renderBanglaInPdf(mb_substr($item->product->name, 0, 1, 'UTF-8')) !!}</div>
+                                <div class="product-placeholder" style="float: left;">@bn($item['productInitial'])</div>
                             @endif
-                            <div style="padding-top: 10px;">{!! renderBanglaInPdf($item->product->name) !!}</div>
+                            <div class="product-name">@bn($item['productName'])</div>
                         </td>
-                        <td class="text-center">{{ $item->qty }}</td>
-                        <td class="text-right">{{ number_format($item->price, 2) }}</td>
-                        <td class="text-right">{{ number_format($itemAmount, 2) }}</td>
+                        <td class="text-center">{{ $item['qty'] }}</td>
+                        <td class="text-right">{{ $item['priceFormatted'] }}</td>
+                        <td class="text-right">{{ $item['amountFormatted'] }}</td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
 
+        <!-- Financial Calculation Summary -->
         <div class="summary-wrapper">
             <table class="summary-table">
-                @if ($invoice->discount_amount != 0)
-                    @php
-                        $discountValue = 0;
-                        if ($invoice->discount_type === \App\Enums\DiscountType::Percentage) {
-                            $discountValue = ($subtotal * $invoice->discount_amount) / 100;
-                        } else {
-                            $discountValue = $invoice->discount_amount;
-                        }
-                    @endphp
+                @if ($discount)
                     <tr>
-                        <td style="color: #666;">Subtotal</td>
-                        <td class="text-right">{{ number_format($subtotal, 2) }}</td>
+                        <td>Subtotal</td>
+                        <td class="text-right">{{ $subtotalFormatted }}</td>
                     </tr>
                     <tr>
-                        <td style="color: #d97706;">
-                            @if ($invoice->discount_type === \App\Enums\DiscountType::Percentage)
-                                Discount (Percentage {{ $invoice->discount_amount }}%)
-                            @else
-                                Discount ({{ $invoice->discount_type->value }})
-                            @endif
-                        </td>
-                        <td class="text-right">-{{ number_format($discountValue, 2) }}</td>
+                        <td style="color: #d97706;">{{ $discount['label'] }}</td>
+                        <td class="text-right" style="color: #d97706;">-{{ $discount['valueFormatted'] }}</td>
                     </tr>
                 @endif
-                @if ($invoice->delivery_charge != 0 && $invoice->client->type !== \App\Enums\ClientType::Corporate)
+                @if ($showDeliveryCharge)
                     <tr>
                         <td style="color: #2563eb;">Delivery Charge</td>
-                        <td class="text-right">{{ number_format($invoice->delivery_charge, 2) }}</td>
+                        <td class="text-right">{{ $deliveryChargeFormatted }}</td>
                     </tr>
                 @endif
                 <tr>
-                    <td style="color: #059669;">Paid</td>
-                    <td class="text-right">{{ number_format($invoice->paid, 2) }}</td>
-                </tr>
-                <tr>
-                    <td style="color: {{ $invoice->payment_status === \App\Enums\PaymentStatus::Paid ? '#059669' : '#dc2626' }};">Payment Status</td>
-                    <td class="text-right">{{ $invoice->payment_status->value }}</td>
+                    <td style="color: #059669;">Paid Amount</td>
+                    <td class="text-right" style="color: #059669; font-weight: bold;">{{ $paidFormatted }}</td>
                 </tr>
                 <tr class="total-row">
-                    <td>Total</td>
-                    <td class="text-right">{{ number_format($invoice->total, 2) }}</td>
+                    <td class="total-label">Total Payable</td>
+                    <td class="text-right total-value">{{ $totalFormatted }}</td>
                 </tr>
             </table>
         </div>
 
-        @if ($invoice->remarks)
+        <!-- নোট / রিমার্কস -->
+        @if ($remarks)
             <div class="remarks">
-                <div class="section-title">Remarks</div>
-                {!! renderBanglaInPdf($invoice->remarks) !!}
+                <div class="section-title" style="margin-bottom: 4px;">Remarks / Notes</div>
+                @bn($remarks)
             </div>
         @endif
 
+        <!-- ডায়নামিক ফুটার -->
         <div class="footer">
-            Generated on {{ date('Y-m-d H:i:s') }} | Thank you for your business!
+            Generated on {{ $generatedAt }} &middot; Thank you for your business!
         </div>
     </div>
 </body>
