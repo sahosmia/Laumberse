@@ -13,6 +13,7 @@ class Client extends Model implements AuthenticatableContract
 
     protected $fillable = [
         'client_uuid',
+        'outlet_id',
         'username',
         'password',
         'name',
@@ -44,6 +45,12 @@ class Client extends Model implements AuthenticatableContract
     public function invoices()
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    /** Null for a Corporate client — see the outlet_id migration docblock. */
+    public function outlet()
+    {
+        return $this->belongsTo(Outlet::class);
     }
 
     public function customPrices()

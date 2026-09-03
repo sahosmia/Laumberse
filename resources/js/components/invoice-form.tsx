@@ -86,7 +86,7 @@ export default function InvoiceForm({ invoice, products, clients, accounts, isEd
         total: invoice?.total || 0,
         paid: invoice?.paid ? invoice.paid : ('' as string | number),
         due: invoice?.due || 0,
-        status: invoice?.status || ('Processing' as InvoiceStatus),
+        status: invoice?.status || ('In House' as InvoiceStatus),
         account_id: invoice?.account_id || ('' as string | number),
         remarks: invoice?.remarks || '',
         internal_note: invoice?.internal_note || '',

@@ -11,14 +11,29 @@ export const CLIENT_TYPE_STYLES: Record<ClientType, string> = {
     B2B: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
 };
 
-export const INVOICE_STATUSES = ['Pending', 'Processing', 'In House', 'Delivered', 'Cancelled'] as const;
+/** The laundry workflow's pipeline order — In House (intake) through Ready (awaiting pickup), then Delivered; Cancelled can happen at any stage. */
+export const INVOICE_STATUSES = ['In House', 'Pre Wash', 'Washing', 'Extract', 'Drying', 'Pressing', 'Ready', 'Delivered', 'Cancelled'] as const;
 export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
-/** Statuses settable directly on the invoice create/edit form; Pending is only reachable via the inline status dropdown. */
-export const INVOICE_FORM_STATUSES: readonly InvoiceStatus[] = ['Processing', 'In House', 'Delivered', 'Cancelled'];
+/** Every status is settable directly on the invoice create/edit form — same set as INVOICE_STATUSES. */
+export const INVOICE_FORM_STATUSES: readonly InvoiceStatus[] = [
+    'In House',
+    'Pre Wash',
+    'Washing',
+    'Extract',
+    'Drying',
+    'Pressing',
+    'Ready',
+    'Delivered',
+    'Cancelled',
+];
 export const INVOICE_STATUS_STYLES: Record<InvoiceStatus, string> = {
-    Pending: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800',
-    Processing: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800',
-    'In House': 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800',
+    'In House': 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-900/20 dark:text-slate-400 dark:border-slate-800',
+    'Pre Wash': 'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-900/20 dark:text-sky-400 dark:border-sky-800',
+    Washing: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800',
+    Extract: 'bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-900/20 dark:text-cyan-400 dark:border-cyan-800',
+    Drying: 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800',
+    Pressing: 'bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900/20 dark:text-violet-400 dark:border-violet-800',
+    Ready: 'bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-800',
     Delivered: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800',
     Cancelled: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800',
 };

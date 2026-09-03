@@ -51,7 +51,12 @@ class GetDashboardMetricsAction
             'total_paid' => (clone $invoiceQuery)->sum('paid'),
             'total_expense' => (clone $expenseQuery)->sum('amount'),
             'unpaid_invoices' => (clone $invoiceQuery)->where('payment_status', PaymentStatus::Unpaid->value)->count(),
-            'pending' => Invoice::tap(fn ($q) => OutletContext::scope($q))->where('status', InvoiceStatus::Processing->value)->count(),
+            // "Pending" = still somewhere in the wash pipeline (In House through Ready) — not yet
+            // Delivered and not Cancelled. There's no single "Processing" status anymore now that
+            // the pipeline has named stages, so this counts everything short of a final state.
+            'pending' => Invoice::tap(fn ($q) => OutletContext::scope($q))
+                ->whereNotIn('status', [InvoiceStatus::Delivered->value, InvoiceStatus::Cancelled->value])
+                ->count(),
         ];
 
         $transportExpense = [

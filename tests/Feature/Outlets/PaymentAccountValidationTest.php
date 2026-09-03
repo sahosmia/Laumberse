@@ -56,7 +56,7 @@ test('an invoice cannot be paid from another outlet\'s account', function () {
         'total' => 100,
         'paid' => 100,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'account_id' => $accountB->id,
         'discount_type' => 'Fixed',
         'discount_amount' => 0,

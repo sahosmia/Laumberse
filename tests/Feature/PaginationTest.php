@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\User;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Unit;
+use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('invoice list paginates 50 per page and reports total count', function () {
@@ -12,13 +12,13 @@ test('invoice list paginates 50 per page and reports total count', function () {
 
     for ($i = 0; $i < 60; $i++) {
         Invoice::create([
-            'invoice_uuid' => 'INV-' . str_pad((string) ($i + 1), 4, '0', STR_PAD_LEFT),
+            'invoice_uuid' => 'INV-'.str_pad((string) ($i + 1), 4, '0', STR_PAD_LEFT),
             'date' => now()->toDateString(),
             'client_id' => $client->id,
             'total' => 100,
             'paid' => 100,
             'due' => 0,
-            'status' => 'Processing',
+            'status' => 'In House',
             'method' => 'Cash',
         ]);
     }
@@ -45,7 +45,7 @@ test('invoice list search filters server-side across pages', function () {
         'total' => 100,
         'paid' => 100,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
     ]);
     Invoice::create([
@@ -55,7 +55,7 @@ test('invoice list search filters server-side across pages', function () {
         'total' => 100,
         'paid' => 100,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
     ]);
 

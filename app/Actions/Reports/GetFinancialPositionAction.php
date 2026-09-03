@@ -89,9 +89,10 @@ class GetFinancialPositionAction
         // Client itself stays global, and Client.total_due is a running total aggregated across
         // every outlet's invoices — not what "this outlet's debtors" means. Recomputed here from
         // outlet-scoped Invoice.due instead of trusting that global column. Never date-scoped —
-        // see docblock above. Only Delivered invoices count: a Pending/Processing/In House order
-        // isn't a finished sale yet, so its due amount isn't a firm receivable — it becomes one
-        // only once the order is actually delivered. A Cancelled invoice's due is never owed.
+        // see docblock above. Only Delivered invoices count: an order still somewhere in the wash
+        // pipeline (In House, Pre Wash, Washing, Extract, Drying, Pressing, Ready) isn't a finished
+        // sale yet, so its due amount isn't a firm receivable — it becomes one only once the order
+        // is actually delivered. A Cancelled invoice's due is never owed.
         $debtors = Client::query()
             ->select('clients.id', 'clients.name')
             ->selectRaw('SUM(invoices.due) as total_due')

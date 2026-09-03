@@ -182,7 +182,7 @@ export default function Dashboard({
                     <StatCard icon={Check} label="Total Paid" value={formatCurrency(Number(stats.total_paid))} color="green" />
                     <StatCard icon={Receipt} label="Total Expense" value={formatCurrency(Number(stats.total_expense))} color="red" />
                     <StatCard icon={AlertCircle} label="Unpaid Invoices" value={stats.unpaid_invoices} color="amber" />
-                    <StatCard icon={Clock} label="Pending" value={stats.pending} sub="deliveries" color="amber" />
+                    <StatCard icon={Clock} label="Pending" value={stats.pending} sub="in pipeline" color="amber" />
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

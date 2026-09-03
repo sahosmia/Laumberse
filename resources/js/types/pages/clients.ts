@@ -1,10 +1,12 @@
-import type { Client, ClientActivity, Employee, Invoice, InvoiceItem, Product } from '@/types';
+import type { Client, ClientActivity, Employee, Invoice, InvoiceItem, Outlet, Product } from '@/types';
 import type { Paginated } from '@/types/pagination';
 
 export interface ClientsProps {
     clients: Paginated<Client>;
     products: Product[];
-    filters: { search?: string; type?: string; sort?: string; per_page?: number };
+    /** Every active outlet — any staff member may set any outlet on a client, not just their own. */
+    outlets: Pick<Outlet, 'id' | 'name'>[];
+    filters: { search?: string; type?: string; outlet_id?: number | string; sort?: string; per_page?: number };
 }
 
 export interface CustomPrice {

@@ -26,7 +26,7 @@ return new class extends Migration
             $table->decimal('due', 10, 2);
             $table->enum('payment_status', ['Paid', 'Unpaid'])->default('Unpaid');
             $table->date('payment_date')->nullable();
-            $table->enum('status', ['Pending', 'Processing', 'In House', 'Delivered', 'Cancelled']);
+            $table->enum('status', ['In House', 'Pre Wash', 'Washing', 'Extract', 'Drying', 'Pressing', 'Ready', 'Delivered', 'Cancelled']);
             $table->string('method');
             // Client-facing, printed on the invoice/PDF — distinct from `internal_note`, which is staff-only.
             $table->text('remarks')->nullable();

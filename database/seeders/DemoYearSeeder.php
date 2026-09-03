@@ -236,7 +236,9 @@ class DemoYearSeeder extends Seeder
         $due = round($total - $paid, 2);
 
         $isRecent = $date->gt($this->end->copy()->subDays(10));
-        $status = $isRecent ? collect(['Processing', 'In House', 'Delivered'])->random() : 'Delivered';
+        $status = $isRecent
+            ? collect(['In House', 'Pre Wash', 'Washing', 'Extract', 'Drying', 'Pressing', 'Ready', 'Delivered'])->random()
+            : 'Delivered';
 
         $invoice = app(InvoiceService::class)->createInvoice([
             'date' => $date->toDateString(),

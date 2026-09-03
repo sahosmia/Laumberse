@@ -88,9 +88,10 @@ test('InvoiceStatus enum matches frontend INVOICE_STATUSES', function () {
 });
 
 test('InvoiceStatus form-selectable subset matches frontend INVOICE_FORM_STATUSES', function () {
-    // formValues() is the narrower set the create/edit form may set directly (Pending/Cancelled
-    // are only reachable through the inline status-update action) — a distinct contract from the
-    // full INVOICE_STATUSES list above, and worth guarding separately for that reason.
+    // formValues() is currently the same 9-status set as values() — every stage of the wash
+    // pipeline (In House through Ready), plus Delivered and Cancelled, is settable directly on
+    // the create/edit form. Still guarded as a distinct contract from INVOICE_STATUSES above in
+    // case the two ever diverge again.
     $frontend = frontendConstArray(STATUS_TS_PATH, 'INVOICE_FORM_STATUSES');
 
     expect(sorted($frontend))->toBe(sorted(InvoiceStatus::formValues()));

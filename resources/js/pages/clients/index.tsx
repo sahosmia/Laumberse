@@ -18,7 +18,7 @@ import { formatCurrency } from '@/lib/format';
 import { type BreadcrumbItem, Client } from '@/types';
 import type { ClientsProps } from '@/types/pages/clients';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { Bell, CalendarClock, Lock, MapPin, PackagePlus, Phone, Plus, Settings2, Tag, Trash2, Users } from 'lucide-react';
+import { Bell, CalendarClock, Lock, MapPin, PackagePlus, Phone, Plus, Settings2, Store, Tag, Trash2, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -30,7 +30,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const typeBadgeClass = (type: ClientType) => CLIENT_TYPE_STYLES[type] ?? CLIENT_TYPE_STYLES.Consumer;
 
-export default function Clients({ clients, products, filters }: ClientsProps) {
+export default function Clients({ clients, products, outlets, filters }: ClientsProps) {
     const [showModal, setShowModal] = useState(false);
     const [editingClient, setEditingClient] = useState<Client | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
@@ -41,6 +41,7 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
         name: '',
         phone: '',
         type: 'Consumer' as ClientType,
+        outlet_id: '' as number | '',
         address: '',
         internal_note: '',
         username: '',
@@ -56,7 +57,10 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
         filterValues,
         setFilter,
         reset: resetDataView,
-    } = useDataViewSearch('clients.index', filters, {}, 'created_at:desc', 300, { type: filters.type || '' });
+    } = useDataViewSearch('clients.index', filters, {}, 'created_at:desc', 300, {
+        type: filters.type || '',
+        outlet_id: filters.outlet_id ? String(filters.outlet_id) : '',
+    });
     const isLoading = useTableLoading();
 
     const openCreateModal = () => {
@@ -80,6 +84,7 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
             name: client.name,
             phone: client.phone,
             type: client.type,
+            outlet_id: client.outlet_id || '',
             address: client.address || '',
             internal_note: client.internal_note || '',
             username: client.username || '',
@@ -182,6 +187,12 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
             render: (c) => c.phone,
         },
         {
+            key: 'outlet',
+            label: 'Outlet',
+            className: 'text-neutral-600 dark:text-neutral-400',
+            render: (c) => c.outlet?.name ?? '—',
+        },
+        {
             key: 'address',
             label: 'Address',
             className: 'max-w-xs truncate text-neutral-600 dark:text-neutral-400',
@@ -247,6 +258,12 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
                         <span className="line-clamp-1">{c.address}</span>
                     </p>
                 )}
+                {c.outlet && (
+                    <p className="flex items-center gap-1.5">
+                        <Store className="h-3 w-3 flex-shrink-0 text-neutral-400" />
+                        <span className="line-clamp-1">{c.outlet.name}</span>
+                    </p>
+                )}
             </div>
 
             <div className="grid grid-cols-3 divide-x divide-neutral-100 border-t border-neutral-100 bg-neutral-50/50 dark:divide-neutral-800 dark:border-neutral-800 dark:bg-neutral-800/20">
@@ -291,19 +308,34 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
                     onSearchChange={setSearch}
                     searchPlaceholder="Search clients..."
                     filters={
-                        <FilterSelect
-                            icon={<Tag className="h-4 w-4" />}
-                            containerClassName="w-full sm:w-48"
-                            value={filterValues.type ?? ''}
-                            onChange={(e) => setFilter('type', e.target.value)}
-                        >
-                            <option value="">All Types</option>
-                            {CLIENT_TYPES.map((t) => (
-                                <option key={t} value={t}>
-                                    {t}
-                                </option>
-                            ))}
-                        </FilterSelect>
+                        <>
+                            <FilterSelect
+                                icon={<Tag className="h-4 w-4" />}
+                                containerClassName="w-full sm:w-48"
+                                value={filterValues.type ?? ''}
+                                onChange={(e) => setFilter('type', e.target.value)}
+                            >
+                                <option value="">All Types</option>
+                                {CLIENT_TYPES.map((t) => (
+                                    <option key={t} value={t}>
+                                        {t}
+                                    </option>
+                                ))}
+                            </FilterSelect>
+                            <FilterSelect
+                                icon={<Store className="h-4 w-4" />}
+                                containerClassName="w-full sm:w-48"
+                                value={filterValues.outlet_id ?? ''}
+                                onChange={(e) => setFilter('outlet_id', e.target.value)}
+                            >
+                                <option value="">All Outlets</option>
+                                {outlets.map((o) => (
+                                    <option key={o.id} value={o.id}>
+                                        {o.name}
+                                    </option>
+                                ))}
+                            </FilterSelect>
+                        </>
                     }
                     onReset={resetDataView}
                     viewKey="clients"
@@ -388,7 +420,12 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
                                 id="client_type"
                                 value={data.type}
                                 disabled={processing}
-                                onChange={(e) => setData('type', e.target.value as ClientType)}
+                                onChange={(e) => {
+                                    const type = e.target.value as ClientType;
+                                    // Corporate isn't tied to any single branch — clear a
+                                    // previously-picked outlet so it never gets submitted.
+                                    setData((prev) => ({ ...prev, type, outlet_id: type === 'Corporate' ? '' : prev.outlet_id }));
+                                }}
                                 className="mt-1"
                             >
                                 {CLIENT_TYPES.map((t) => (
@@ -400,6 +437,27 @@ export default function Clients({ clients, products, filters }: ClientsProps) {
                             {errors.type && <p className="mt-1 text-xs font-medium text-red-500">{errors.type}</p>}
                         </div>
                     </div>
+
+                    {/* Outlet — every type except Corporate must belong to one */}
+                    {data.type !== 'Corporate' && (
+                        <FormSelect
+                            id="client_outlet"
+                            label="Outlet"
+                            required
+                            icon={<Store className="h-4 w-4" />}
+                            value={data.outlet_id}
+                            disabled={processing}
+                            onChange={(e) => setData('outlet_id', e.target.value ? Number(e.target.value) : '')}
+                            error={errors.outlet_id}
+                        >
+                            <option value="">Select an outlet</option>
+                            {outlets.map((o) => (
+                                <option key={o.id} value={o.id}>
+                                    {o.name}
+                                </option>
+                            ))}
+                        </FormSelect>
+                    )}
 
                     {/* Address Input */}
                     <div>

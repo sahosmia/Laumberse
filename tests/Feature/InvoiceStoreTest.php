@@ -1,11 +1,11 @@
 <?php
 
 use App\Models\Account;
-use App\Models\User;
-use App\Models\Client;
-use App\Models\Product;
 use App\Models\Category;
+use App\Models\Client;
 use App\Models\Invoice;
+use App\Models\Product;
+use App\Models\User;
 
 test('invoice can be stored with existing client', function () {
     $user = User::factory()->admin()->create();
@@ -18,7 +18,7 @@ test('invoice can be stored with existing client', function () {
     $client = Client::create([
         'name' => 'Existing Client',
         'phone' => '01700000000',
-        'address' => 'Test Address'
+        'address' => 'Test Address',
     ]);
     $account = Account::create(['name' => 'Cash', 'opening_balance' => 0, 'current_balance' => 0]);
 
@@ -29,7 +29,7 @@ test('invoice can be stored with existing client', function () {
         'total' => 100,
         'paid' => 100,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
         'account_id' => $account->id,
         'discount_type' => 'Fixed',
@@ -38,9 +38,9 @@ test('invoice can be stored with existing client', function () {
             [
                 'productId' => $product->id,
                 'qty' => 1,
-                'price' => 100
-            ]
-        ]
+                'price' => 100,
+            ],
+        ],
     ];
 
     $response = $this->actingAs($user)->post(route('invoices.store'), $data);
@@ -73,14 +73,14 @@ test('invoice can be stored without ever touching the discount amount field', fu
         'total' => 100,
         'paid' => 100,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
         'account_id' => $account->id,
         'discount_type' => 'Fixed',
         // discount_amount intentionally omitted
         'items' => [
-            ['productId' => $product->id, 'qty' => 1, 'price' => 100]
-        ]
+            ['productId' => $product->id, 'qty' => 1, 'price' => 100],
+        ],
     ];
 
     $response = $this->actingAs($user)->post(route('invoices.store'), $data);
@@ -116,13 +116,13 @@ test('invoice can be stored without ever touching the paid amount field', functi
         'total' => 100,
         'due' => 100,
         // paid intentionally omitted
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
-            ['productId' => $product->id, 'qty' => 1, 'price' => 100]
-        ]
+            ['productId' => $product->id, 'qty' => 1, 'price' => 100],
+        ],
     ];
 
     $response = $this->actingAs($user)->post(route('invoices.store'), $data);
@@ -154,21 +154,21 @@ test('invoice is assigned an INV-prefixed 4-digit zero-padded serial number base
         'total' => 100,
         'paid' => 100,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
         'account_id' => $account->id,
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
-            ['productId' => $product->id, 'qty' => 1, 'price' => 100]
-        ]
+            ['productId' => $product->id, 'qty' => 1, 'price' => 100],
+        ],
     ];
 
     $response = $this->actingAs($user)->post(route('invoices.store'), $data);
 
     $response->assertSessionHasNoErrors();
     $invoice = Invoice::latest('id')->first();
-    expect($invoice->invoice_uuid)->toBe('INV-' . str_pad((string) $invoice->id, 4, '0', STR_PAD_LEFT));
+    expect($invoice->invoice_uuid)->toBe('INV-'.str_pad((string) $invoice->id, 4, '0', STR_PAD_LEFT));
 
     // A second invoice gets a distinct, still-unique serial.
     $this->actingAs($user)->post(route('invoices.store'), $data);
@@ -187,7 +187,7 @@ test('invoice can be stored with a delivery charge and defaults to 0 if blank', 
     $client = Client::create([
         'name' => 'Existing Client',
         'phone' => '01700000000',
-        'address' => 'Test Address'
+        'address' => 'Test Address',
     ]);
     $account = Account::create(['name' => 'Cash', 'opening_balance' => 0, 'current_balance' => 0]);
 
@@ -198,7 +198,7 @@ test('invoice can be stored with a delivery charge and defaults to 0 if blank', 
         'total' => 150,
         'paid' => 150,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
         'account_id' => $account->id,
         'discount_type' => 'Fixed',
@@ -208,9 +208,9 @@ test('invoice can be stored with a delivery charge and defaults to 0 if blank', 
             [
                 'productId' => $product->id,
                 'qty' => 1,
-                'price' => 100
-            ]
-        ]
+                'price' => 100,
+            ],
+        ],
     ];
 
     $response = $this->actingAs($user)->post(route('invoices.store'), $data);
@@ -232,13 +232,13 @@ test('invoice cannot be stored with empty client id when create_new_client is fa
         'total' => 100,
         'paid' => 100,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
-            ['productId' => 1, 'qty' => 1, 'price' => 100]
-        ]
+            ['productId' => 1, 'qty' => 1, 'price' => 100],
+        ],
     ];
 
     $response = $this->actingAs($user)->post(route('invoices.store'), $data);
@@ -267,7 +267,7 @@ test('invoice can be stored with new client', function () {
         'total' => 100,
         'paid' => 100,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
         'account_id' => $account->id,
         'discount_type' => 'Fixed',
@@ -276,9 +276,9 @@ test('invoice can be stored with new client', function () {
             [
                 'productId' => $product->id,
                 'qty' => 1,
-                'price' => 100
-            ]
-        ]
+                'price' => 100,
+            ],
+        ],
     ];
 
     $response = $this->actingAs($user)->post(route('invoices.store'), $data);
@@ -308,7 +308,7 @@ test('invoice can be stored with a new B2B client', function () {
         'total' => 100,
         'paid' => 100,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
         'account_id' => $account->id,
         'discount_type' => 'Fixed',
@@ -317,9 +317,9 @@ test('invoice can be stored with a new B2B client', function () {
             [
                 'productId' => $product->id,
                 'qty' => 1,
-                'price' => 100
-            ]
-        ]
+                'price' => 100,
+            ],
+        ],
     ];
 
     $response = $this->actingAs($user)->post(route('invoices.store'), $data);
@@ -354,7 +354,7 @@ test('delivery charge is ignored when the client is Corporate', function () {
         'total' => 100,
         'paid' => 100,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
         'account_id' => $account->id,
         'discount_type' => 'Fixed',
@@ -364,9 +364,9 @@ test('delivery charge is ignored when the client is Corporate', function () {
             [
                 'productId' => $product->id,
                 'qty' => 1,
-                'price' => 100
-            ]
-        ]
+                'price' => 100,
+            ],
+        ],
     ];
 
     $response = $this->actingAs($user)->post(route('invoices.store'), $data);
@@ -397,14 +397,14 @@ test('a fully paid invoice is automatically marked Paid on creation', function (
         'total' => 100,
         'paid' => 100,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
         'account_id' => $account->id,
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
-            ['productId' => $product->id, 'qty' => 1, 'price' => 100]
-        ]
+            ['productId' => $product->id, 'qty' => 1, 'price' => 100],
+        ],
     ];
 
     $response = $this->actingAs($user)->post(route('invoices.store'), $data);
@@ -436,14 +436,14 @@ test('an invoice with a remaining due is automatically marked Unpaid on creation
         'total' => 100,
         'paid' => 40,
         'due' => 60,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
         'account_id' => $account->id,
         'discount_type' => 'Fixed',
         'discount_amount' => 0,
         'items' => [
-            ['productId' => $product->id, 'qty' => 1, 'price' => 100]
-        ]
+            ['productId' => $product->id, 'qty' => 1, 'price' => 100],
+        ],
     ];
 
     $response = $this->actingAs($user)->post(route('invoices.store'), $data);

@@ -29,7 +29,7 @@ test('dashboard stats only include invoices within the selected date range', fun
         'total' => 100,
         'paid' => 100,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
     ]);
 
@@ -40,7 +40,7 @@ test('dashboard stats only include invoices within the selected date range', fun
         'total' => 500,
         'paid' => 500,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
     ]);
 
@@ -64,7 +64,7 @@ test('dashboard defaults to this month and reports the resolved period', functio
         'total' => 100,
         'paid' => 100,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
     ]);
 
@@ -75,7 +75,7 @@ test('dashboard defaults to this month and reports the resolved period', functio
         'total' => 500,
         'paid' => 500,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
     ]);
 
@@ -100,7 +100,7 @@ test('dashboard period=today only includes invoices from today', function () {
         'total' => 150,
         'paid' => 150,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
     ]);
 
@@ -111,7 +111,7 @@ test('dashboard period=today only includes invoices from today', function () {
         'total' => 250,
         'paid' => 250,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
     ]);
 
@@ -135,7 +135,7 @@ test('dashboard period=last_month excludes invoices from this month', function (
         'total' => 300,
         'paid' => 300,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
     ]);
 
@@ -146,7 +146,7 @@ test('dashboard period=last_month excludes invoices from this month', function (
         'total' => 400,
         'paid' => 400,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
     ]);
 
@@ -170,7 +170,7 @@ test('dashboard period=this_year excludes invoices from last year', function () 
         'total' => 600,
         'paid' => 600,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
     ]);
 
@@ -181,7 +181,7 @@ test('dashboard period=this_year excludes invoices from last year', function () 
         'total' => 700,
         'paid' => 700,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
     ]);
 
@@ -194,23 +194,28 @@ test('dashboard period=this_year excludes invoices from last year', function () 
     );
 });
 
-test('dashboard pending count only includes Processing invoices', function () {
-    // Regression guard for the InvoiceStatus::Processing enum fix (P1.6): 'pending' must count
-    // exactly the invoices whose status is Processing, not every invoice regardless of status.
+test('dashboard pending count includes every non-final status and excludes Delivered/Cancelled', function () {
+    // 'pending' counts an invoice still somewhere in the wash pipeline (any status short of
+    // Delivered or Cancelled) — there's no single "Processing" status anymore now that the
+    // pipeline has named stages (In House, Pre Wash, Washing, Extract, Drying, Pressing, Ready).
     $user = User::factory()->create();
     $client = Client::create(['name' => 'John Doe', 'phone' => '123456789']);
 
     Invoice::create([
         'invoice_uuid' => 'INV-PENDING-1', 'date' => now()->toDateString(), 'client_id' => $client->id,
-        'total' => 100, 'paid' => 0, 'due' => 100, 'status' => 'Processing', 'method' => 'Cash',
+        'total' => 100, 'paid' => 0, 'due' => 100, 'status' => 'In House', 'method' => 'Cash',
     ]);
     Invoice::create([
         'invoice_uuid' => 'INV-PENDING-2', 'date' => now()->toDateString(), 'client_id' => $client->id,
-        'total' => 200, 'paid' => 0, 'due' => 200, 'status' => 'Processing', 'method' => 'Cash',
+        'total' => 200, 'paid' => 0, 'due' => 200, 'status' => 'Washing', 'method' => 'Cash',
     ]);
     Invoice::create([
         'invoice_uuid' => 'INV-DELIVERED', 'date' => now()->toDateString(), 'client_id' => $client->id,
         'total' => 300, 'paid' => 300, 'due' => 0, 'status' => 'Delivered', 'method' => 'Cash',
+    ]);
+    Invoice::create([
+        'invoice_uuid' => 'INV-CANCELLED', 'date' => now()->toDateString(), 'client_id' => $client->id,
+        'total' => 400, 'paid' => 0, 'due' => 0, 'status' => 'Cancelled', 'method' => 'Cash',
     ]);
 
     $response = $this->actingAs($user)->get('/dashboard');

@@ -1,12 +1,13 @@
-- metting ba follow up time to current date timer age hote pare na, akane validation dite hobe, dashboard e pashapasi dui ta table hobe akta meeting er jonno onno ta followup er jonno, 
+- invoice er order status gulo ai rokom hobe, 
+* In House, 
+* Pre Wash,
+* Washing,
+* Extract,
+* Drying,
+* Pressing,
+* Ready,
+* Delivered,
+* Cancelled,
+defaulte status hobe In House,  ai kaj ta akon sokol jaigai korte hobe jemon migration tumi direct main migration file e koro, color change koro 
 
-- finacial position e je invoice ta procesing e ase se ta to akane asbe na, mane jar payment peyegesi tar ta to aser kota ar jar ta deliver hoye gese, "As of Date" leka ta show korar dorkar nai, new investor er opning balance ki financiyal report e show korbe na? ata to mone hoi gap akta, same company loan,
-
-
-
-- tumi amake akta md file dao jekane system kivabe use hoi, kon ta taka kothai jai, financiyal report kivabe hoi, logic gulo bolo jate user bujte pare se akta input dile shei gulo kothai kothai impect felbe, ata bangla te dibe
-
-
-- invoice er print e kono kisu na thakle sekane N/A dekanor dorkar nei, akane jemon address nai tai N/A dekacche, ata not only address
-
-
+- akane client create ba edit e outlet id thakte hobe, kon client kon outlet er under e se ta to boja jabe, abar amar kon outlet e koto client ase seta jante parbo, tai outlet rakbe, but jodi Client type corporate hoi tahole se kono fixed outlet e asbe na, tar kono outlet thakbe na, client create er somoy tar kono outlet show hobe na, ar jekeono outlet er staff  caile onno outlet er client dekte parbe and edit kore outlet change korte parbe

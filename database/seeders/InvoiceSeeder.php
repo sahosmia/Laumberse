@@ -57,7 +57,7 @@ class InvoiceSeeder extends Seeder
                     'total' => $total,
                     'paid' => $paid,
                     'due' => $due,
-                    'status' => ($due > 0) ? InvoiceStatus::Processing->value : InvoiceStatus::Delivered->value,
+                    'status' => ($due > 0) ? InvoiceStatus::InHouse->value : InvoiceStatus::Delivered->value,
                     'method' => ['Cash', 'Bkash', 'Bank'][rand(0, 2)],
                 ]);
 

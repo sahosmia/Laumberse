@@ -135,6 +135,9 @@ export interface OutletProductPrice {
 export interface Client {
     id: number;
     client_uuid?: string;
+    /** Null for a Corporate client — it isn't tied to any single branch. See the outlet_id migration docblock. */
+    outlet_id?: number | null;
+    outlet?: Pick<Outlet, 'id' | 'name' | 'code'> | null;
     username?: string | null;
     name: string;
     phone: string;

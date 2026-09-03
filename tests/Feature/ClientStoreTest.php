@@ -2,6 +2,7 @@
 
 use App\Models\Category;
 use App\Models\Client;
+use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -37,7 +38,7 @@ test('creating a consumer client ignores any custom prices sent', function () {
     $response = $this->actingAs($user)->post(route('clients.store'), [
         'name' => 'Individual',
         'phone' => '01711111111',
-        'type' => 'Consumer',
+        'type' => 'Consumer', 'outlet_id' => Outlet::first()->id,
         'custom_prices' => [
             ['product_id' => $product->id, 'custom_price' => 40],
         ],
@@ -81,7 +82,7 @@ test('updating a client away from corporate removes its custom prices', function
     $response = $this->actingAs($user)->put(route('clients.update', $client), [
         'name' => 'Acme Corp',
         'phone' => '01700000000',
-        'type' => 'Consumer',
+        'type' => 'Consumer', 'outlet_id' => Outlet::first()->id,
     ]);
 
     $response->assertSessionHasNoErrors();
@@ -94,7 +95,7 @@ test('an admin can create a client with portal login credentials', function () {
     $response = $this->actingAs($user)->post(route('clients.store'), [
         'name' => 'Acme Corp',
         'phone' => '01700000000',
-        'type' => 'Consumer',
+        'type' => 'Consumer', 'outlet_id' => Outlet::first()->id,
         'username' => 'acme',
         'password' => 'secret123',
     ]);
@@ -107,12 +108,12 @@ test('an admin can create a client with portal login credentials', function () {
 
 test('username must be unique across clients', function () {
     $user = User::factory()->admin()->create();
-    Client::create(['name' => 'Existing', 'phone' => '01700000000', 'type' => 'Consumer', 'username' => 'acme', 'password' => 'secret123']);
+    Client::create(['name' => 'Existing', 'phone' => '01700000000', 'type' => 'Consumer', 'outlet_id' => Outlet::first()->id, 'username' => 'acme', 'password' => 'secret123']);
 
     $response = $this->actingAs($user)->post(route('clients.store'), [
         'name' => 'Acme Corp',
         'phone' => '01700000001',
-        'type' => 'Consumer',
+        'type' => 'Consumer', 'outlet_id' => Outlet::first()->id,
         'username' => 'acme',
         'password' => 'secret456',
     ]);
@@ -126,7 +127,7 @@ test('a password is required when a username is given on create', function () {
     $response = $this->actingAs($user)->post(route('clients.store'), [
         'name' => 'Acme Corp',
         'phone' => '01700000000',
-        'type' => 'Consumer',
+        'type' => 'Consumer', 'outlet_id' => Outlet::first()->id,
         'username' => 'acme',
     ]);
 
@@ -139,7 +140,7 @@ test('a client without a username or password is created without portal access',
     $this->actingAs($user)->post(route('clients.store'), [
         'name' => 'Acme Corp',
         'phone' => '01700000000',
-        'type' => 'Consumer',
+        'type' => 'Consumer', 'outlet_id' => Outlet::first()->id,
     ])->assertSessionHasNoErrors();
 
     $client = Client::first();
@@ -150,14 +151,14 @@ test('a client without a username or password is created without portal access',
 test('leaving the password blank on update keeps the client\'s existing password', function () {
     $user = User::factory()->admin()->create();
     $client = Client::create([
-        'name' => 'Acme Corp', 'phone' => '01700000000', 'type' => 'Consumer',
+        'name' => 'Acme Corp', 'phone' => '01700000000', 'type' => 'Consumer', 'outlet_id' => Outlet::first()->id,
         'username' => 'acme', 'password' => 'original-password',
     ]);
 
     $response = $this->actingAs($user)->put(route('clients.update', $client), [
         'name' => 'Acme Corp Updated',
         'phone' => '01700000000',
-        'type' => 'Consumer',
+        'type' => 'Consumer', 'outlet_id' => Outlet::first()->id,
         'username' => 'acme',
     ]);
 
@@ -168,14 +169,14 @@ test('leaving the password blank on update keeps the client\'s existing password
 test('clearing the username on update revokes portal access', function () {
     $user = User::factory()->admin()->create();
     $client = Client::create([
-        'name' => 'Acme Corp', 'phone' => '01700000000', 'type' => 'Consumer',
+        'name' => 'Acme Corp', 'phone' => '01700000000', 'type' => 'Consumer', 'outlet_id' => Outlet::first()->id,
         'username' => 'acme', 'password' => 'secret123',
     ]);
 
     $response = $this->actingAs($user)->put(route('clients.update', $client), [
         'name' => 'Acme Corp',
         'phone' => '01700000000',
-        'type' => 'Consumer',
+        'type' => 'Consumer', 'outlet_id' => Outlet::first()->id,
         'username' => '',
     ]);
 

@@ -1,9 +1,9 @@
 <?php
 
 use App\Models\Account;
-use App\Models\User;
-use App\Models\Invoice;
 use App\Models\Client;
+use App\Models\Invoice;
+use App\Models\User;
 
 beforeEach(function () {
     $this->user = User::factory()->admin()->create();
@@ -20,7 +20,7 @@ test('marking a partially paid invoice as Paid settles the full amount and store
         'total' => 820,
         'paid' => 411,
         'due' => 409,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
         'payment_status' => 'Unpaid',
         'payment_date' => null,
@@ -52,7 +52,7 @@ test('marking an invoice as Unpaid resets paid to 0 and due to the full total', 
         'total' => 100,
         'paid' => 100,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
         'payment_status' => 'Paid',
         'payment_date' => now()->toDateString(),
@@ -83,7 +83,7 @@ test('invoice payment status update fails with an invalid value', function () {
         'total' => 100,
         'paid' => 100,
         'due' => 0,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
         'payment_status' => 'Unpaid',
     ]);

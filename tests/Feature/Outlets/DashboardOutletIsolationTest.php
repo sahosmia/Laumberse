@@ -20,11 +20,11 @@ test('dashboard stats only include invoices, expenses, and accounts from the cur
 
     Invoice::create([
         'outlet_id' => $userA->outlet_id, 'invoice_uuid' => 'INV-A', 'date' => now()->toDateString(),
-        'client_id' => $clientA->id, 'total' => 1000, 'paid' => 1000, 'due' => 0, 'status' => 'Processing', 'method' => 'Cash',
+        'client_id' => $clientA->id, 'total' => 1000, 'paid' => 1000, 'due' => 0, 'status' => 'In House', 'method' => 'Cash',
     ]);
     Invoice::create([
         'outlet_id' => $outletB->id, 'invoice_uuid' => 'INV-B', 'date' => now()->toDateString(),
-        'client_id' => $clientB->id, 'total' => 5000, 'paid' => 5000, 'due' => 0, 'status' => 'Processing', 'method' => 'Cash',
+        'client_id' => $clientB->id, 'total' => 5000, 'paid' => 5000, 'due' => 0, 'status' => 'In House', 'method' => 'Cash',
     ]);
 
     Account::create(['outlet_id' => $userA->outlet_id, 'name' => 'Cash A', 'opening_balance' => 100, 'current_balance' => 100]);
@@ -48,11 +48,11 @@ test('an admin who switches to All Outlets sees dashboard stats aggregated acros
 
     Invoice::create([
         'outlet_id' => $admin->outlet_id, 'invoice_uuid' => 'INV-ADMIN', 'date' => now()->toDateString(),
-        'client_id' => $client->id, 'total' => 1000, 'paid' => 1000, 'due' => 0, 'status' => 'Processing', 'method' => 'Cash',
+        'client_id' => $client->id, 'total' => 1000, 'paid' => 1000, 'due' => 0, 'status' => 'In House', 'method' => 'Cash',
     ]);
     Invoice::create([
         'outlet_id' => $outletB->id, 'invoice_uuid' => 'INV-B', 'date' => now()->toDateString(),
-        'client_id' => $client->id, 'total' => 5000, 'paid' => 5000, 'due' => 0, 'status' => 'Processing', 'method' => 'Cash',
+        'client_id' => $client->id, 'total' => 5000, 'paid' => 5000, 'due' => 0, 'status' => 'In House', 'method' => 'Cash',
     ]);
 
     test()->actingAs($admin)->post(route('outlet-context.update'), ['outlet' => 'all'])

@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\User;
-use App\Models\Invoice;
 use App\Models\Client;
+use App\Models\Invoice;
+use App\Models\User;
 
 beforeEach(function () {
     $this->user = User::factory()->admin()->create();
@@ -17,7 +17,7 @@ test('invoice status can be updated inline', function () {
         'total' => 100,
         'paid' => 100,
         'due' => 0,
-        'status' => 'Pending',
+        'status' => 'In House',
         'method' => 'Cash',
     ]);
 
@@ -40,7 +40,7 @@ test('invoice status update fails with invalid status', function () {
         'total' => 100,
         'paid' => 100,
         'due' => 0,
-        'status' => 'Pending',
+        'status' => 'In House',
         'method' => 'Cash',
     ]);
 

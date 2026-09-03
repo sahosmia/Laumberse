@@ -10,6 +10,7 @@ use App\Http\Requests\Clients\StoreClientRequest;
 use App\Http\Requests\Clients\UpdateClientRequest;
 use App\Models\Client;
 use App\Models\Employee;
+use App\Models\Outlet;
 use App\Models\Product;
 use App\Support\DateRangeFilter;
 use App\Support\OutletContext;
@@ -33,13 +34,16 @@ class ClientController extends Controller
         [$sortColumn, $sortDirection] = self::SORTABLE[$request->sort] ?? self::SORTABLE['created_at:desc'];
         $perPage = PerPage::resolve($request);
 
-        $clients = Client::with('customPrices')
+        $clients = Client::with(['customPrices', 'outlet:id,name,code'])
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('name', 'like', "%{$s}%")
                     ->orWhere('phone', 'like', "%{$s}%")
                     ->orWhere('client_uuid', 'like', "%{$s}%");
             }))
             ->when($request->type, fn ($q, $type) => $q->where('type', $type))
+            // Client is global (not outlet-scoped), so this filter is opt-in for "how many clients
+            // does this outlet have" — not an access restriction like OutletContext::scope().
+            ->when($request->outlet_id, fn ($q, $outletId) => $q->where('outlet_id', $outletId))
             ->orderBy($sortColumn, $sortDirection)
             ->orderBy('id', $sortDirection)
             ->paginate($perPage)
@@ -52,9 +56,13 @@ class ClientController extends Controller
         return Inertia::render('clients/index', [
             'clients' => $clients,
             'products' => Product::all(),
+            // Every active outlet, not just the current user's — any staff member may create or
+            // edit a client under any outlet, unrelated to which outlet they're currently viewing.
+            'outlets' => Outlet::where('status', 'active')->orderBy('name')->get(['id', 'name']),
             'filters' => [
                 'search' => $request->search,
                 'type' => $request->type,
+                'outlet_id' => $request->outlet_id,
                 'sort' => $request->sort,
                 'per_page' => $perPage,
             ],
@@ -99,7 +107,7 @@ class ClientController extends Controller
             ->withQueryString();
 
         return Inertia::render('clients/show', [
-            'client' => $client->load('customPrices.product')->makeVisible('internal_note'),
+            'client' => $client->load(['customPrices.product', 'outlet:id,name,code'])->makeVisible('internal_note'),
             'orders' => $orders,
             'activities' => $activities,
             'employees' => Employee::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name']),

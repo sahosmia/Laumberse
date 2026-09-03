@@ -110,7 +110,7 @@ test('a client with existing orders cannot be deleted', function () {
     $client = Client::create(['name' => 'Has Orders', 'phone' => '01700000031']);
     Invoice::create([
         'invoice_uuid' => 'INV-GUARD-1', 'date' => now()->toDateString(), 'client_id' => $client->id,
-        'total' => 100, 'paid' => 100, 'due' => 0, 'status' => 'Processing', 'method' => 'Cash',
+        'total' => 100, 'paid' => 100, 'due' => 0, 'status' => 'In House', 'method' => 'Cash',
     ]);
 
     $response = $this->actingAs($user)->delete(route('clients.destroy', $client));
@@ -197,7 +197,7 @@ test('a product used in a past invoice cannot be deleted', function () {
     $client = Client::create(['name' => 'Buyer', 'phone' => '01700000034']);
     $invoice = Invoice::create([
         'invoice_uuid' => 'INV-GUARD-2', 'date' => now()->toDateString(), 'client_id' => $client->id,
-        'total' => 100, 'paid' => 100, 'due' => 0, 'status' => 'Processing', 'method' => 'Cash',
+        'total' => 100, 'paid' => 100, 'due' => 0, 'status' => 'In House', 'method' => 'Cash',
     ]);
     InvoiceItem::create(['invoice_id' => $invoice->id, 'product_id' => $product->id, 'qty' => 1, 'price' => 100]);
 

@@ -23,7 +23,7 @@ test('an invoice PDF can be generated with a discount, delivery charge, and Bang
         'total' => 180,
         'paid' => 100,
         'due' => 80,
-        'status' => 'Processing',
+        'status' => 'In House',
         'method' => 'Cash',
         'account_id' => $account->id,
         'discount_type' => 'Percentage',

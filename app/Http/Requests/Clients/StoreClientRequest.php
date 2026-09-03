@@ -19,6 +19,13 @@ class StoreClientRequest extends FormRequest
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
             'type' => ['required', 'string', Rule::enum(ClientType::class)],
+            // A Corporate client isn't tied to any single branch — every other type must have one.
+            'outlet_id' => [
+                'nullable',
+                'prohibited_if:type,Corporate',
+                'required_unless:type,Corporate',
+                Rule::exists('outlets', 'id')->where('status', 'active'),
+            ],
             'address' => 'nullable|string|max:500',
             'internal_note' => 'nullable|string|max:2000',
             'username' => ['nullable', 'string', 'max:255', 'required_with:password', Rule::unique('clients', 'username')],

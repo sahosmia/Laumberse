@@ -34,6 +34,7 @@ import {
     Plus,
     Settings,
     ShoppingBag,
+    Store,
     Tag,
     User,
 } from 'lucide-react';
@@ -409,6 +410,13 @@ export default function ClientShow({ client, orders, activities, employees, orde
                                     <MapPin className="mt-0.5 h-4 w-4 text-neutral-400" />
                                     <span className="text-neutral-600 dark:text-neutral-300">{client.address || 'No address provided'}</span>
                                 </div>
+                                {/* Corporate has no fixed outlet by design — nothing to show for it. */}
+                                {client.type !== 'Corporate' && (
+                                    <div className="flex items-start gap-3 text-sm">
+                                        <Store className="mt-0.5 h-4 w-4 text-neutral-400" />
+                                        <span className="text-neutral-600 dark:text-neutral-300">{client.outlet?.name || 'No outlet assigned'}</span>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3 dark:border-amber-900/40 dark:bg-amber-900/10">
