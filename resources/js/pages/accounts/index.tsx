@@ -213,7 +213,9 @@ export default function Accounts({ accounts, allAccounts, filters }: AccountsPro
                     defaultView="table"
                     columns={columns}
                     renderCard={renderAccountCard}
-                    pagination={accounts.links}
+                    scrollProp="accounts"
+                    currentPage={accounts.current_page}
+                    lastPage={accounts.last_page}
                     total={accounts.total}
                     perPage={perPage}
                     onPerPageChange={setPerPage}

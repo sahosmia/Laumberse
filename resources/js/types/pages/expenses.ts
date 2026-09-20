@@ -1,11 +1,13 @@
-import type { Account, Expense, ExpenseCategory, Material } from '@/types';
+import type { AssetStatus } from '@/constants/status';
+import type { Account, AssetCategory, Expense, ExpenseCategory, Material } from '@/types';
 import type { Paginated } from '@/types/pagination';
 
 export interface ExpensesProps {
     expenses: Paginated<Expense>;
     categories: ExpenseCategory[];
-    accounts: Pick<Account, 'id' | 'name' | 'account_number'>[];
+    accounts: Pick<Account, 'id' | 'name' | 'account_number' | 'outlet_id'>[];
     materials: Material[];
+    asset_categories: Pick<AssetCategory, 'id' | 'name'>[];
     filters: {
         search?: string;
         category_id?: string;
@@ -70,4 +72,15 @@ export interface PayrollFormProps {
     netSalary: number;
     formatCurrency: (n: number | string) => string;
     onEmployeeChange: (val: string | number) => void;
+}
+
+export interface AssetPurchaseFormProps {
+    data: {
+        asset_name: string;
+        asset_category_id: string | number;
+        asset_status: AssetStatus;
+    };
+    setData: (key: string, value: string | number | boolean | null | undefined) => void;
+    errors: Record<string, string | undefined>;
+    assetCategories: Pick<AssetCategory, 'id' | 'name'>[];
 }

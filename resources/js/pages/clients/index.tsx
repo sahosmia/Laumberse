@@ -15,9 +15,9 @@ import { useDataViewSearch } from '@/hooks/use-data-view-search';
 import { useTableLoading } from '@/hooks/use-table-loading';
 import AppLayout from '@/layouts/app-layout';
 import { formatCurrency } from '@/lib/format';
-import { type BreadcrumbItem, Client } from '@/types';
+import { type BreadcrumbItem, Client, type SharedData } from '@/types';
 import type { ClientsProps } from '@/types/pages/clients';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { Bell, CalendarClock, Lock, MapPin, PackagePlus, Phone, Plus, Settings2, Store, Tag, Trash2, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -31,13 +31,15 @@ const breadcrumbs: BreadcrumbItem[] = [
 const typeBadgeClass = (type: ClientType) => CLIENT_TYPE_STYLES[type] ?? CLIENT_TYPE_STYLES.Consumer;
 
 export default function Clients({ clients, products, outlets, filters }: ClientsProps) {
+    const { outlet } = usePage<SharedData>().props;
+    const enabledFeatures = outlet?.enabledFeatures ?? [];
     const [showModal, setShowModal] = useState(false);
     const [editingClient, setEditingClient] = useState<Client | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
     const [priceIndexToDelete, setPriceIndexToDelete] = useState<number | null>(null);
 
-    const { data, setData, post, put, transform, reset, errors, processing, clearErrors } = useForm({
+    const { data, setData, post, put, reset, errors, processing, clearErrors } = useForm({
         name: '',
         phone: '',
         type: 'Consumer' as ClientType,
@@ -49,6 +51,14 @@ export default function Clients({ clients, products, outlets, filters }: Clients
         custom_prices: [] as { product_id: number; custom_price: string | number }[],
     });
 
+    // Which outlet's feature toggles gate the Type dropdown — the fixed active outlet, or
+    // whichever one the "All Outlets" picker in the form currently has selected. Editing an
+    // existing client never hides its own type just because the outlet config changed later
+    // (matches StoreClientRequest, which only gates `type` on create, not update).
+    const effectiveOutlet = outlet?.isAll ? outlet.available.find((o) => o.id === data.outlet_id) : outlet?.current;
+    const enabledClientTypes = effectiveOutlet ? CLIENT_TYPES.filter((t) => !effectiveOutlet.disabled_features?.includes(t)) : CLIENT_TYPES;
+    const availableClientTypes = editingClient || enabledClientTypes.length === 0 ? CLIENT_TYPES : enabledClientTypes;
+
     const {
         search,
         setSearch,
@@ -59,7 +69,10 @@ export default function Clients({ clients, products, outlets, filters }: Clients
         reset: resetDataView,
     } = useDataViewSearch('clients.index', filters, {}, 'created_at:desc', 300, {
         type: filters.type || '',
-        outlet_id: filters.outlet_id ? String(filters.outlet_id) : '',
+        // Server always resolves this to either a real outlet id or the explicit "all" sentinel
+        // (never blank) — defaulting to the viewer's own active outlet on a fresh visit. See
+        // ClientController::index.
+        outlet_id: filters.outlet_id ? String(filters.outlet_id) : 'all',
     });
     const isLoading = useTableLoading();
 
@@ -67,6 +80,9 @@ export default function Clients({ clients, products, outlets, filters }: Clients
         setEditingClient(null);
         reset();
         clearErrors();
+        // reset() always lands on 'Consumer' — swap in the first type this outlet actually
+        // offers, since 'Consumer' itself might be one of the disabled ones.
+        setData('type', enabledClientTypes[0] ?? 'Consumer');
         setShowModal(true);
     };
 
@@ -76,6 +92,15 @@ export default function Clients({ clients, products, outlets, filters }: Clients
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // If the selected type falls outside the (now-known) outlet's enabled types — the outlet
+    // wasn't resolved yet on open, or the "All Outlets" picker just changed — fall back to
+    // whatever's actually available instead of letting the submit round-trip through a 422.
+    useEffect(() => {
+        if (editingClient || !showModal || availableClientTypes.includes(data.type)) return;
+        setData('type', availableClientTypes[0]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editingClient, showModal, data.type, data.outlet_id, availableClientTypes.join(',')]);
 
     const openEditModal = (client: Client) => {
         setEditingClient(client);
@@ -100,10 +125,6 @@ export default function Clients({ clients, products, outlets, filters }: Clients
         if (editingClient) {
             setShowSaveConfirm(true);
         } else {
-            transform((data) => ({
-                ...data,
-                custom_prices: data.custom_prices.filter((cp) => cp.product_id && cp.custom_price !== ''),
-            }));
             post(route('clients.store'), {
                 onSuccess: () => {
                     setShowModal(false);
@@ -115,10 +136,6 @@ export default function Clients({ clients, products, outlets, filters }: Clients
 
     const confirmSave = () => {
         if (editingClient) {
-            transform((data) => ({
-                ...data,
-                custom_prices: data.custom_prices.filter((cp) => cp.product_id && cp.custom_price !== ''),
-            }));
             put(route('clients.update', editingClient.id), {
                 onSuccess: () => {
                     setShowSaveConfirm(false);
@@ -133,16 +150,20 @@ export default function Clients({ clients, products, outlets, filters }: Clients
 
     const clientQuickActions = (c: Client) => (
         <>
-            <DropdownMenuItem asChild>
-                <Link href={`${route('clients.show', c.id)}?action=add-meeting`}>
-                    <CalendarClock className="mr-2 h-4 w-4" /> Add Meeting
-                </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-                <Link href={`${route('clients.show', c.id)}?action=add-follow-up`}>
-                    <Bell className="mr-2 h-4 w-4" /> Add Follow-up
-                </Link>
-            </DropdownMenuItem>
+            {enabledFeatures.includes('meeting') && (
+                <DropdownMenuItem asChild>
+                    <Link href={`${route('clients.show', c.id)}?action=add-meeting`}>
+                        <CalendarClock className="mr-2 h-4 w-4" /> Add Meeting
+                    </Link>
+                </DropdownMenuItem>
+            )}
+            {enabledFeatures.includes('follow_up') && (
+                <DropdownMenuItem asChild>
+                    <Link href={`${route('clients.show', c.id)}?action=add-follow-up`}>
+                        <Bell className="mr-2 h-4 w-4" /> Add Follow-up
+                    </Link>
+                </DropdownMenuItem>
+            )}
         </>
     );
 
@@ -325,10 +346,10 @@ export default function Clients({ clients, products, outlets, filters }: Clients
                             <FilterSelect
                                 icon={<Store className="h-4 w-4" />}
                                 containerClassName="w-full sm:w-48"
-                                value={filterValues.outlet_id ?? ''}
+                                value={filterValues.outlet_id ?? 'all'}
                                 onChange={(e) => setFilter('outlet_id', e.target.value)}
                             >
-                                <option value="">All Outlets</option>
+                                <option value="all">All Outlets</option>
                                 {outlets.map((o) => (
                                     <option key={o.id} value={o.id}>
                                         {o.name}
@@ -337,12 +358,24 @@ export default function Clients({ clients, products, outlets, filters }: Clients
                             </FilterSelect>
                         </>
                     }
-                    onReset={resetDataView}
+                    onReset={() => {
+                        resetDataView();
+                        // resetDataView() clears outlet_id to '' like every other filter, which
+                        // would submit no outlet_id at all — ClientController::index resolves
+                        // that to the viewer's own active outlet anyway, but only once the
+                        // response comes back, and this filterValues state doesn't auto-resync
+                        // from it. Setting it here directly (from the same outlet.current the
+                        // backend would resolve to) keeps the dropdown showing the right selection
+                        // immediately instead of flashing "All Outlets" until a fresh reload.
+                        setFilter('outlet_id', outlet?.current ? String(outlet.current.id) : 'all');
+                    }}
                     viewKey="clients"
                     defaultView="card"
                     columns={columns}
                     renderCard={renderClientCard}
-                    pagination={clients.links}
+                    scrollProp="clients"
+                    currentPage={clients.current_page}
+                    lastPage={clients.last_page}
                     total={clients.total}
                     perPage={perPage}
                     onPerPageChange={setPerPage}
@@ -398,6 +431,28 @@ export default function Clients({ clients, products, outlets, filters }: Clients
                         error={errors.name}
                     />
 
+                    {/* Outlet — every type except Corporate must belong to one. Picked before Type
+                        because Type's own options depend on which outlet is selected here. */}
+                    {data.type !== 'Corporate' && (
+                        <FormSelect
+                            id="client_outlet"
+                            label="Outlet"
+                            required
+                            icon={<Store className="h-4 w-4" />}
+                            value={data.outlet_id}
+                            disabled={processing}
+                            onChange={(e) => setData('outlet_id', e.target.value ? Number(e.target.value) : '')}
+                            error={errors.outlet_id}
+                        >
+                            <option value="">Select an outlet</option>
+                            {outlets.map((o) => (
+                                <option key={o.id} value={o.id}>
+                                    {o.name}
+                                </option>
+                            ))}
+                        </FormSelect>
+                    )}
+
                     {/* Phone & Type Rows */}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <FormInput
@@ -428,7 +483,7 @@ export default function Clients({ clients, products, outlets, filters }: Clients
                                 }}
                                 className="mt-1"
                             >
-                                {CLIENT_TYPES.map((t) => (
+                                {availableClientTypes.map((t) => (
                                     <option key={t} value={t} className="bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100">
                                         {t}
                                     </option>
@@ -437,27 +492,6 @@ export default function Clients({ clients, products, outlets, filters }: Clients
                             {errors.type && <p className="mt-1 text-xs font-medium text-red-500">{errors.type}</p>}
                         </div>
                     </div>
-
-                    {/* Outlet — every type except Corporate must belong to one */}
-                    {data.type !== 'Corporate' && (
-                        <FormSelect
-                            id="client_outlet"
-                            label="Outlet"
-                            required
-                            icon={<Store className="h-4 w-4" />}
-                            value={data.outlet_id}
-                            disabled={processing}
-                            onChange={(e) => setData('outlet_id', e.target.value ? Number(e.target.value) : '')}
-                            error={errors.outlet_id}
-                        >
-                            <option value="">Select an outlet</option>
-                            {outlets.map((o) => (
-                                <option key={o.id} value={o.id}>
-                                    {o.name}
-                                </option>
-                            ))}
-                        </FormSelect>
-                    )}
 
                     {/* Address Input */}
                     <div>

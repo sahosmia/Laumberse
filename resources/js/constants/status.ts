@@ -11,10 +11,14 @@ export const CLIENT_TYPE_STYLES: Record<ClientType, string> = {
     B2B: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
 };
 
-/** The laundry workflow's pipeline order — In House (intake) through Ready (awaiting pickup), then Delivered; Cancelled can happen at any stage. */
-export const INVOICE_STATUSES = ['In House', 'Pre Wash', 'Washing', 'Extract', 'Drying', 'Pressing', 'Ready', 'Delivered', 'Cancelled'] as const;
+/** The laundry workflow's pipeline order — In House (intake) through Ready (awaiting pickup), then Delivered; Bad Order can happen at any stage. */
+export const INVOICE_STATUSES = ['In House', 'Pre Wash', 'Washing', 'Extract', 'Drying', 'Pressing', 'Ready', 'Delivered', 'Bad Order'] as const;
 export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
-/** Every status is settable directly on the invoice create/edit form — same set as INVOICE_STATUSES. */
+/**
+ * Every status settable directly on the invoice create/edit form or the inline status dropdown —
+ * everything except "Bad Order", which is only ever set via the dedicated "Cancel Order" action
+ * (see invoices/index.tsx), since it also reverses any paid amount and flips payment_status.
+ */
 export const INVOICE_FORM_STATUSES: readonly InvoiceStatus[] = [
     'In House',
     'Pre Wash',
@@ -24,7 +28,6 @@ export const INVOICE_FORM_STATUSES: readonly InvoiceStatus[] = [
     'Pressing',
     'Ready',
     'Delivered',
-    'Cancelled',
 ];
 export const INVOICE_STATUS_STYLES: Record<InvoiceStatus, string> = {
     'In House': 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-900/20 dark:text-slate-400 dark:border-slate-800',
@@ -35,14 +38,15 @@ export const INVOICE_STATUS_STYLES: Record<InvoiceStatus, string> = {
     Pressing: 'bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900/20 dark:text-violet-400 dark:border-violet-800',
     Ready: 'bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-800',
     Delivered: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800',
-    Cancelled: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800',
+    'Bad Order': 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800',
 };
 
-export const PAYMENT_STATUSES = ['Paid', 'Unpaid'] as const;
+export const PAYMENT_STATUSES = ['Paid', 'Unpaid', 'Cancelled'] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 export const PAYMENT_STATUS_STYLES: Record<PaymentStatus, string> = {
     Paid: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800',
     Unpaid: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800',
+    Cancelled: 'bg-neutral-200 text-neutral-600 border-neutral-300 dark:bg-neutral-800 dark:text-neutral-400 dark:border-neutral-700',
 };
 
 export const DISCOUNT_TYPES = ['Fixed', 'Percentage'] as const;

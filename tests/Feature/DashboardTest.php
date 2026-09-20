@@ -194,9 +194,9 @@ test('dashboard period=this_year excludes invoices from last year', function () 
     );
 });
 
-test('dashboard pending count includes every non-final status and excludes Delivered/Cancelled', function () {
+test('dashboard pending count includes every non-final status and excludes Delivered/Bad Order', function () {
     // 'pending' counts an invoice still somewhere in the wash pipeline (any status short of
-    // Delivered or Cancelled) — there's no single "Processing" status anymore now that the
+    // Delivered or Bad Order) — there's no single "Processing" status anymore now that the
     // pipeline has named stages (In House, Pre Wash, Washing, Extract, Drying, Pressing, Ready).
     $user = User::factory()->create();
     $client = Client::create(['name' => 'John Doe', 'phone' => '123456789']);
@@ -214,14 +214,19 @@ test('dashboard pending count includes every non-final status and excludes Deliv
         'total' => 300, 'paid' => 300, 'due' => 0, 'status' => 'Delivered', 'method' => 'Cash',
     ]);
     Invoice::create([
-        'invoice_uuid' => 'INV-CANCELLED', 'date' => now()->toDateString(), 'client_id' => $client->id,
-        'total' => 400, 'paid' => 0, 'due' => 0, 'status' => 'Cancelled', 'method' => 'Cash',
+        'invoice_uuid' => 'INV-BAD-ORDER', 'date' => now()->toDateString(), 'client_id' => $client->id,
+        'total' => 400, 'paid' => 0, 'due' => 0, 'status' => 'Bad Order', 'payment_status' => 'Cancelled', 'method' => 'Cash',
     ]);
 
     $response = $this->actingAs($user)->get('/dashboard');
 
     $response->assertOk();
-    $response->assertInertia(fn ($page) => $page->where('stats.pending', 2));
+    $response->assertInertia(fn ($page) => $page
+        ->where('stats.pending', 2)
+        // A Bad Order never completed — it contributes to neither the order count nor revenue.
+        ->where('stats.total_orders', 3)
+        ->where('stats.total_revenue', 600)
+    );
 });
 
 test('dashboard reports transportation cost broken down by business and delivery', function () {

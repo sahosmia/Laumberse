@@ -71,6 +71,10 @@ export interface Outlet {
     phone: string | null;
     email: string | null;
     status: 'active' | 'inactive';
+    /** Whether this outlet's data is folded into the "All Outlets" consolidated view. */
+    include_in_consolidated_reporting: boolean;
+    /** Feature keys (see CLIENT_ACTIVITY_TYPES) turned off for this outlet — absence means enabled. */
+    disabled_features: string[];
     created_at: string;
 }
 
@@ -85,6 +89,8 @@ export interface OutletContext {
     available: Outlet[];
     canSwitch: boolean;
     isAll: boolean;
+    /** Feature keys (see CLIENT_ACTIVITY_TYPES) enabled in the current context — every key while viewing "All Outlets". */
+    enabledFeatures: string[];
 }
 
 export interface Role {
@@ -310,6 +316,8 @@ export interface Asset {
     status: AssetStatus;
     asset_category_id: number;
     category?: AssetCategory;
+    /** The purchase Expense this asset was bought through, if any — see CreateAssetAction. */
+    expense?: { id: number; account?: Pick<Account, 'id' | 'name' | 'account_number'> | null } | null;
 }
 
 export interface Account {

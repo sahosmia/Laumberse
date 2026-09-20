@@ -77,6 +77,7 @@ class HandleInertiaRequests extends Middleware
                 'available' => OutletContext::available()->values(),
                 'canSwitch' => OutletContext::canSwitch(),
                 'isAll' => OutletContext::isAll(),
+                'enabledFeatures' => OutletContext::enabledFeatures(),
             ] : null,
             'flash' => [
                 'success' => $request->session()->get('success'),

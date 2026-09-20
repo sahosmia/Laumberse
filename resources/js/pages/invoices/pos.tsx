@@ -9,7 +9,7 @@ import { useEffect } from 'react';
  * absorb the app's usual visual style. Auto-triggers the print dialog on load since this page's
  * only purpose is printing (unlike invoices/show.tsx, which is also a normal viewing page).
  */
-export default function InvoicePosPrint({ invoice }: PosPrintProps) {
+export default function InvoicePosPrint({ invoice, business }: PosPrintProps) {
     const subtotal = invoice.items.reduce((s, i) => s + Number(i.price) * i.qty, 0);
     const discountAmount = Number(invoice.discount_amount) || 0;
     const discountValue = invoice.discount_type === 'Percentage' ? (subtotal * discountAmount) / 100 : discountAmount;
@@ -25,9 +25,9 @@ export default function InvoicePosPrint({ invoice }: PosPrintProps) {
             <Head title={`Receipt ${invoice.invoice_uuid}`} />
             <div className="mx-auto w-[302px] bg-white px-2 py-3 font-mono text-[11px] leading-snug text-black">
                 <div className="space-y-0.5 text-center">
-                    <p className="text-sm font-bold">Launverse</p>
-                    <p>Dhaka, Bangladesh</p>
-                    <p>Phone: +880 1234 567890</p>
+                    <p className="text-sm font-bold">{business.name}</p>
+                    {business.address && <p>{business.address}</p>}
+                    {business.phone && <p>Phone: {business.phone}</p>}
                 </div>
 
                 <div className="my-2 border-t border-dashed border-black" />
@@ -41,6 +41,12 @@ export default function InvoicePosPrint({ invoice }: PosPrintProps) {
                         <span>Date</span>
                         <span>{formatDate(invoice.date)}</span>
                     </div>
+                    {invoice.outlet?.name && (
+                        <div className="flex justify-between">
+                            <span>Outlet</span>
+                            <span className="max-w-[70%] truncate text-right">{invoice.outlet.name}</span>
+                        </div>
+                    )}
                     <div className="flex justify-between">
                         <span>Client</span>
                         <span className="max-w-[70%] truncate text-right">{invoice.client.name}</span>
@@ -106,7 +112,7 @@ export default function InvoicePosPrint({ invoice }: PosPrintProps) {
 
                 <div className="my-2 border-t border-dashed border-black" />
 
-                <p className="text-center">Thank you for choosing Launverse!</p>
+                <p className="text-center">Thank you for choosing {business.name}!</p>
             </div>
 
             <style

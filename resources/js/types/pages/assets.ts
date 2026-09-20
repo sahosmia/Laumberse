@@ -4,7 +4,7 @@ import type { Paginated } from '@/types/pagination';
 export interface AssetsProps {
     assets: Paginated<Asset>;
     categories: AssetCategory[];
-    accounts: Pick<Account, 'id' | 'name' | 'account_number'>[];
+    accounts: Pick<Account, 'id' | 'name' | 'account_number' | 'outlet_id'>[];
     filters: {
         search?: string;
         status?: string;

@@ -1,9 +1,12 @@
 <?php
 
+use App\Actions\Invoices\PrepareInvoicePdfDataAction;
 use App\Models\Account;
 use App\Models\Category;
 use App\Models\Client;
+use App\Models\GlobalSetting;
 use App\Models\Invoice;
+use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\User;
 
@@ -66,4 +69,73 @@ test('an invoice PDF can be generated with no discount and no remarks', function
     $invoice = Invoice::latest('id')->first();
 
     test()->actingAs($user)->get(route('invoices.print', $invoice))->assertOk();
+});
+
+test('the invoice PDF uses the invoice\'s own outlet address and phone, not another outlet\'s', function () {
+    GlobalSetting::set('business_address', 'HQ Address, Dhaka');
+    GlobalSetting::set('business_phone', '01799999999');
+
+    $outlet = Outlet::factory()->create(['address' => 'Gulshan Branch, Dhaka', 'phone' => '01711111111']);
+    $user = User::factory()->for($outlet, 'outlet')->admin()->create();
+    $category = Category::create(['name' => 'Cat-'.uniqid(), 'slug' => 'cat-'.uniqid()]);
+    $product = Product::create(['name' => 'Product', 'category_id' => $category->id, 'price' => 50]);
+    $client = Client::create(['outlet_id' => $outlet->id, 'name' => 'Client', 'phone' => '01700000000', 'type' => 'Consumer']);
+    $account = Account::create(['outlet_id' => $outlet->id, 'name' => 'Cash', 'opening_balance' => 0, 'current_balance' => 0]);
+
+    test()->actingAs($user)->post(route('invoices.store'), [
+        'date' => now()->format('Y-m-d'),
+        'client_id' => $client->id,
+        'create_new_client' => false,
+        'total' => 50,
+        'paid' => 50,
+        'due' => 0,
+        'status' => 'Delivered',
+        'method' => 'Cash',
+        'account_id' => $account->id,
+        'discount_type' => 'Fixed',
+        'discount_amount' => 0,
+        'items' => [['productId' => $product->id, 'qty' => 1, 'price' => 50]],
+    ])->assertSessionHasNoErrors();
+
+    $invoice = Invoice::latest('id')->first();
+
+    $data = (new PrepareInvoicePdfDataAction)($invoice);
+
+    expect($data['business']['address'])->toBe('Gulshan Branch, Dhaka');
+    expect($data['business']['phone'])->toBe('01711111111');
+    expect($data['outletName'])->toBe($outlet->name);
+});
+
+test('the invoice PDF falls back to the global business address and phone when the outlet has none set', function () {
+    GlobalSetting::set('business_address', 'HQ Address, Dhaka');
+    GlobalSetting::set('business_phone', '01799999999');
+
+    $outlet = Outlet::factory()->create(['address' => null, 'phone' => null]);
+    $user = User::factory()->for($outlet, 'outlet')->admin()->create();
+    $category = Category::create(['name' => 'Cat-'.uniqid(), 'slug' => 'cat-'.uniqid()]);
+    $product = Product::create(['name' => 'Product', 'category_id' => $category->id, 'price' => 50]);
+    $client = Client::create(['outlet_id' => $outlet->id, 'name' => 'Client', 'phone' => '01700000000', 'type' => 'Consumer']);
+    $account = Account::create(['outlet_id' => $outlet->id, 'name' => 'Cash', 'opening_balance' => 0, 'current_balance' => 0]);
+
+    test()->actingAs($user)->post(route('invoices.store'), [
+        'date' => now()->format('Y-m-d'),
+        'client_id' => $client->id,
+        'create_new_client' => false,
+        'total' => 50,
+        'paid' => 50,
+        'due' => 0,
+        'status' => 'Delivered',
+        'method' => 'Cash',
+        'account_id' => $account->id,
+        'discount_type' => 'Fixed',
+        'discount_amount' => 0,
+        'items' => [['productId' => $product->id, 'qty' => 1, 'price' => 50]],
+    ])->assertSessionHasNoErrors();
+
+    $invoice = Invoice::latest('id')->first();
+
+    $data = (new PrepareInvoicePdfDataAction)($invoice);
+
+    expect($data['business']['address'])->toBe('HQ Address, Dhaka');
+    expect($data['business']['phone'])->toBe('01799999999');
 });

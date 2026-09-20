@@ -12,15 +12,21 @@ enum InvoiceStatus: string
     case Pressing = 'Pressing';
     case Ready = 'Ready';
     case Delivered = 'Delivered';
-    case Cancelled = 'Cancelled';
+    /** Only ever set via InvoiceService::cancelOrder() — see formValues()'s exclusion below. */
+    case BadOrder = 'Bad Order';
 
-    /** Statuses settable directly through the invoice create/edit form. */
+    /**
+     * Statuses settable directly through the invoice create/edit form or the inline status
+     * dropdown — everything except BadOrder, which is reachable only through the dedicated
+     * "Cancel Order" action (it has money/payment_status side effects a plain status edit must
+     * never trigger as a side door).
+     */
     public static function formValues(): array
     {
-        return self::values();
+        return array_values(array_filter(self::values(), fn ($value) => $value !== self::BadOrder->value));
     }
 
-    /** Statuses settable through the dedicated inline status-update action. */
+    /** Every valid status value, including BadOrder (for display/casting — not form-settable, see formValues()). */
     public static function values(): array
     {
         return array_column(self::cases(), 'value');

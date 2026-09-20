@@ -5,6 +5,6 @@ export interface MaterialsProps {
     materials: Paginated<Material>;
     allMaterials: Material[];
     units: Unit[];
-    accounts: Pick<Account, 'id' | 'name' | 'account_number'>[];
+    accounts: Pick<Account, 'id' | 'name' | 'account_number' | 'outlet_id'>[];
     filters: { search?: string; unit_id?: string; sort?: string; per_page?: number };
 }

@@ -105,7 +105,7 @@ An overview of the application architecture, highlighting the clean division bet
 │   │       ├── Employees/           # e.g., StoreEmployeeRequest, GetEligibleForPayrollRequest
 │   │       ├── Invoices/            # e.g., StoreInvoiceRequest, UpdateInvoiceStatusRequest
 │   │       ├── Materials/
-│   │       └── Settings/            # e.g., UpdatePasswordRequest, UpdateGlobalSettingsRequest
+│   │       └── Settings/            # e.g., UpdatePasswordRequest, UpdateBrandingSettingsRequest
 │   ├── Models/                      # Eloquent models (Client, Product, Employee, Invoice, Expense, etc.)
 │   └── Services/                    # Encapsulated Domain Logic (InvoiceService, ExpenseService)
 │

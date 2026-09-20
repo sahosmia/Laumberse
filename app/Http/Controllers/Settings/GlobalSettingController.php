@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Settings\UpdateGlobalSettingsRequest;
+use App\Http\Requests\Settings\UpdateBrandingSettingsRequest;
+use App\Http\Requests\Settings\UpdateBusinessSettingsRequest;
+use App\Http\Requests\Settings\UpdateCategorySettingsRequest;
+use App\Http\Requests\Settings\UpdateWeekSettingsRequest;
 use App\Models\ExpenseCategory;
 use App\Models\GlobalSetting;
 use Illuminate\Http\UploadedFile;
@@ -37,14 +40,22 @@ class GlobalSettingController extends Controller
         ]);
     }
 
-    public function update(UpdateGlobalSettingsRequest $request)
+    public function updateBusiness(UpdateBusinessSettingsRequest $request)
     {
-        $values = $request->safe()->except(['logo', 'favicon']);
+        $this->saveValues($request->validated());
 
-        foreach ($values as $key => $value) {
-            GlobalSetting::updateOrCreate(['key' => $key], ['value' => $value]);
-        }
+        return redirect()->back()->with('success', 'Business information updated successfully');
+    }
 
+    public function updateWeek(UpdateWeekSettingsRequest $request)
+    {
+        $this->saveValues($request->validated());
+
+        return redirect()->back()->with('success', 'Business week updated successfully');
+    }
+
+    public function updateBranding(UpdateBrandingSettingsRequest $request)
+    {
         if ($request->hasFile('logo')) {
             $this->replaceFile($request->file('logo'), 'logo_path');
         }
@@ -53,7 +64,21 @@ class GlobalSettingController extends Controller
             $this->replaceFile($request->file('favicon'), 'favicon_path');
         }
 
-        return redirect()->back()->with('success', 'Settings updated successfully');
+        return redirect()->back()->with('success', 'Branding updated successfully');
+    }
+
+    public function updateCategories(UpdateCategorySettingsRequest $request)
+    {
+        $this->saveValues($request->validated());
+
+        return redirect()->back()->with('success', 'Workflow categories updated successfully');
+    }
+
+    private function saveValues(array $values): void
+    {
+        foreach ($values as $key => $value) {
+            GlobalSetting::updateOrCreate(['key' => $key], ['value' => $value]);
+        }
     }
 
     private function replaceFile(UploadedFile $file, string $key): void

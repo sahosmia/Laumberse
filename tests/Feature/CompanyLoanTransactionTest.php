@@ -118,6 +118,7 @@ test('the company loan show page lists its paginated transactions', function () 
     $loan = CompanyLoan::create(['lender_name' => 'ABC Bank', 'initial_loan_amount' => 1000, 'current_balance' => 1000]);
     CompanyLoanTransaction::create([
         'company_loan_id' => $loan->id,
+        'outlet_id' => $user->outlet_id,
         'transaction_type' => 'interest',
         'amount' => 50,
         'date' => now()->format('Y-m-d'),
@@ -142,16 +143,16 @@ test('the company loan show page running balance reflects full history even when
     $account = Account::create(['name' => 'Bank', 'opening_balance' => 10000, 'current_balance' => 10000]);
 
     CompanyLoanTransaction::create([
-        'company_loan_id' => $loan->id, 'account_id' => $account->id,
+        'company_loan_id' => $loan->id, 'account_id' => $account->id, 'outlet_id' => $user->outlet_id,
         'transaction_type' => 'loan', 'amount' => 1000, 'date' => now()->subDays(10)->toDateString(),
     ]);
     CompanyLoanTransaction::create([
-        'company_loan_id' => $loan->id, 'account_id' => null,
+        'company_loan_id' => $loan->id, 'account_id' => null, 'outlet_id' => $user->outlet_id,
         'transaction_type' => 'interest', 'amount' => 50, 'date' => now()->subDays(5)->toDateString(),
     ]);
     // Deliberately dated today — this is the only row the "today" filter should show.
     CompanyLoanTransaction::create([
-        'company_loan_id' => $loan->id, 'account_id' => $account->id,
+        'company_loan_id' => $loan->id, 'account_id' => $account->id, 'outlet_id' => $user->outlet_id,
         'transaction_type' => 'repay', 'amount' => 200, 'date' => now()->toDateString(),
     ]);
 

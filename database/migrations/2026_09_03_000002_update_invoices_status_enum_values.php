@@ -26,8 +26,12 @@ return new class extends Migration
         }
 
         DB::table('invoices')->whereIn('status', ['Pending', 'Processing'])->update(['status' => 'In House']);
+        // 'Cancelled' was renamed to 'Bad Order' — same reasoning as the Pending/Processing
+        // backfill above: any row still holding the old value must be fixed before the column is
+        // narrowed to a type that no longer allows it.
+        DB::table('invoices')->where('status', 'Cancelled')->update(['status' => 'Bad Order']);
 
-        DB::statement("ALTER TABLE invoices MODIFY status ENUM('In House', 'Pre Wash', 'Washing', 'Extract', 'Drying', 'Pressing', 'Ready', 'Delivered', 'Cancelled') NOT NULL");
+        DB::statement("ALTER TABLE invoices MODIFY status ENUM('In House', 'Pre Wash', 'Washing', 'Extract', 'Drying', 'Pressing', 'Ready', 'Delivered', 'Bad Order') NOT NULL");
     }
 
     public function down(): void

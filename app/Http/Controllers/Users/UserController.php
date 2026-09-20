@@ -38,7 +38,7 @@ class UserController extends Controller
             ->withQueryString();
 
         return Inertia::render('users/index', [
-            'users' => $users,
+            'users' => Inertia::merge($users)->append('data', 'id'),
             'roles' => Role::orderBy('name')->pluck('name'),
             'outlets' => Outlet::active()->orderBy('name')->get(['id', 'name', 'code']),
             'filters' => [

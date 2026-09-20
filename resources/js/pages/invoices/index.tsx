@@ -6,7 +6,7 @@ import { FilterSelect } from '@/components/ui/filter-select';
 import { FormSelect } from '@/components/ui/form-select';
 import { DATE_FILTERS } from '@/constants/date-filters';
 import {
-    INVOICE_STATUSES,
+    INVOICE_FORM_STATUSES,
     INVOICE_STATUS_STYLES,
     PAYMENT_STATUSES,
     PAYMENT_STATUS_STYLES,
@@ -20,7 +20,7 @@ import { formatCurrency, formatDate } from '@/lib/format';
 import { Account, Invoice, type BreadcrumbItem } from '@/types';
 import type { InvoiceHistoryProps } from '@/types/pages/invoices';
 import { Head, Link, router } from '@inertiajs/react';
-import { Calendar, CircleCheck, CircleDollarSign, CreditCard, Plus, Printer, Receipt, Zap } from 'lucide-react';
+import { Ban, Calendar, CircleCheck, CircleDollarSign, CreditCard, Plus, Printer, Receipt, Zap } from 'lucide-react';
 import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -46,6 +46,19 @@ function StatusSelect({ invoice }: { invoice: Invoice }) {
         );
     };
 
+    // Locked once cancelled — Bad Order is only ever set via the dedicated "Cancel Order" action
+    // (see handleCancelOrder below), and isn't offered back out of it through this dropdown either
+    // (it's excluded from INVOICE_FORM_STATUSES entirely).
+    if (invoice.status === 'Bad Order') {
+        return (
+            <span
+                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${INVOICE_STATUS_STYLES['Bad Order']}`}
+            >
+                Bad Order
+            </span>
+        );
+    }
+
     return (
         <div className="relative inline-block">
             <select
@@ -54,7 +67,7 @@ function StatusSelect({ invoice }: { invoice: Invoice }) {
                 onChange={(e) => handleStatusChange(e.target.value as InvoiceStatus)}
                 className={`inline-flex cursor-pointer appearance-none items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-opacity focus:outline-none ${loading ? 'opacity-50' : ''} ${INVOICE_STATUS_STYLES[invoice.status] || 'border-neutral-200 bg-neutral-100 text-neutral-600'}`}
             >
-                {INVOICE_STATUSES.map((s) => (
+                {INVOICE_FORM_STATUSES.map((s) => (
                     <option key={s} value={s}>
                         {s}
                     </option>
@@ -64,15 +77,37 @@ function StatusSelect({ invoice }: { invoice: Invoice }) {
     );
 }
 
-function PaymentStatusToggle({ invoice, accounts }: { invoice: Invoice; accounts: Pick<Account, 'id' | 'name' | 'account_number'>[] }) {
+function PaymentStatusToggle({
+    invoice,
+    accounts,
+}: {
+    invoice: Invoice;
+    accounts: Pick<Account, 'id' | 'name' | 'account_number' | 'outlet_id'>[];
+}) {
     const [loading, setLoading] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [selectedAccountId, setSelectedAccountId] = useState<string | number>('');
+
+    // Locked once cancelled — the Paid/Unpaid toggle only ever moves between those two; Cancelled
+    // is only ever set via the dedicated "Cancel Order" action, and never toggled back out of it.
+    if (invoice.payment_status === 'Cancelled') {
+        return (
+            <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${PAYMENT_STATUS_STYLES.Cancelled}`}>
+                <Ban className="h-3.5 w-3.5" />
+                Cancelled
+            </span>
+        );
+    }
+
     const isPaid = invoice.payment_status === 'Paid';
     const nextStatus: PaymentStatus = isPaid ? 'Unpaid' : 'Paid';
     // Only ask when there's genuinely no account tied to this invoice yet (e.g. it was created
     // fully unpaid) — an invoice that already has one keeps reusing it, same as before.
     const needsAccountPick = nextStatus === 'Paid' && !invoice.method;
+    // This invoice can only ever be paid into an account belonging to its own outlet — the flat
+    // `accounts` list spans every outlet while viewing "All Outlets", since it backs every row's
+    // toggle at once.
+    const availableAccounts = accounts.filter((a) => a.outlet_id === invoice.outlet_id);
 
     const openConfirm = () => {
         setSelectedAccountId('');
@@ -133,7 +168,7 @@ function PaymentStatusToggle({ invoice, accounts }: { invoice: Invoice; accounts
                         autoFocus
                     >
                         <option value="">Select payment account</option>
-                        {accounts.map((a) => (
+                        {availableAccounts.map((a) => (
                             <option key={a.id} value={a.id}>
                                 {a.name}
                                 {a.account_number ? ` (${a.account_number})` : ''}
@@ -149,6 +184,11 @@ function PaymentStatusToggle({ invoice, accounts }: { invoice: Invoice; accounts
 export default function InvoiceHistory({ invoices, accounts, filters }: InvoiceHistoryProps) {
     const [startDate, setStartDate] = useState(filters.start_date || '');
     const [endDate, setEndDate] = useState(filters.end_date || '');
+    // Lives here (not inside the dropdown's customActions) because Radix unmounts DropdownMenuContent
+    // on close — a modal nested inside it would disappear before the user could confirm. Mirrors how
+    // TableRowActions keeps its own delete-confirmation state at its own top level for the same reason.
+    const [invoiceToCancel, setInvoiceToCancel] = useState<Invoice | null>(null);
+    const [cancelling, setCancelling] = useState(false);
 
     const {
         search,
@@ -200,6 +240,26 @@ export default function InvoiceHistory({ invoices, accounts, filters }: InvoiceH
         window.open(route('invoices.pos-print', invoice.id), '_blank');
     };
 
+    const confirmCancelOrder = () => {
+        if (!invoiceToCancel) return;
+        setCancelling(true);
+        router.patch(
+            route('invoices.cancel', invoiceToCancel.id),
+            {},
+            {
+                onFinish: () => setCancelling(false),
+                onSuccess: () => setInvoiceToCancel(null),
+                preserveScroll: true,
+            },
+        );
+    };
+
+    const cancelOrderDescription = invoiceToCancel
+        ? Number(invoiceToCancel.paid) > 0
+            ? `This will mark the order as Bad Order and cancel its payment status. ${formatCurrency(Number(invoiceToCancel.paid))} already paid will be reversed back out of the "${invoiceToCancel.method}" account. This cannot be undone.`
+            : 'This will mark the order as Bad Order and cancel its payment status. This invoice has no paid amount, so no account balance will change. This cannot be undone.'
+        : '';
+
     const columns: DataViewColumn<Invoice>[] = [
         {
             key: 'actions',
@@ -220,6 +280,14 @@ export default function InvoiceHistory({ invoices, accounts, filters }: InvoiceH
                             <DropdownMenuItem onSelect={() => handleQuickPrint(inv)}>
                                 <Zap className="mr-2 h-4 w-4" /> Quick Print
                             </DropdownMenuItem>
+                            {inv.status !== 'Bad Order' && (
+                                <DropdownMenuItem
+                                    onSelect={() => setInvoiceToCancel(inv)}
+                                    className="cursor-pointer text-red-600 focus:text-red-600"
+                                >
+                                    <Ban className="mr-2 h-4 w-4" /> Cancel Order
+                                </DropdownMenuItem>
+                            )}
                         </>
                     }
                 />
@@ -248,6 +316,12 @@ export default function InvoiceHistory({ invoices, accounts, filters }: InvoiceH
             label: 'Phone',
             className: 'text-neutral-600 dark:text-neutral-400',
             render: (inv) => inv.client?.phone || '—',
+        },
+        {
+            key: 'outlet',
+            label: 'Outlet',
+            className: 'text-neutral-600 dark:text-neutral-400',
+            render: (inv) => inv.outlet?.name ?? '—',
         },
         {
             key: 'total',
@@ -296,6 +370,14 @@ export default function InvoiceHistory({ invoices, accounts, filters }: InvoiceH
                                 <DropdownMenuItem onSelect={() => handleQuickPrint(inv)}>
                                     <Zap className="mr-2 h-4 w-4" /> Quick Print
                                 </DropdownMenuItem>
+                                {inv.status !== 'Bad Order' && (
+                                    <DropdownMenuItem
+                                        onSelect={() => setInvoiceToCancel(inv)}
+                                        className="cursor-pointer text-red-600 focus:text-red-600"
+                                    >
+                                        <Ban className="mr-2 h-4 w-4" /> Cancel Order
+                                    </DropdownMenuItem>
+                                )}
                             </>
                         }
                     />
@@ -310,6 +392,7 @@ export default function InvoiceHistory({ invoices, accounts, filters }: InvoiceH
                         <p className="text-xs text-neutral-500 dark:text-neutral-400">
                             {formatDate(inv.date)} · <CreditCard className="inline h-3 w-3 -translate-y-px" /> {inv.method || 'No account set'}
                         </p>
+                        {inv.outlet?.name && <p className="text-xs text-neutral-400 dark:text-neutral-500">{inv.outlet.name}</p>}
                     </div>
                     <p className="font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(Number(inv.total))}</p>
                 </div>
@@ -414,12 +497,24 @@ export default function InvoiceHistory({ invoices, accounts, filters }: InvoiceH
                     defaultView="table"
                     columns={columns}
                     renderCard={renderInvoiceCard}
-                    pagination={invoices.links}
+                    scrollProp="invoices"
+                    currentPage={invoices.current_page}
+                    lastPage={invoices.last_page}
                     total={invoices.total}
                     perPage={perPage}
                     onPerPageChange={setPerPage}
                 />
             </div>
+
+            <SaveConfirmationModal
+                isOpen={!!invoiceToCancel}
+                onClose={() => setInvoiceToCancel(null)}
+                onConfirm={confirmCancelOrder}
+                title={`Cancel order ${invoiceToCancel?.invoice_uuid ?? ''}?`}
+                description={cancelOrderDescription}
+                confirmText="Cancel Order"
+                isProcessing={cancelling}
+            />
         </AppLayout>
     );
 }

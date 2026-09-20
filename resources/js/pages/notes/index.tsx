@@ -226,7 +226,9 @@ export default function Notes({ notes, categories, filters }: NotesProps) {
                     defaultView="card"
                     columns={columns}
                     renderCard={renderNoteCard}
-                    pagination={notes.links}
+                    scrollProp="notes"
+                    currentPage={notes.current_page}
+                    lastPage={notes.last_page}
                     total={notes.total}
                     perPage={perPage}
                     onPerPageChange={setPerPage}

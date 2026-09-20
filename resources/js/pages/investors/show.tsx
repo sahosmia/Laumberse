@@ -13,7 +13,7 @@ import { type BreadcrumbItem, type InvestorTransaction, type SharedData } from '
 import type { InvestorShowProps } from '@/types/pages/investors';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function InvestorShow({ investor, transactions, accounts, filters }: InvestorShowProps) {
     const { outlet } = usePage<SharedData>().props;
@@ -36,6 +36,11 @@ export default function InvestorShow({ investor, transactions, accounts, filters
         outlet_id: '' as number | '',
     });
 
+    // Which outlet's accounts the Payment Account dropdown offers — the fixed active outlet, or
+    // whichever one the "All Outlets" picker below currently has selected.
+    const effectiveOutlet = outlet?.isAll ? outlet.available.find((o) => o.id === data.outlet_id) : outlet?.current;
+    const availableAccounts = !effectiveOutlet ? accounts : accounts.filter((a) => a.outlet_id === effectiveOutlet.id);
+
     const openModal = () => {
         reset();
         clearErrors();
@@ -46,6 +51,14 @@ export default function InvestorShow({ investor, transactions, accounts, filters
         setShowModal(false);
         clearErrors();
     };
+
+    // If the selected account falls outside the (now-known) outlet's accounts — the "All Outlets"
+    // picker just changed — clear it instead of letting the submit round-trip through a 422.
+    useEffect(() => {
+        if (!showModal || !data.account_id || availableAccounts.some((a) => a.id === Number(data.account_id))) return;
+        setData('account_id', '');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showModal, data.account_id, data.outlet_id, availableAccounts.map((a) => a.id).join(',')]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -195,22 +208,8 @@ export default function InvestorShow({ investor, transactions, accounts, filters
                         ))}
                     </FormSelect>
 
-                    <FormSelect
-                        id="account_id"
-                        label="Payment Account"
-                        required
-                        value={data.account_id}
-                        onChange={(e) => setData('account_id', e.target.value)}
-                        error={errors.account_id}
-                    >
-                        <option value="">Select Account</option>
-                        {accounts.map((a) => (
-                            <option key={a.id} value={a.id}>
-                                {a.name} {a.account_number ? `(${a.account_number})` : ''}
-                            </option>
-                        ))}
-                    </FormSelect>
-
+                    {/* Outlet — picked first because it gates which accounts the Payment Account
+                        field below may offer. */}
                     {outlet?.isAll && (
                         <FormSelect
                             id="outlet_id"
@@ -228,6 +227,22 @@ export default function InvestorShow({ investor, transactions, accounts, filters
                             ))}
                         </FormSelect>
                     )}
+
+                    <FormSelect
+                        id="account_id"
+                        label="Payment Account"
+                        required
+                        value={data.account_id}
+                        onChange={(e) => setData('account_id', e.target.value)}
+                        error={errors.account_id}
+                    >
+                        <option value="">Select Account</option>
+                        {availableAccounts.map((a) => (
+                            <option key={a.id} value={a.id}>
+                                {a.name} {a.account_number ? `(${a.account_number})` : ''}
+                            </option>
+                        ))}
+                    </FormSelect>
 
                     <FormInput
                         id="amount"

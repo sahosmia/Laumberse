@@ -5,9 +5,12 @@ namespace App\Http\Requests\Invoices;
 use App\Enums\ClientType;
 use App\Enums\DiscountType;
 use App\Enums\InvoiceStatus;
+use App\Models\Outlet;
 use App\Support\OutletContext;
+use App\Support\OutletFeatures;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreInvoiceRequest extends FormRequest
 {
@@ -60,5 +63,29 @@ class StoreInvoiceRequest extends FormRequest
             'items.*.qty' => 'required|integer|min:1',
             'items.*.price' => 'required|numeric|min:0',
         ];
+    }
+
+    /**
+     * Rejects an inline-created client's type when the invoice's own target outlet (resolved the
+     * same way InvoiceService will resolve it — see OutletContext::resolvableForWrite) has that
+     * type turned off. Mirrors StoreClientRequest's equivalent check; skipped entirely when this
+     * invoice isn't creating a new client, since an existing client's type was already validated
+     * when that client itself was created.
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            if (! $this->boolean('create_new_client')) {
+                return;
+            }
+
+            $type = $this->input('new_client_type');
+            $outletId = OutletContext::resolvableForWrite($this->input('outlet_id'));
+            $outlet = $outletId ? Outlet::find($outletId) : null;
+
+            if ($type && $outlet && ! $outlet->hasFeature($type)) {
+                $validator->errors()->add('new_client_type', 'This outlet does not offer '.(OutletFeatures::CLIENT_TYPES[$type] ?? $type).'.');
+            }
+        });
     }
 }

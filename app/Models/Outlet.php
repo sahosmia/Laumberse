@@ -17,6 +17,13 @@ class Outlet extends Model
         'phone',
         'email',
         'status',
+        'include_in_consolidated_reporting',
+        'disabled_features',
+    ];
+
+    protected $casts = [
+        'include_in_consolidated_reporting' => 'boolean',
+        'disabled_features' => 'array',
     ];
 
     public function users()
@@ -27,6 +34,12 @@ class Outlet extends Model
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    /** Whether $feature (see App\Support\OutletFeatures) is turned on for this outlet. */
+    public function hasFeature(string $feature): bool
+    {
+        return ! in_array($feature, $this->disabled_features ?? [], true);
     }
 
     public function scopeActive(Builder $query): Builder

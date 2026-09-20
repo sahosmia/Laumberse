@@ -145,6 +145,54 @@ test('the global meetings list only offers staff from the current outlet scope f
     expect($ids)->not->toContain($employeeB->id);
 });
 
+test('logging an activity of a type disabled for the current outlet is rejected', function () {
+    $outlet = Outlet::factory()->withDisabledFeatures(['meeting'])->create();
+    $user = User::factory()->for($outlet, 'outlet')->create();
+    $user->assignRole('Sales Staff');
+    $client = Client::create(['name' => 'New Client', 'phone' => '01700000095']);
+
+    $response = test()->actingAs($user)->post(route('clients.activities.store', $client), [
+        'type' => 'meeting',
+        'scheduled_at' => now()->addMinute()->format('Y-m-d H:i:s'),
+    ]);
+
+    $response->assertSessionHasErrors(['type']);
+});
+
+test('logging an activity of a type still enabled for the current outlet succeeds', function () {
+    $outlet = Outlet::factory()->withDisabledFeatures(['meeting'])->create();
+    $user = User::factory()->for($outlet, 'outlet')->create();
+    $user->assignRole('Sales Staff');
+
+    $activity = makeActivityFor($user, null, ['type' => 'follow_up']);
+
+    expect($activity->type)->toBe('follow_up');
+});
+
+test('the global meetings list is not found for an outlet with every activity feature disabled', function () {
+    $outlet = Outlet::factory()->withDisabledFeatures(['meeting', 'follow_up'])->create();
+    $user = User::factory()->for($outlet, 'outlet')->create();
+    $user->assignRole('Sales Staff');
+
+    test()->actingAs($user)->get(route('meetings.index'))->assertNotFound();
+});
+
+test('the global meetings list stays reachable for an outlet with at least one activity feature enabled', function () {
+    $outlet = Outlet::factory()->withDisabledFeatures(['meeting'])->create();
+    $user = User::factory()->for($outlet, 'outlet')->create();
+    $user->assignRole('Sales Staff');
+
+    test()->actingAs($user)->get(route('meetings.index'))->assertOk();
+});
+
+test('an admin viewing All Outlets can still reach the global meetings list even if one outlet has every feature disabled', function () {
+    Outlet::factory()->withDisabledFeatures(['meeting', 'follow_up'])->create();
+    $admin = User::factory()->admin()->create();
+
+    test()->actingAs($admin)->post(route('outlet-context.update'), ['outlet' => 'all'])->assertRedirect();
+    test()->actingAs($admin)->get(route('meetings.index'))->assertOk();
+});
+
 test('logging an activity while viewing All Outlets requires a valid outlet_id', function () {
     $admin = User::factory()->admin()->create();
     test()->actingAs($admin)->post(route('outlet-context.update'), ['outlet' => 'all'])

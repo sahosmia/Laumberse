@@ -48,7 +48,7 @@ class AccountController extends Controller
             ->withQueryString();
 
         return Inertia::render('accounts/index', [
-            'accounts' => $accounts,
+            'accounts' => Inertia::merge($accounts)->append('data', 'id'),
             // Full, unpaginated list for the Transfer Funds dropdowns — the paginated/filtered
             // `accounts` prop above may not include every account. Scoped the same way: a transfer
             // can only ever move funds between two accounts in the same outlet (see

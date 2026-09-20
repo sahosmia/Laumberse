@@ -9,9 +9,18 @@ use Illuminate\Support\Collection;
 
 class GetEligibleEmployeesForPayrollAction
 {
-    public function __invoke(int $month, int $year): Collection
+    /**
+     * $outletId is the outlet explicitly picked in the caller's own form while viewing "All
+     * Outlets" (see expenses/index.tsx's PayrollForm) — OutletContext::scope() alone can't reflect
+     * that, since the admin's *session* context stays "all" the whole time they're on that screen.
+     * Outside "All Outlets" this is ignored in favor of the normal single-outlet scope, same as
+     * every other outlet-scoped list.
+     */
+    public function __invoke(int $month, int $year, ?int $outletId = null): Collection
     {
-        return Employee::tap(fn ($q) => OutletContext::scope($q))
+        return Employee::tap(fn ($q) => OutletContext::isAll() && $outletId
+            ? $q->where('outlet_id', $outletId)
+            : OutletContext::scope($q))
             ->active()
             ->whereDoesntHave('payrolls', function ($query) use ($month, $year) {
                 $query->where('month', $month)

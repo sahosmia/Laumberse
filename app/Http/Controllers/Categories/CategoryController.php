@@ -34,7 +34,7 @@ class CategoryController extends Controller
             ->withQueryString();
 
         return Inertia::render('categories/index', [
-            'categories' => $categories,
+            'categories' => Inertia::merge($categories)->append('data', 'id'),
             'filters' => [
                 'search' => $request->search,
                 'sort' => $request->sort,

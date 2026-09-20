@@ -32,29 +32,29 @@ class DatabaseSeeder extends Seeder
 
             // Expenses & materials
             ExpenseCategorySeeder::class,
-            // MaterialSeeder::class,
+            MaterialSeeder::class,
 
             // Assets
             AssetCategorySeeder::class,
 
             // Finance
-            // AccountSeeder::class,
-            // AssetSeeder::class,
+            AccountSeeder::class,
+            AssetSeeder::class,
 
             // Staff
-            // EmployeeSeeder::class,
-            // EmployeeTransactionSeeder::class,
-            // InvestorSeeder::class,
-            // CompanyLoanSeeder::class,
+            EmployeeSeeder::class,
+            EmployeeTransactionSeeder::class,
+            InvestorSeeder::class,
+            CompanyLoanSeeder::class,
 
             // Clients & sales demo data
-            // ClientSeeder::class,
-            // ClientActivitySeeder::class,
+            ClientSeeder::class,
+            ClientActivitySeeder::class,
 
             // A full ~13-month history of interlinked activity (invoices, payroll, expenses,
             // investor/loan/employee transactions, transfers, client follow-ups) across every
             // ledger above, so date filters and running-balance reports have real data to check.
-            // DemoYearSeeder::class,
+            DemoYearSeeder::class,
         ]);
     }
 }

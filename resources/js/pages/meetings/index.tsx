@@ -16,9 +16,9 @@ import { useDataViewSearch } from '@/hooks/use-data-view-search';
 import { useTableLoading } from '@/hooks/use-table-loading';
 import AppLayout from '@/layouts/app-layout';
 import { formatDateTime } from '@/lib/format';
-import { type BreadcrumbItem, ClientActivity } from '@/types';
+import { type BreadcrumbItem, ClientActivity, type SharedData } from '@/types';
 import type { MeetingsIndexProps } from '@/types/pages/meetings';
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { CalendarClock, Plus, Tag, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -30,6 +30,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function MeetingsIndex({ activities, clients, employees, filters }: MeetingsIndexProps) {
+    const { outlet } = usePage<SharedData>().props;
+    const enabledFeatures = outlet?.enabledFeatures ?? [];
     const [dateFilter, setDateFilter] = useState(filters.date_filter || '');
     const [startDate, setStartDate] = useState(filters.start_date || '');
     const [endDate, setEndDate] = useState(filters.end_date || '');
@@ -77,8 +79,9 @@ export default function MeetingsIndex({ activities, clients, employees, filters 
 
     useEffect(() => {
         const action = new URLSearchParams(window.location.search).get('action');
-        if (action === 'add-meeting') openCreateActivityModal('meeting');
-        if (action === 'add-follow-up') openCreateActivityModal('follow_up');
+        if (action === 'add-meeting' && enabledFeatures.includes('meeting')) openCreateActivityModal('meeting');
+        if (action === 'add-follow-up' && enabledFeatures.includes('follow_up')) openCreateActivityModal('follow_up');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const columns: DataViewColumn<ClientActivity & { client: { id: number; name: string } }>[] = [
@@ -178,16 +181,20 @@ export default function MeetingsIndex({ activities, clients, employees, filters 
                         <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Meetings & Follow-ups</h1>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={() => openCreateActivityModal('follow_up')}
-                            className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
-                        >
-                            <Plus className="h-4 w-4" /> Add Follow-up
-                        </button>
-                        <FormButton onClick={() => openCreateActivityModal('meeting')} icon={<Plus className="h-4 w-4" />}>
-                            Add Meeting
-                        </FormButton>
+                        {enabledFeatures.includes('follow_up') && (
+                            <button
+                                type="button"
+                                onClick={() => openCreateActivityModal('follow_up')}
+                                className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                            >
+                                <Plus className="h-4 w-4" /> Add Follow-up
+                            </button>
+                        )}
+                        {enabledFeatures.includes('meeting') && (
+                            <FormButton onClick={() => openCreateActivityModal('meeting')} icon={<Plus className="h-4 w-4" />}>
+                                Add Meeting
+                            </FormButton>
+                        )}
                     </div>
                 </div>
 
@@ -246,7 +253,9 @@ export default function MeetingsIndex({ activities, clients, employees, filters 
                     defaultView="table"
                     columns={columns}
                     renderCard={renderCard}
-                    pagination={activities.links}
+                    scrollProp="activities"
+                    currentPage={activities.current_page}
+                    lastPage={activities.last_page}
                     total={activities.total}
                     perPage={perPage}
                     onPerPageChange={setPerPage}

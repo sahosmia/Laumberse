@@ -126,7 +126,9 @@ export default function CompanyLoans({ companyLoans, filters }: CompanyLoansProp
                     defaultView="table"
                     columns={columns}
                     renderCard={renderCompanyLoanCard}
-                    pagination={companyLoans.links}
+                    scrollProp="companyLoans"
+                    currentPage={companyLoans.current_page}
+                    lastPage={companyLoans.last_page}
                     total={companyLoans.total}
                     perPage={perPage}
                     onPerPageChange={setPerPage}

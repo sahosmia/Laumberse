@@ -39,7 +39,7 @@ class OutletController extends Controller
             ->withQueryString();
 
         return Inertia::render('outlets/index', [
-            'outlets' => $outlets,
+            'outlets' => Inertia::merge($outlets)->append('data', 'id'),
             'filters' => [
                 'search' => $request->search,
                 'status' => $request->status,

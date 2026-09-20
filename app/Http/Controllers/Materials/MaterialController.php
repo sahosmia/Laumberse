@@ -37,10 +37,10 @@ class MaterialController extends Controller
             ->withQueryString();
 
         return Inertia::render('materials/index', [
-            'materials' => $materials,
+            'materials' => Inertia::merge($materials)->append('data', 'id'),
             'allMaterials' => Material::with('unit')->orderBy('name')->get(),
             'units' => Unit::orderBy('name')->get(),
-            'accounts' => Account::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name', 'account_number']),
+            'accounts' => Account::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name', 'account_number', 'outlet_id']),
             'filters' => [
                 'search' => $request->search,
                 'unit_id' => $request->unit_id,

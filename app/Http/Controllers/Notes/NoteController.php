@@ -37,7 +37,7 @@ class NoteController extends Controller
             ->withQueryString();
 
         return Inertia::render('notes/index', [
-            'notes' => $notes,
+            'notes' => Inertia::merge($notes)->append('data', 'id'),
             'categories' => NoteCategory::orderBy('name')->get(),
             'filters' => [
                 'search' => $request->search,

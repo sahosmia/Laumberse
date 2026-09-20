@@ -41,6 +41,7 @@ class ExpenseCategoryController extends Controller
             ->orderBy('id', $sortDirection)
             ->paginate($perPage)
             ->withQueryString();
+        $categories = inertia()->merge($categories)->append('data', 'id');
         $filters = [
             'search' => $request->search,
             'sort' => $request->sort,

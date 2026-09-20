@@ -16,6 +16,8 @@ interface SearchableSelectProps {
     className?: string;
     error?: string;
     disabled?: boolean;
+    /** Fires on every keystroke with the current search text — e.g. so a caller can offer "create new" prefilled with what was typed once nothing matches. */
+    onQueryChange?: (query: string) => void;
 }
 
 export function SearchableSelect({
@@ -26,6 +28,7 @@ export function SearchableSelect({
     className,
     error,
     disabled = false,
+    onQueryChange,
 }: SearchableSelectProps) {
     const [query, setQuery] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
@@ -76,7 +79,10 @@ export function SearchableSelect({
                                 disabled && 'cursor-not-allowed opacity-50',
                             )}
                             displayValue={(val: string | number) => options.find((o) => o.value == val)?.label || ''}
-                            onChange={(event) => setQuery(event.target.value)}
+                            onChange={(event) => {
+                                setQuery(event.target.value);
+                                onQueryChange?.(event.target.value);
+                            }}
                             onFocus={handleFocus}
                             placeholder={placeholder}
                         />

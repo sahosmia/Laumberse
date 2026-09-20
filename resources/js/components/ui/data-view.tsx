@@ -1,8 +1,8 @@
+import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
 import { cn } from '@/lib/utils';
-import type { PaginationLink } from '@/types/pagination';
+import { router } from '@inertiajs/react';
 import { LayoutGrid, Loader2, RotateCcw, Rows3, Search, SlidersHorizontal } from 'lucide-react';
 import * as React from 'react';
-import { Pagination } from './pagination';
 import { Skeleton } from './skeleton';
 import { TableSkeletonRows } from './table-skeleton-rows';
 
@@ -39,8 +39,14 @@ interface DataViewProps<T> {
     renderCard?: (item: T) => React.ReactNode;
     cardGridClassName?: string;
 
-    pagination: PaginationLink[];
-    /** Total item count across all pages — shown as "{page count} of {total}". Omit to hide the count row. */
+    /** Inertia page-prop key holding this paginator (e.g. "products") — reloaded in place and merged onto `data` as the user scrolls near the bottom. */
+    scrollProp: string;
+    /** current_page/last_page off the same paginator — decide whether there's anything left to fetch. */
+    currentPage?: number;
+    lastPage?: number;
+    /** Query param `paginate()` reads for this prop's page number. Only needed when a controller uses a custom pageName (e.g. clients/show's "orders_page"/"activities_page" for its two paginators). */
+    pageParam?: string;
+    /** Total item count across all pages — shown as "{loaded so far} of {total}". Omit to hide the count row. */
     total?: number;
     perPage?: number;
     onPerPageChange?: (perPage: number) => void;
@@ -86,7 +92,10 @@ export function DataView<T>({
     columns,
     renderCard,
     cardGridClassName = 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
-    pagination,
+    scrollProp,
+    currentPage,
+    lastPage,
+    pageParam = 'page',
     total,
     perPage,
     onPerPageChange,
@@ -96,12 +105,42 @@ export function DataView<T>({
     const canToggleView = Boolean(columns && renderCard);
     const [storedView, setStoredView] = useStoredView(viewKey, defaultView);
     const view = canToggleView ? storedView : columns ? 'table' : 'card';
-    const showPaginationNav = pagination.length > 3;
-    const showFooter = showPaginationNav || typeof total === 'number';
+    const showFooter = typeof total === 'number' || Boolean(onPerPageChange);
     // On mobile, search/filters/reset start collapsed behind a single "Filters" icon so the
     // header isn't a tall stack of full-width controls — only that icon and the view switcher show
     // by default. Unaffected at sm: and up, where everything stays inline as before.
     const [mobileControlsOpen, setMobileControlsOpen] = React.useState(false);
+
+    const [loadingMore, setLoadingMore] = React.useState(false);
+    const hasMore = typeof currentPage === 'number' && typeof lastPage === 'number' && currentPage < lastPage;
+
+    const loadMore = React.useCallback(() => {
+        if (!hasMore || loadingMore || loading) return;
+
+        setLoadingMore(true);
+        router.reload({
+            only: [scrollProp],
+            data: { [pageParam]: (currentPage ?? 1) + 1 },
+            preserveUrl: true,
+            onFinish: () => setLoadingMore(false),
+        });
+    }, [hasMore, loadingMore, loading, scrollProp, pageParam, currentPage]);
+
+    const sentinelRef = useInfiniteScroll<HTMLDivElement>({ hasMore, loading: loadingMore || loading, onLoadMore: loadMore });
+
+    // Sits right after the list — an invisible trigger for the IntersectionObserver while idle,
+    // a spinner while the next page is in flight. Rendered even with nothing left to load so the
+    // observed element never disappears and re-attaches on every page boundary.
+    const loadMoreSentinel = !loading && (
+        <div ref={sentinelRef} className="flex items-center justify-center gap-2 py-4 text-xs text-neutral-400">
+            {loadingMore && (
+                <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Loading more...
+                </>
+            )}
+        </div>
+    );
 
     const viewToggle = canToggleView && (
         <div className="flex items-center gap-1 rounded-xl border border-neutral-200 bg-white p-1 sm:ml-auto dark:border-neutral-700 dark:bg-neutral-900">
@@ -244,6 +283,7 @@ export function DataView<T>({
                             )}
                         </tbody>
                     </table>
+                    {loadMoreSentinel}
                 </div>
             ) : (
                 <div className="overflow-auto" style={{ maxHeight }}>
@@ -259,12 +299,13 @@ export function DataView<T>({
                             : renderCard && data.map((item) => <React.Fragment key={getKey(item)}>{renderCard(item)}</React.Fragment>)}
                     </div>
                     {!loading && data.length === 0 && <div className="py-16 text-center text-neutral-400 italic">{emptyMessage}</div>}
+                    {loadMoreSentinel}
                 </div>
             )}
 
-            {/* Footer band: item count, rows-per-page, and page navigation */}
+            {/* Footer band: item count loaded so far, and rows-per-load */}
             {showFooter && (
-                <div className="flex flex-col items-center justify-between gap-3 border-t border-neutral-200 bg-neutral-50 p-4 sm:flex-row dark:border-neutral-800 dark:bg-neutral-800/40">
+                <div className="flex flex-col items-center justify-center gap-3 border-t border-neutral-200 bg-neutral-50 p-4 sm:flex-row dark:border-neutral-800 dark:bg-neutral-800/40">
                     <div className="flex items-center gap-3 text-sm text-neutral-500 dark:text-neutral-400">
                         {typeof total === 'number' && (
                             <span>
@@ -288,7 +329,6 @@ export function DataView<T>({
                             </label>
                         )}
                     </div>
-                    {showPaginationNav && <Pagination links={pagination} />}
                 </div>
             )}
         </div>

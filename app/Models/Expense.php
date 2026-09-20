@@ -65,6 +65,10 @@ class Expense extends Model
             if ((string) $categoryId === (string) GlobalSetting::get('material_expense_category_id')) {
                 return ExpenseType::Material;
             }
+
+            if ((string) $categoryId === (string) GlobalSetting::get('asset_purchase_category_id')) {
+                return ExpenseType::Asset;
+            }
         }
 
         return ExpenseType::General;

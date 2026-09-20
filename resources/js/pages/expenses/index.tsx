@@ -8,6 +8,7 @@ import { FormInput } from '@/components/ui/form-input';
 import { FormLabel } from '@/components/ui/form-label';
 import { FormSelect } from '@/components/ui/form-select';
 import { Modal } from '@/components/ui/modal';
+import { type AssetStatus } from '@/constants/status';
 import { useDataViewSearch } from '@/hooks/use-data-view-search';
 import { useTableLoading } from '@/hooks/use-table-loading';
 import AppLayout from '@/layouts/app-layout';
@@ -18,6 +19,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { Plus, Receipt, Tag } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { AssetPurchaseForm } from './com/AssetPurchaseForm';
 import { MaterialItemsForm } from './com/MaterialItemsForm';
 import { PayrollForm } from './com/PayrollForm';
 
@@ -28,7 +30,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Expenses({ expenses, categories, accounts, materials, filters }: ExpensesProps) {
+export default function Expenses({ expenses, categories, accounts, materials, asset_categories, filters }: ExpensesProps) {
     const [dateFilter, setDateFilter] = useState(filters.date_filter || '');
     const [startDate, setStartDate] = useState(filters.start_date || '');
     const [endDate, setEndDate] = useState(filters.end_date || '');
@@ -71,41 +73,57 @@ export default function Expenses({ expenses, categories, accounts, materials, fi
         note: '',
         // Material fields
         items: [] as { material_id: string | number; quantity: number | ''; unit_price: number | '' }[],
+        // Asset purchase fields — amount/date/description above double as the new Asset's
+        // cost/purchase_date/description (see ExpenseService::storeExpense).
+        asset_name: '',
+        asset_category_id: '' as string | number,
+        asset_status: 'Active' as AssetStatus,
     });
 
     const [eligibleEmployees, setEligibleEmployees] = useState<EligibleEmployee[]>([]);
 
     const isPayroll = Number(data.expense_category_id) === Number(salaryCategoryId);
     const isMaterial = Number(data.expense_category_id) === Number(materialExpenseCategoryId);
+    const isAssetPurchase = Number(data.expense_category_id) === Number(assetPurchaseCategoryId);
+
+    // Which outlet's accounts the Payment Account dropdown offers — the fixed active outlet, or
+    // whichever one the "All Outlets" picker below currently has selected. Editing an existing
+    // expense never re-filters its own already-set account just because the outlet picker isn't
+    // shown then (see the `!editingExpense` guard on that field further down).
+    const effectiveOutlet = outlet?.isAll ? outlet.available.find((o) => o.id === data.outlet_id) : outlet?.current;
+    const availableAccounts = editingExpense || !effectiveOutlet ? accounts : accounts.filter((a) => a.outlet_id === effectiveOutlet.id);
 
     useEffect(() => {
         if (isPayroll && data.month && data.year) {
-            axios.get(route('employees.payroll-eligible', { month: data.month, year: data.year })).then((res) => {
-                let list: EligibleEmployee[] = res.data;
-                if (editingExpense?.payroll?.employee) {
-                    const exists = list.some((e) => e.id == editingExpense.payroll?.employee_id);
-                    if (!exists) {
-                        const emp = editingExpense.payroll.employee;
-                        const pr = editingExpense.payroll;
-                        list = [
-                            ...list,
-                            {
-                                id: emp.id,
-                                name: emp.name,
-                                base_salary: emp.base_salary,
-                                already_paid: pr.paid_amount,
-                                bonus: pr.bonus,
-                                deduction: pr.deduction,
-                                net_salary: pr.net_salary,
-                                status: pr.status,
-                            },
-                        ];
+            axios
+                .get(route('employees.payroll-eligible', { month: data.month, year: data.year, outlet_id: effectiveOutlet?.id }))
+                .then((res) => {
+                    let list: EligibleEmployee[] = res.data;
+                    if (editingExpense?.payroll?.employee) {
+                        const exists = list.some((e) => e.id == editingExpense.payroll?.employee_id);
+                        if (!exists) {
+                            const emp = editingExpense.payroll.employee;
+                            const pr = editingExpense.payroll;
+                            list = [
+                                ...list,
+                                {
+                                    id: emp.id,
+                                    name: emp.name,
+                                    base_salary: emp.base_salary,
+                                    already_paid: pr.paid_amount,
+                                    bonus: pr.bonus,
+                                    deduction: pr.deduction,
+                                    net_salary: pr.net_salary,
+                                    status: pr.status,
+                                },
+                            ];
+                        }
                     }
-                }
-                setEligibleEmployees(list);
-            });
+                    setEligibleEmployees(list);
+                });
         }
-    }, [isPayroll, data.month, data.year, editingExpense]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isPayroll, data.month, data.year, editingExpense, effectiveOutlet?.id]);
 
     const selectedEmployee = useMemo(() => {
         return eligibleEmployees.find((e) => e.id == data.employee_id) || null;
@@ -201,6 +219,15 @@ export default function Expenses({ expenses, categories, accounts, materials, fi
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // If the selected account falls outside the (now-known) outlet's accounts — the outlet wasn't
+    // resolved yet on open, or the "All Outlets" picker just changed — clear it instead of letting
+    // the submit round-trip through a 422.
+    useEffect(() => {
+        if (editingExpense || !showModal || !data.account_id || availableAccounts.some((a) => a.id === Number(data.account_id))) return;
+        setData('account_id', '');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editingExpense, showModal, data.account_id, data.outlet_id, availableAccounts.map((a) => a.id).join(',')]);
+
     const openEditModal = (expense: Expense) => {
         setEditingExpense(expense);
         clearErrors();
@@ -232,6 +259,9 @@ export default function Expenses({ expenses, categories, accounts, materials, fi
                     unit_price: m.unit_price,
                     isSaved: true,
                 })) || [],
+            asset_name: expense.asset?.name || '',
+            asset_category_id: expense.asset?.asset_category_id || '',
+            asset_status: (expense.asset?.status as AssetStatus) || 'Active',
         });
         setShowModal(true);
     };
@@ -417,7 +447,9 @@ export default function Expenses({ expenses, categories, accounts, materials, fi
                     defaultView="table"
                     columns={columns}
                     renderCard={renderExpenseCard}
-                    pagination={expenses.links}
+                    scrollProp="expenses"
+                    currentPage={expenses.current_page}
+                    lastPage={expenses.last_page}
                     total={expenses.total}
                     perPage={perPage}
                     onPerPageChange={setPerPage}
@@ -459,31 +491,18 @@ export default function Expenses({ expenses, categories, accounts, materials, fi
                                 required
                             >
                                 <option value="">Select Category</option>
-                                {categories
-                                    .filter(
-                                        (c) =>
-                                            editingExpense ||
-                                            (Number(c.id) !== Number(salaryCategoryId) &&
-                                                Number(c.id) !== Number(materialExpenseCategoryId) &&
-                                                Number(c.id) !== Number(assetPurchaseCategoryId)),
-                                    )
-                                    .map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name}
-                                        </option>
-                                    ))}
+                                {categories.map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.name}
+                                    </option>
+                                ))}
                             </FormSelect>
                             {errors.expense_category_id && <p className="text-xs text-red-500">{errors.expense_category_id}</p>}
-                            {!editingExpense && (
-                                <p className="text-xs text-neutral-400">
-                                    Salary payments, material purchases, and asset purchases are now made from their own pages.
-                                </p>
-                            )}
                         </div>
                         {!isPayroll && (
                             <FormInput
                                 id="amount"
-                                label="Amount"
+                                label={isAssetPurchase ? 'Cost' : 'Amount'}
                                 required
                                 type="number"
                                 value={data.amount}
@@ -524,6 +543,32 @@ export default function Expenses({ expenses, categories, accounts, materials, fi
                             onEmployeeChange={handleEmployeeChange}
                         />
                     )}
+
+                    {isAssetPurchase && (
+                        <AssetPurchaseForm data={data} setData={setData} errors={errors} assetCategories={asset_categories} />
+                    )}
+
+                    {/* Outlet — picked first because it gates which accounts the Payment Account
+                        field below may offer. */}
+                    {!editingExpense && outlet?.isAll && (
+                        <div className="space-y-1">
+                            <FormLabel required>Outlet</FormLabel>
+                            <FormSelect
+                                value={data.outlet_id}
+                                onChange={(e) => setData('outlet_id', e.target.value ? Number(e.target.value) : '')}
+                                required
+                            >
+                                <option value="">Select an outlet</option>
+                                {outlet.available.map((o) => (
+                                    <option key={o.id} value={o.id}>
+                                        {o.name}
+                                    </option>
+                                ))}
+                            </FormSelect>
+                            {errors.outlet_id && <p className="text-xs text-red-500">{errors.outlet_id}</p>}
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-1">
                             <FormLabel required>Date</FormLabel>
@@ -589,7 +634,7 @@ export default function Expenses({ expenses, categories, accounts, materials, fi
                                 required
                             >
                                 <option value="">Select Account</option>
-                                {accounts.map((a) => (
+                                {availableAccounts.map((a) => (
                                     <option key={a.id} value={a.id}>
                                         {a.name} {a.account_number ? `(${a.account_number})` : ''}
                                     </option>
@@ -599,24 +644,6 @@ export default function Expenses({ expenses, categories, accounts, materials, fi
                         </div>
                     </div>
 
-                    {!editingExpense && outlet?.isAll && (
-                        <div className="space-y-1">
-                            <FormLabel required>Outlet</FormLabel>
-                            <FormSelect
-                                value={data.outlet_id}
-                                onChange={(e) => setData('outlet_id', e.target.value ? Number(e.target.value) : '')}
-                                required
-                            >
-                                <option value="">Select an outlet</option>
-                                {outlet.available.map((o) => (
-                                    <option key={o.id} value={o.id}>
-                                        {o.name}
-                                    </option>
-                                ))}
-                            </FormSelect>
-                            {errors.outlet_id && <p className="text-xs text-red-500">{errors.outlet_id}</p>}
-                        </div>
-                    )}
                     <div className="space-y-1">
                         <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Description</label>
                         <textarea

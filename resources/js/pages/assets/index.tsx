@@ -18,7 +18,7 @@ import { type Asset, type BreadcrumbItem, SharedData } from '@/types';
 import type { AssetsProps } from '@/types/pages/assets';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { Clock, CreditCard, Plus, Tag, Wallet } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -51,6 +51,11 @@ export default function Assets({ assets, categories, accounts, filters }: Assets
         account_id: '' as string | number,
         outlet_id: '' as number | '',
     });
+
+    // Which outlet's accounts the new-purchase Payment Account dropdown offers — the fixed active
+    // outlet, or whichever one the "All Outlets" picker below currently has selected.
+    const effectiveOutlet = outlet?.isAll ? outlet.available.find((o) => o.id === data.outlet_id) : outlet?.current;
+    const availableAccounts = !effectiveOutlet ? accounts : accounts.filter((a) => a.outlet_id === effectiveOutlet.id);
 
     const {
         search,
@@ -89,6 +94,15 @@ export default function Assets({ assets, categories, accounts, filters }: Assets
         setShowModal(true);
     };
 
+    // If the selected account falls outside the (now-known) outlet's accounts — the outlet wasn't
+    // resolved yet on open, or the "All Outlets" picker just changed — clear it instead of letting
+    // the submit round-trip through a 422.
+    useEffect(() => {
+        if (!showModal || !data.is_new_purchase || !data.account_id || availableAccounts.some((a) => a.id === Number(data.account_id))) return;
+        setData('account_id', '');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showModal, data.is_new_purchase, data.account_id, data.outlet_id, availableAccounts.map((a) => a.id).join(',')]);
+
     const openEditModal = (asset: Asset) => {
         setEditingAsset(asset);
         clearErrors();
@@ -101,6 +115,7 @@ export default function Assets({ assets, categories, accounts, filters }: Assets
             asset_category_id: asset.asset_category_id,
             is_new_purchase: false, // Default to false on edit as expense is already handled
             account_id: '',
+            outlet_id: asset.outlet_id ?? '',
         });
         setShowModal(true);
     };
@@ -167,6 +182,12 @@ export default function Assets({ assets, categories, accounts, filters }: Assets
             render: (a) => formatDate(a.purchase_date),
         },
         {
+            key: 'outlet',
+            label: 'Outlet',
+            className: 'text-neutral-600 dark:text-neutral-400',
+            render: (a) => a.outlet?.name ?? '—',
+        },
+        {
             key: 'status',
             label: 'Status',
             render: (a) => (
@@ -196,6 +217,7 @@ export default function Assets({ assets, categories, accounts, filters }: Assets
                     <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400">
                         <Tag className="h-3 w-3" /> {a.category?.name || 'No Category'}
                     </p>
+                    {a.outlet?.name && <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{a.outlet.name}</p>}
                 </div>
             </div>
 
@@ -279,7 +301,9 @@ export default function Assets({ assets, categories, accounts, filters }: Assets
                     defaultView="table"
                     columns={columns}
                     renderCard={renderAssetCard}
-                    pagination={assets.links}
+                    scrollProp="assets"
+                    currentPage={assets.current_page}
+                    lastPage={assets.last_page}
                     total={assets.total}
                     perPage={perPage}
                     onPerPageChange={setPerPage}
@@ -390,6 +414,51 @@ export default function Assets({ assets, categories, accounts, filters }: Assets
                         />
                     </div>
 
+                    {/* Outlet — picked first because it gates which accounts the Payment Account
+                        field below (inside "Create Expense Entry") may offer. */}
+                    {!editingAsset && outlet?.isAll && (
+                        <div className="space-y-1">
+                            <FormLabel required>Outlet</FormLabel>
+                            <FormSelect
+                                value={data.outlet_id}
+                                onChange={(e) => setData('outlet_id', e.target.value ? Number(e.target.value) : '')}
+                                required
+                            >
+                                <option value="">Select an outlet</option>
+                                {outlet.available.map((o) => (
+                                    <option key={o.id} value={o.id}>
+                                        {o.name}
+                                    </option>
+                                ))}
+                            </FormSelect>
+                            {errors.outlet_id && <p className="text-xs text-red-500">{errors.outlet_id}</p>}
+                        </div>
+                    )}
+
+                    {/* An asset's outlet (and its purchase account, if bought as one) is fixed at
+                        creation — shown read-only here, outlet first, same ordering as the picker
+                        above. Editing the Cost field still keeps the linked account's balance in
+                        sync — see AssetController::update(). */}
+                    {editingAsset && (
+                        <div className="space-y-3 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50">
+                            <div className="space-y-1">
+                                <FormLabel>Outlet</FormLabel>
+                                <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{editingAsset.outlet?.name ?? '—'}</p>
+                            </div>
+                            {editingAsset.expense && (
+                                <div className="space-y-1">
+                                    <FormLabel>Payment Account</FormLabel>
+                                    <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                                        {editingAsset.expense.account
+                                            ? `${editingAsset.expense.account.name}${editingAsset.expense.account.account_number ? ` (${editingAsset.expense.account.account_number})` : ''}`
+                                            : 'No account set'}
+                                    </p>
+                                    <p className="text-xs text-neutral-400">Changing the Cost above will update this account's balance too.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {!editingAsset && (
                         <div className="space-y-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50">
                             <div className="flex items-center justify-between">
@@ -422,7 +491,7 @@ export default function Assets({ assets, categories, accounts, filters }: Assets
                                         required
                                     >
                                         <option value="">Select Account</option>
-                                        {accounts.map((a) => (
+                                        {availableAccounts.map((a) => (
                                             <option key={a.id} value={a.id}>
                                                 {a.name} {a.account_number ? `(${a.account_number})` : ''}
                                             </option>
@@ -431,25 +500,6 @@ export default function Assets({ assets, categories, accounts, filters }: Assets
                                     {errors.account_id && <p className="text-xs text-red-500">{errors.account_id}</p>}
                                 </div>
                             )}
-                        </div>
-                    )}
-
-                    {!editingAsset && outlet?.isAll && (
-                        <div className="space-y-1">
-                            <FormLabel required>Outlet</FormLabel>
-                            <FormSelect
-                                value={data.outlet_id}
-                                onChange={(e) => setData('outlet_id', e.target.value ? Number(e.target.value) : '')}
-                                required
-                            >
-                                <option value="">Select an outlet</option>
-                                {outlet.available.map((o) => (
-                                    <option key={o.id} value={o.id}>
-                                        {o.name}
-                                    </option>
-                                ))}
-                            </FormSelect>
-                            {errors.outlet_id && <p className="text-xs text-red-500">{errors.outlet_id}</p>}
                         </div>
                     )}
 

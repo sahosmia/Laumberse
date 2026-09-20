@@ -2,10 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\Outlet;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Outlet>
+ * @extends Factory<Outlet>
  */
 class OutletFactory extends Factory
 {
@@ -24,5 +25,15 @@ class OutletFactory extends Factory
     public function inactive(): static
     {
         return $this->state(fn () => ['status' => 'inactive']);
+    }
+
+    public function individualReportingOnly(): static
+    {
+        return $this->state(fn () => ['include_in_consolidated_reporting' => false]);
+    }
+
+    public function withDisabledFeatures(array $features): static
+    {
+        return $this->state(fn () => ['disabled_features' => $features]);
     }
 }

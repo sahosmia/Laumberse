@@ -29,7 +29,6 @@ use App\Http\Controllers\Roles\RoleController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Units\UnitController;
 use App\Http\Controllers\Users\UserController;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -150,6 +149,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
         Route::patch('/invoices/{invoice}/status', [InvoiceController::class, 'updateStatus'])->name('invoices.update-status');
         Route::patch('/invoices/{invoice}/payment-status', [InvoiceController::class, 'updatePaymentStatus'])->name('invoices.update-payment-status');
+        Route::patch('/invoices/{invoice}/cancel', [InvoiceController::class, 'cancelOrder'])->name('invoices.cancel');
     });
     Route::middleware('permission:invoices.delete')->group(function () {
         Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
@@ -192,12 +192,6 @@ Route::middleware(['auth'])->group(function () {
         ->middlewareFor('update', 'permission:roles.edit')
         ->middlewareFor('destroy', 'permission:roles.delete');
 });
-
-Route::get('/run-command/{command}', function ($command) {
-    Artisan::call($command);
-
-    return Artisan::output();
-})->name('run-command.dynamic');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

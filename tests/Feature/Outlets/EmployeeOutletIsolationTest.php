@@ -91,7 +91,11 @@ test('a user cannot record an advance/loan transaction against another outlet\'s
     $userB->assignRole('Manager');
 
     $employeeB = makeEmployeeFor($userB);
-    $account = Account::create(['name' => 'Cash', 'opening_balance' => 10000, 'current_balance' => 10000]);
+    // Must belong to $employeeB's own outlet — StoreEmployeeTransactionRequest's account_id rule
+    // checks against the target employee's outlet, not the acting user's, so an account left to
+    // default to the globally-oldest outlet would fail that validation before ever reaching the
+    // ensureAccessible() check this test is actually exercising.
+    $account = Account::create(['outlet_id' => $outletB->id, 'name' => 'Cash', 'opening_balance' => 10000, 'current_balance' => 10000]);
 
     // $userA is Admin (defaults to its own home outlet, not "all"), so it's still cross-outlet
     // relative to $employeeB despite holding every permission.

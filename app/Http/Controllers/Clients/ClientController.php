@@ -33,6 +33,17 @@ class ClientController extends Controller
     {
         [$sortColumn, $sortDirection] = self::SORTABLE[$request->sort] ?? self::SORTABLE['created_at:desc'];
         $perPage = PerPage::resolve($request);
+        // A fresh visit — no outlet_id in the URL at all — defaults this filter to the viewer's
+        // own active outlet, same "all" sentinel OutletContext::set() already uses so an explicit
+        // "All Outlets" pick (outlet_id=all) is distinguishable from "not chosen yet" and survives
+        // sort/paginate (which resubmit whatever's already in the URL via withQueryString() below)
+        // instead of re-defaulting on every request.
+        $rawOutletId = $request->input('outlet_id');
+        $outletId = match (true) {
+            $rawOutletId === 'all' => null,
+            filled($rawOutletId) => $rawOutletId,
+            default => OutletContext::currentId(),
+        };
 
         $clients = Client::with(['customPrices', 'outlet:id,name,code'])
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
@@ -43,7 +54,7 @@ class ClientController extends Controller
             ->when($request->type, fn ($q, $type) => $q->where('type', $type))
             // Client is global (not outlet-scoped), so this filter is opt-in for "how many clients
             // does this outlet have" — not an access restriction like OutletContext::scope().
-            ->when($request->outlet_id, fn ($q, $outletId) => $q->where('outlet_id', $outletId))
+            ->when($outletId, fn ($q, $id) => $q->where('outlet_id', $id))
             ->orderBy($sortColumn, $sortDirection)
             ->orderBy('id', $sortDirection)
             ->paginate($perPage)
@@ -54,7 +65,7 @@ class ClientController extends Controller
         $clients->getCollection()->makeVisible('internal_note');
 
         return Inertia::render('clients/index', [
-            'clients' => $clients,
+            'clients' => Inertia::merge($clients)->append('data', 'id'),
             'products' => Product::all(),
             // Every active outlet, not just the current user's — any staff member may create or
             // edit a client under any outlet, unrelated to which outlet they're currently viewing.
@@ -62,7 +73,7 @@ class ClientController extends Controller
             'filters' => [
                 'search' => $request->search,
                 'type' => $request->type,
-                'outlet_id' => $request->outlet_id,
+                'outlet_id' => $outletId === null ? 'all' : (string) $outletId,
                 'sort' => $request->sort,
                 'per_page' => $perPage,
             ],
@@ -108,8 +119,8 @@ class ClientController extends Controller
 
         return Inertia::render('clients/show', [
             'client' => $client->load(['customPrices.product', 'outlet:id,name,code'])->makeVisible('internal_note'),
-            'orders' => $orders,
-            'activities' => $activities,
+            'orders' => Inertia::merge($orders)->append('data', 'id'),
+            'activities' => Inertia::merge($activities)->append('data', 'id'),
             'employees' => Employee::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name']),
             'orderFilters' => [
                 'search' => $request->order_search,

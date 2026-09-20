@@ -11,6 +11,7 @@ import type { InvoiceDetailProps } from '@/types/pages/invoices';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
+    Ban,
     Calendar,
     CircleCheck,
     CircleDollarSign,
@@ -32,13 +33,17 @@ const HISTORY_ACTION_LABELS: Record<string, string> = {
     updated: 'Invoice updated',
     status_changed: 'Status changed',
     payment_status_changed: 'Payment status changed',
+    cancelled: 'Order cancelled',
 };
 
-export default function InvoiceDetail({ invoice, accounts, histories }: InvoiceDetailProps) {
+export default function InvoiceDetail({ invoice, accounts, histories, business }: InvoiceDetailProps) {
     const [togglingPayment, setTogglingPayment] = useState(false);
     const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
     const [selectedAccountId, setSelectedAccountId] = useState<string | number>('');
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+    const [cancelling, setCancelling] = useState(false);
     const isPaid = invoice.payment_status === 'Paid';
+    const isCancelled = invoice.payment_status === 'Cancelled';
     const nextPaymentStatus: PaymentStatus = isPaid ? 'Unpaid' : 'Paid';
     // Only ask when there's genuinely no account tied to this invoice yet.
     const needsAccountPick = nextPaymentStatus === 'Paid' && !invoice.method;
@@ -68,7 +73,7 @@ export default function InvoiceDetail({ invoice, accounts, histories }: InvoiceD
     const handleWhatsAppShare = () => {
         const lines = [
             `*Invoice ${invoice.invoice_uuid}*`,
-            '_Launverse_',
+            `_${business.name}_`,
             '',
             `*Client:* ${invoice.client.name}`,
             `*Date:* ${formatDate(invoice.date)}`,
@@ -113,6 +118,24 @@ export default function InvoiceDetail({ invoice, accounts, histories }: InvoiceD
             },
         );
     };
+
+    const confirmCancelOrder = () => {
+        setCancelling(true);
+        router.patch(
+            route('invoices.cancel', invoice.id),
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setCancelling(false),
+                onSuccess: () => setShowCancelConfirm(false),
+            },
+        );
+    };
+
+    const cancelOrderDescription =
+        Number(invoice.paid) > 0
+            ? `This will mark the order as Bad Order and cancel its payment status. ${formatCurrency(Number(invoice.paid))} already paid will be reversed back out of the "${invoice.method}" account. This cannot be undone.`
+            : 'This will mark the order as Bad Order and cancel its payment status. This invoice has no paid amount, so no account balance will change. This cannot be undone.';
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -162,6 +185,15 @@ export default function InvoiceDetail({ invoice, accounts, histories }: InvoiceD
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
+                        {invoice.status !== 'Bad Order' && (
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowCancelConfirm(true)}
+                                className="border-red-200 px-3 text-red-600 hover:bg-red-50 hover:text-red-700 sm:px-4 dark:border-red-800/50 dark:text-red-400"
+                            >
+                                <Ban className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Cancel Order</span>
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -176,9 +208,9 @@ export default function InvoiceDetail({ invoice, accounts, histories }: InvoiceD
                                 <p className="mt-1 font-mono text-neutral-500">{invoice.invoice_uuid}</p>
                             </div>
                             <div className="text-right">
-                                <h2 className="text-xl font-bold">Launverse</h2>
-                                <p className="text-sm text-neutral-500">Dhaka, Bangladesh</p>
-                                <p className="text-sm text-neutral-500">Phone: +880 1234 567890</p>
+                                <h2 className="text-xl font-bold">{business.name}</h2>
+                                {business.address && <p className="text-sm text-neutral-500">{business.address}</p>}
+                                {business.phone && <p className="text-sm text-neutral-500">Phone: {business.phone}</p>}
                             </div>
                         </div>
 
@@ -202,6 +234,12 @@ export default function InvoiceDetail({ invoice, accounts, histories }: InvoiceD
                                         <span className="text-neutral-500">Date:</span>{' '}
                                         <span className="font-medium">{formatDate(invoice.date)}</span>
                                     </p>
+                                    {invoice.outlet?.name && (
+                                        <p className="text-sm">
+                                            <span className="text-neutral-500">Outlet:</span>{' '}
+                                            <span className="font-medium">{invoice.outlet.name}</span>
+                                        </p>
+                                    )}
                                     <p className="flex items-center justify-end gap-1.5 text-sm">
                                         <span className="text-neutral-500">Status:</span>
                                         <span
@@ -378,20 +416,30 @@ export default function InvoiceDetail({ invoice, accounts, histories }: InvoiceD
                             <div className="mt-4 flex items-center justify-between">
                                 <span className="text-xs font-medium text-blue-100">Payment Status</span>
                                 <span
-                                    className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${isPaid ? 'bg-emerald-400/20 text-emerald-300' : 'bg-red-400/20 text-red-300'}`}
+                                    className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                                        isCancelled
+                                            ? 'bg-white/10 text-blue-100'
+                                            : isPaid
+                                              ? 'bg-emerald-400/20 text-emerald-300'
+                                              : 'bg-red-400/20 text-red-300'
+                                    }`}
                                 >
                                     {invoice.payment_status}
                                 </span>
                             </div>
-                            <Button
-                                variant="outline"
-                                disabled={togglingPayment}
-                                onClick={openPaymentConfirm}
-                                className="mt-3 w-full border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                            >
-                                {isPaid ? <CircleCheck className="mr-2 h-4 w-4" /> : <CircleDollarSign className="mr-2 h-4 w-4" />}
-                                {isPaid ? 'Mark as Unpaid' : 'Mark as Paid'}
-                            </Button>
+                            {/* Locked once cancelled — see StatusSelect/PaymentStatusToggle in invoices/index.tsx for
+                                the same rule: Cancelled is only ever set via "Cancel Order", never toggled back out. */}
+                            {!isCancelled && (
+                                <Button
+                                    variant="outline"
+                                    disabled={togglingPayment}
+                                    onClick={openPaymentConfirm}
+                                    className="mt-3 w-full border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+                                >
+                                    {isPaid ? <CircleCheck className="mr-2 h-4 w-4" /> : <CircleDollarSign className="mr-2 h-4 w-4" />}
+                                    {isPaid ? 'Mark as Unpaid' : 'Mark as Paid'}
+                                </Button>
+                            )}
                         </div>
 
                         <div className="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
@@ -489,6 +537,16 @@ export default function InvoiceDetail({ invoice, accounts, histories }: InvoiceD
                     </FormSelect>
                 )}
             </SaveConfirmationModal>
+
+            <SaveConfirmationModal
+                isOpen={showCancelConfirm}
+                onClose={() => setShowCancelConfirm(false)}
+                onConfirm={confirmCancelOrder}
+                title={`Cancel order ${invoice.invoice_uuid}?`}
+                description={cancelOrderDescription}
+                confirmText="Cancel Order"
+                isProcessing={cancelling}
+            />
         </AppLayout>
     );
 }

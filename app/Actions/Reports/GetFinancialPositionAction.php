@@ -92,7 +92,7 @@ class GetFinancialPositionAction
         // see docblock above. Only Delivered invoices count: an order still somewhere in the wash
         // pipeline (In House, Pre Wash, Washing, Extract, Drying, Pressing, Ready) isn't a finished
         // sale yet, so its due amount isn't a firm receivable — it becomes one only once the order
-        // is actually delivered. A Cancelled invoice's due is never owed.
+        // is actually delivered. A Bad Order's due is never owed (and is reset to 0 on cancel).
         $debtors = Client::query()
             ->select('clients.id', 'clients.name')
             ->selectRaw('SUM(invoices.due) as total_due')

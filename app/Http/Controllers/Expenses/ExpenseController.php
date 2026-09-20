@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Expenses\StoreExpenseRequest;
 use App\Http\Requests\Expenses\UpdateExpenseRequest;
 use App\Models\Account;
+use App\Models\AssetCategory;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\GlobalSetting;
@@ -43,7 +44,7 @@ class ExpenseController extends Controller
         [$sortColumn, $sortDirection] = self::SORTABLE[$request->sort] ?? self::SORTABLE['created_at:desc'];
         $perPage = PerPage::resolve($request);
 
-        $expenses = Expense::with(['category', 'account', 'materials.material.unit', 'payroll.employee'])
+        $expenses = Expense::with(['category', 'account', 'materials.material.unit', 'payroll.employee', 'asset.category'])
             ->tap(fn ($q) => OutletContext::scope($q))
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('description', 'like', "%{$s}%")
@@ -57,11 +58,12 @@ class ExpenseController extends Controller
             ->withQueryString();
 
         return Inertia::render('expenses/index', [
-            'expenses' => $expenses,
+            'expenses' => Inertia::merge($expenses)->append('data', 'id'),
             'categories' => ExpenseCategory::ordered()->get(['id', 'name']),
-            'accounts' => Account::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name', 'account_number']),
+            'accounts' => Account::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name', 'account_number', 'outlet_id']),
             'salary_category_id' => GlobalSetting::get('salary_category_id'),
             'materials' => Material::with('unit')->orderBy('name')->get(),
+            'asset_categories' => AssetCategory::orderBy('name')->get(['id', 'name']),
             'filters' => [
                 'search' => $request->search,
                 'category_id' => $request->category_id,

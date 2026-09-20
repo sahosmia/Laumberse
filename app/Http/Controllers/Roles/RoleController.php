@@ -34,7 +34,7 @@ class RoleController extends Controller
             ->withQueryString();
 
         return Inertia::render('roles/index', [
-            'roles' => $roles,
+            'roles' => Inertia::merge($roles)->append('data', 'id'),
             'availablePermissions' => Permissions::all(),
             'filters' => [
                 'search' => $request->search,

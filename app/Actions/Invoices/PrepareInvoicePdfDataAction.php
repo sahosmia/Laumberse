@@ -7,6 +7,7 @@ use App\Enums\DiscountType;
 use App\Enums\PaymentStatus;
 use App\Models\GlobalSetting;
 use App\Models\Invoice;
+use App\Support\BusinessInfo;
 use Carbon\Carbon;
 
 /**
@@ -18,18 +19,19 @@ class PrepareInvoicePdfDataAction
 {
     public function __invoke(Invoice $invoice): array
     {
-        $invoice->loadMissing(['client', 'items.product']);
+        $invoice->loadMissing(['client', 'items.product', 'outlet']);
 
         $subtotal = $invoice->items->sum(fn ($item) => $item->qty * $item->price);
 
         return [
             'invoiceUuid' => $invoice->invoice_uuid,
             'invoiceDate' => Carbon::parse($invoice->date)->format('d M, Y'),
+            'outletName' => $invoice->outlet?->name,
             'status' => $invoice->status->value,
             'method' => $invoice->method,
             'paymentStatus' => $invoice->payment_status->value,
             'paymentStatusColor' => $invoice->payment_status === PaymentStatus::Paid ? '#059669' : '#dc2626',
-            'business' => $this->business(),
+            'business' => $this->business($invoice),
             'client' => [
                 'name' => $invoice->client->name,
                 'phone' => $invoice->client->phone,
@@ -54,15 +56,16 @@ class PrepareInvoicePdfDataAction
         ];
     }
 
-    private function business(): array
+    /** The PDF needs a local file path (not a URL) for the logo — everything else comes from BusinessInfo. */
+    private function business(Invoice $invoice): array
     {
         $logoPath = GlobalSetting::get('logo_path');
 
         return [
             'logoPath' => $logoPath ? storage_path('app/public/'.$logoPath) : null,
-            'name' => GlobalSetting::get('business_name') ?: 'Launverse',
-            'address' => GlobalSetting::get('business_address'),
-            'phone' => GlobalSetting::get('business_phone'),
+            'name' => BusinessInfo::name(),
+            'address' => BusinessInfo::address($invoice->outlet),
+            'phone' => BusinessInfo::phone($invoice->outlet),
         ];
     }
 

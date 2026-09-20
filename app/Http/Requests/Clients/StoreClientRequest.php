@@ -3,8 +3,11 @@
 namespace App\Http\Requests\Clients;
 
 use App\Enums\ClientType;
+use App\Support\OutletContext;
+use App\Support\OutletFeatures;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreClientRequest extends FormRequest
 {
@@ -34,5 +37,23 @@ class StoreClientRequest extends FormRequest
             'custom_prices.*.product_id' => 'required|exists:products,id',
             'custom_prices.*.custom_price' => 'required|numeric|min:0',
         ];
+    }
+
+    /**
+     * Rejects a client type the *creator's own active outlet* has turned off (see
+     * Outlet::hasFeature) — not the client's own outlet_id, since a Corporate client is never
+     * assigned one at all. Stays unrestricted while viewing "All Outlets" (nothing single to gate
+     * against) or outside any authenticated context, matching OutletContext::current().
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $type = $this->input('type');
+            $outlet = OutletContext::current();
+
+            if ($type && $outlet && ! $outlet->hasFeature($type)) {
+                $validator->errors()->add('type', 'This outlet does not offer '.(OutletFeatures::CLIENT_TYPES[$type] ?? $type).'.');
+            }
+        });
     }
 }

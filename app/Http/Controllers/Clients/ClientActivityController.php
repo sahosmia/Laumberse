@@ -11,6 +11,7 @@ use App\Models\Employee;
 use App\Services\ClientActivityService;
 use App\Support\DateRangeFilter;
 use App\Support\OutletContext;
+use App\Support\OutletFeatures;
 use App\Support\PerPage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -32,9 +33,17 @@ class ClientActivityController extends Controller
         }
     }
 
-    /** All meetings/follow-ups across every client — the sidebar's "Meetings & Follow-ups" list. */
+    /**
+     * All meetings/follow-ups across every client — the sidebar's "Meetings & Follow-ups" list.
+     * Not found while viewing a single outlet that has every activity feature turned off (see
+     * OutletFeatures::ACTIVITIES) — matches the sidebar, which hides the link in that case.
+     */
     public function index(Request $request)
     {
+        if (! OutletContext::anyFeatureEnabled(array_keys(OutletFeatures::ACTIVITIES))) {
+            abort(404);
+        }
+
         [$sortColumn, $sortDirection] = self::SORTABLE[$request->sort] ?? self::SORTABLE['scheduled_at:desc'];
         $perPage = PerPage::resolve($request);
 
@@ -52,7 +61,7 @@ class ClientActivityController extends Controller
             ->withQueryString();
 
         return Inertia::render('meetings/index', [
-            'activities' => $activities,
+            'activities' => Inertia::merge($activities)->append('data', 'id'),
             'clients' => Client::orderBy('name')->get(['id', 'name']),
             'employees' => Employee::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name']),
             'filters' => [

@@ -26,6 +26,8 @@ import AppLogo from './app-logo';
 type PermissionedNavItem = Omit<NavItem, 'items'> & {
     /** Permission required to see this item. Omit for items every logged-in staff member should see (e.g. Dashboard). */
     permission?: string;
+    /** At least one of these outlet feature keys (see outlet.enabledFeatures) must be on for the current outlet — omit for items that aren't outlet-feature-gated. */
+    requiresAnyFeature?: string[];
     items?: PermissionedNavItem[];
 };
 
@@ -77,6 +79,7 @@ const rawNavGroups: PermissionedNavGroup[] = [
                 url: route('meetings.index'),
                 icon: CalendarClock,
                 permission: permission(PERMISSION_MODULES.CLIENTS, 'view'),
+                requiresAnyFeature: ['meeting', 'follow_up'],
             },
         ],
     },
@@ -235,28 +238,29 @@ const rawNavGroups: PermissionedNavGroup[] = [
     },
 ];
 
-function filterByPermission(items: PermissionedNavItem[], permissions: string[]): NavItem[] {
+function filterByPermission(items: PermissionedNavItem[], permissions: string[], enabledFeatures: string[]): NavItem[] {
     return items
         .filter((item) => !item.permission || permissions.includes(item.permission))
+        .filter((item) => !item.requiresAnyFeature || item.requiresAnyFeature.some((f) => enabledFeatures.includes(f)))
         .map((item) => ({
             ...item,
-            items: item.items ? filterByPermission(item.items, permissions) : undefined,
+            items: item.items ? filterByPermission(item.items, permissions, enabledFeatures) : undefined,
         }))
         .filter((item) => !item.items || item.items.length > 0);
 }
 
-function buildNavGroups(permissions: string[]): NavGroup[] {
+function buildNavGroups(permissions: string[], enabledFeatures: string[]): NavGroup[] {
     return rawNavGroups
         .map((group) => ({
             title: group.title,
-            items: filterByPermission(group.items, permissions),
+            items: filterByPermission(group.items, permissions, enabledFeatures),
         }))
         .filter((group) => group.items.length > 0);
 }
 
 export function AppSidebar() {
-    const { auth } = usePage<SharedData>().props;
-    const navGroups = buildNavGroups(auth.permissions);
+    const { auth, outlet } = usePage<SharedData>().props;
+    const navGroups = buildNavGroups(auth.permissions, outlet?.enabledFeatures ?? []);
 
     return (
         <Sidebar collapsible="icon" variant="inset">

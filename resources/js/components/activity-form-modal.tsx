@@ -53,6 +53,16 @@ export function ActivityFormModal({
         outlet_id: '' as number | '',
     });
 
+    // Which outlet's feature toggles apply to a new activity — the fixed active outlet, or
+    // whichever one the "All Outlets" picker below currently has selected. Only meaningful for a
+    // create (see StoreClientActivityRequest, which only gates `type` on store, not update), so an
+    // edit always shows the full type list regardless of the activity's own outlet.
+    const effectiveOutlet = outlet?.isAll ? outlet.available.find((o) => o.id === data.outlet_id) : outlet?.current;
+    const availableTypes =
+        isEditing || !effectiveOutlet
+            ? CLIENT_ACTIVITY_TYPES
+            : CLIENT_ACTIVITY_TYPES.filter((type) => !effectiveOutlet.disabled_features?.includes(type));
+
     // Re-seed the form every time the modal opens, for either a fresh create or the activity being edited.
     useEffect(() => {
         if (!isOpen) return;
@@ -76,6 +86,15 @@ export function ActivityFormModal({
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, activity]);
+
+    // If the selected type falls outside the (now-known) outlet's enabled features — the outlet
+    // wasn't resolved yet on open, or the "All Outlets" picker just changed — fall back to
+    // whatever's actually available instead of letting the submit round-trip through a 422.
+    useEffect(() => {
+        if (isEditing || availableTypes.length === 0 || availableTypes.includes(data.type)) return;
+        setData('type', availableTypes[0]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isEditing, data.type, availableTypes.join(',')]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -115,7 +134,7 @@ export function ActivityFormModal({
                     onChange={(e) => setData('type', e.target.value as ClientActivity['type'])}
                     error={errors.type}
                 >
-                    {CLIENT_ACTIVITY_TYPES.map((type) => (
+                    {availableTypes.map((type) => (
                         <option key={type} value={type}>
                             {CLIENT_ACTIVITY_TYPE_LABELS[type]}
                         </option>

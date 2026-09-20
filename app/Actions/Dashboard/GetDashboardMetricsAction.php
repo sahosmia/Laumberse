@@ -23,7 +23,9 @@ class GetDashboardMetricsAction
     {
         [$period, $from, $to] = PeriodResolver::resolve($period, $from, $to);
 
-        $invoiceQuery = Invoice::query()->tap(fn ($q) => OutletContext::scope($q));
+        // A Bad Order never completed — it contributes to none of these stats (orders, revenue,
+        // paid, unpaid), the same reasoning as it being excluded from "pending" below.
+        $invoiceQuery = Invoice::query()->tap(fn ($q) => OutletContext::scope($q))->where('status', '!=', InvoiceStatus::BadOrder->value);
         if ($from) {
             $invoiceQuery->where('date', '>=', $from);
         }
@@ -52,10 +54,10 @@ class GetDashboardMetricsAction
             'total_expense' => (clone $expenseQuery)->sum('amount'),
             'unpaid_invoices' => (clone $invoiceQuery)->where('payment_status', PaymentStatus::Unpaid->value)->count(),
             // "Pending" = still somewhere in the wash pipeline (In House through Ready) — not yet
-            // Delivered and not Cancelled. There's no single "Processing" status anymore now that
-            // the pipeline has named stages, so this counts everything short of a final state.
+            // Delivered and not a Bad Order. There's no single "Processing" status anymore now
+            // that the pipeline has named stages, so this counts everything short of a final state.
             'pending' => Invoice::tap(fn ($q) => OutletContext::scope($q))
-                ->whereNotIn('status', [InvoiceStatus::Delivered->value, InvoiceStatus::Cancelled->value])
+                ->whereNotIn('status', [InvoiceStatus::Delivered->value, InvoiceStatus::BadOrder->value])
                 ->count(),
         ];
 
@@ -73,6 +75,7 @@ class GetDashboardMetricsAction
         $dateFormat = SqlDateFormat::monthDay();
         $dailyRevenue = Invoice::selectRaw("$dateFormat as day, SUM(total) as revenue, SUM(paid) as paid")
             ->tap(fn ($q) => OutletContext::scope($q))
+            ->where('status', '!=', InvoiceStatus::BadOrder->value)
             ->where('date', '>=', now()->subDays(7))
             ->groupBy('day')
             ->orderByRaw('MIN(date) asc')

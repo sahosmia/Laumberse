@@ -173,6 +173,7 @@ test('the investor show page lists its paginated transactions', function () {
     InvestorTransaction::create([
         'investor_id' => $investor->id,
         'account_id' => $account->id,
+        'outlet_id' => $user->outlet_id,
         'transaction_type' => 'invest',
         'amount' => 500,
         'date' => now()->format('Y-m-d'),
@@ -200,22 +201,22 @@ test('the investor show page running balance reflects full history even when nar
     // this test builds the Investor directly instead of through the service, so it inserts the
     // row by hand, dated before every other transaction below.
     InvestorTransaction::create([
-        'investor_id' => $investor->id, 'account_id' => null,
+        'investor_id' => $investor->id, 'account_id' => null, 'outlet_id' => $user->outlet_id,
         'transaction_type' => 'invest', 'amount' => 1000, 'date' => now()->subDays(20)->toDateString(),
         'note' => 'Opening balance',
     ]);
 
     InvestorTransaction::create([
-        'investor_id' => $investor->id, 'account_id' => $account->id,
+        'investor_id' => $investor->id, 'account_id' => $account->id, 'outlet_id' => $user->outlet_id,
         'transaction_type' => 'invest', 'amount' => 500, 'date' => now()->subDays(10)->toDateString(),
     ]);
     InvestorTransaction::create([
-        'investor_id' => $investor->id, 'account_id' => $account->id,
+        'investor_id' => $investor->id, 'account_id' => $account->id, 'outlet_id' => $user->outlet_id,
         'transaction_type' => 'withdraw', 'amount' => 200, 'date' => now()->subDays(5)->toDateString(),
     ]);
     // Deliberately dated today — this is the only row the "today" filter should show.
     InvestorTransaction::create([
-        'investor_id' => $investor->id, 'account_id' => $account->id,
+        'investor_id' => $investor->id, 'account_id' => $account->id, 'outlet_id' => $user->outlet_id,
         'transaction_type' => 'invest', 'amount' => 100, 'date' => now()->toDateString(),
     ]);
 

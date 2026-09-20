@@ -36,7 +36,7 @@ class UnitController extends Controller
             ->withQueryString();
 
         return Inertia::render('units/index', [
-            'units' => $units,
+            'units' => Inertia::merge($units)->append('data', 'id'),
             'filters' => [
                 'search' => $request->search,
                 'sort' => $request->sort,

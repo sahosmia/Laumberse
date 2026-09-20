@@ -301,6 +301,9 @@
                 <td class="info-card text-right" style="width: 50%;">
                     <div class="section-title">Invoice Details</div>
                     <div class="detail-row"><strong>Date:</strong> {{ $invoiceDate }}</div>
+                    @if ($outletName)
+                        <div class="detail-row"><strong>Outlet:</strong> @bn($outletName)</div>
+                    @endif
                     <div class="detail-row"><strong>Status:</strong> {{ $status }}</div>
                     @if ($method)
                         <div class="detail-row"><strong>Method:</strong> {{ $method }}</div>

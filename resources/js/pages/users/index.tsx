@@ -183,7 +183,9 @@ export default function Users({ users, roles, outlets, filters }: UsersProps) {
                     defaultView="table"
                     columns={columns}
                     renderCard={renderUserCard}
-                    pagination={users.links}
+                    scrollProp="users"
+                    currentPage={users.current_page}
+                    lastPage={users.last_page}
                     total={users.total}
                     perPage={perPage}
                     onPerPageChange={setPerPage}

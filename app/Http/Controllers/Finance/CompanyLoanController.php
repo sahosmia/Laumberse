@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Finance\StoreCompanyLoanRequest;
 use App\Models\Account;
 use App\Models\CompanyLoan;
+use App\Models\CompanyLoanTransaction;
 use App\Services\CompanyLoanService;
 use App\Support\LedgerQuery;
 use App\Support\OutletContext;
 use App\Support\PerPage;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class CompanyLoanController extends Controller
@@ -37,7 +37,7 @@ class CompanyLoanController extends Controller
             ->withQueryString();
 
         return Inertia::render('company-loans/index', [
-            'companyLoans' => $companyLoans,
+            'companyLoans' => Inertia::merge($companyLoans)->append('data', 'id'),
             'filters' => [
                 'search' => $request->search,
                 'sort' => $request->sort,
@@ -66,7 +66,7 @@ class CompanyLoanController extends Controller
         // owed; 'repay' decreases it. The window function must run over ALL of this loan's
         // transactions regardless of the date filter (see AccountController::show for why), so it
         // runs in a subquery first with the date filter applied outside it.
-        $withRunningBalance = DB::table('company_loan_transactions')
+        $withRunningBalance = CompanyLoanTransaction::query()
             ->leftJoin('accounts', 'accounts.id', '=', 'company_loan_transactions.account_id')
             ->selectRaw(
                 'company_loan_transactions.*, accounts.name as account_name, accounts.account_number as account_number, '
@@ -74,7 +74,11 @@ class CompanyLoanController extends Controller
                 .'OVER (ORDER BY company_loan_transactions.date ASC, company_loan_transactions.id ASC) AS running_balance',
                 [$companyLoan->initial_loan_amount],
             )
-            ->where('company_loan_transactions.company_loan_id', $companyLoan->id);
+            ->where('company_loan_transactions.company_loan_id', $companyLoan->id)
+            // CompanyLoan is a global entity, but its individual transactions are outlet-scoped —
+            // a user pinned to one outlet must not see another outlet's loan activity here, same as
+            // GetFinancialPositionAction already scopes this same table for the P&L report.
+            ->tap(fn ($q) => OutletContext::scope($q, 'company_loan_transactions.outlet_id'));
 
         $transactions = LedgerQuery::paginate(
             $withRunningBalance,
@@ -87,7 +91,7 @@ class CompanyLoanController extends Controller
         return Inertia::render('company-loans/show', [
             'companyLoan' => $companyLoan,
             'transactions' => $transactions,
-            'accounts' => Account::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name', 'account_number']),
+            'accounts' => Account::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name', 'account_number', 'outlet_id']),
             'filters' => [
                 'date_filter' => $request->date_filter,
                 'start_date' => $request->start_date,

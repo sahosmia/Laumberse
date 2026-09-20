@@ -22,6 +22,8 @@ class GetEligibleForPayrollRequest extends FormRequest
         return [
             'month' => 'required|integer|between:1,12',
             'year' => 'required|integer',
+            // Only meaningful while viewing "All Outlets" — see GetEligibleEmployeesForPayrollAction.
+            'outlet_id' => 'nullable|integer|exists:outlets,id',
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Invoices;
 
 use App\Actions\Invoices\PrepareInvoicePdfDataAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Invoices\CancelInvoiceRequest;
 use App\Http\Requests\Invoices\StoreInvoiceRequest;
 use App\Http\Requests\Invoices\UpdateInvoiceRequest;
 use App\Http\Requests\Invoices\UpdateInvoiceStatusRequest;
@@ -14,6 +15,7 @@ use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Services\InvoiceService;
+use App\Support\BusinessInfo;
 use App\Support\DateRangeFilter;
 use App\Support\OutletContext;
 use App\Support\PerPage;
@@ -52,7 +54,7 @@ class InvoiceController extends Controller
         [$sortColumn, $sortDirection] = self::SORTABLE[$request->sort] ?? self::SORTABLE['created_at:desc'];
         $perPage = PerPage::resolve($request);
 
-        $invoices = Invoice::with('client')
+        $invoices = Invoice::with(['client', 'outlet:id,name,code'])
             ->tap(fn ($q) => OutletContext::scope($q))
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('invoice_uuid', 'like', "%{$s}%")
@@ -67,8 +69,11 @@ class InvoiceController extends Controller
             ->withQueryString();
 
         return Inertia::render('invoices/index', [
-            'invoices' => $invoices,
-            'accounts' => Account::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name', 'account_number']),
+            'invoices' => Inertia::merge($invoices)->append('data', 'id'),
+            // outlet_id included so the per-row "Mark as Paid" account picker can filter down to
+            // that specific invoice's own outlet — this list otherwise spans every outlet while
+            // viewing "All Outlets", but a single invoice can only ever be paid into its own.
+            'accounts' => Account::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name', 'account_number', 'outlet_id']),
             'filters' => [
                 'search' => $request->search,
                 'payment_status' => $request->payment_status,
@@ -88,7 +93,9 @@ class InvoiceController extends Controller
             'products' => Product::with(['category', 'outletPrices'])->get(),
             'clients' => Client::with('customPrices')->get(),
             'categories' => Category::all(),
-            'accounts' => Account::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name', 'account_number']),
+            // outlet_id included so the create form can filter this list down to whichever outlet
+            // is picked below while viewing "All Outlets" (see invoice-form.tsx's effectiveOutlet).
+            'accounts' => Account::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name', 'account_number', 'outlet_id']),
         ]);
     }
 
@@ -114,7 +121,10 @@ class InvoiceController extends Controller
             'products' => Product::with(['category', 'outletPrices'])->get(),
             'clients' => Client::with('customPrices')->get(),
             'categories' => Category::all(),
-            'accounts' => Account::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name', 'account_number']),
+            // This invoice's outlet is fixed (see UpdateInvoiceRequest's own account_id rule) —
+            // scoped to it directly rather than the viewer's own session outlet, which would be
+            // wrong while viewing "All Outlets" or a *different* single outlet than this invoice's.
+            'accounts' => Account::where('outlet_id', $invoice->outlet_id)->orderBy('name')->get(['id', 'name', 'account_number']),
         ]);
     }
 
@@ -137,10 +147,21 @@ class InvoiceController extends Controller
     {
         $this->ensureAccessible($invoice);
 
+        $invoice->load(['client', 'items.product', 'outlet:id,name,code,address,phone'])->makeVisible('internal_note');
+
         return Inertia::render('invoices/show', [
-            'invoice' => $invoice->load(['client', 'items.product'])->makeVisible('internal_note'),
-            'accounts' => Account::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name', 'account_number']),
+            'invoice' => $invoice,
+            // Scoped to this invoice's own fixed outlet — see UpdatePaymentStatusRequest's
+            // account_id rule, and the same reasoning in edit() above.
+            'accounts' => Account::where('outlet_id', $invoice->outlet_id)->orderBy('name')->get(['id', 'name', 'account_number']),
             'histories' => $invoice->histories()->with('user:id,name')->get(),
+            // Resolved per this invoice's own outlet — see BusinessInfo's docblock.
+            'business' => [
+                'name' => BusinessInfo::name(),
+                'address' => BusinessInfo::address($invoice->outlet),
+                'phone' => BusinessInfo::phone($invoice->outlet),
+                'logo_url' => BusinessInfo::logoUrl(),
+            ],
         ]);
     }
 
@@ -190,6 +211,21 @@ class InvoiceController extends Controller
         }
     }
 
+    public function cancelOrder(CancelInvoiceRequest $request, Invoice $invoice)
+    {
+        $this->ensureAccessible($invoice);
+
+        try {
+            $this->invoiceService->cancelOrder($invoice);
+
+            return redirect()->back()->with('success', 'Order cancelled successfully.');
+        } catch (\Throwable $e) {
+            report($e);
+
+            return redirect()->back()->with('error', 'Failed to cancel order.');
+        }
+    }
+
     public function print(Request $request, Invoice $invoice, PrepareInvoicePdfDataAction $preparePdfData)
     {
         $this->ensureAccessible($invoice);
@@ -213,8 +249,15 @@ class InvoiceController extends Controller
     {
         $this->ensureAccessible($invoice);
 
+        $invoice->load(['client', 'items.product', 'outlet:id,name,code,address,phone']);
+
         return Inertia::render('invoices/pos', [
-            'invoice' => $invoice->load(['client', 'items.product']),
+            'invoice' => $invoice,
+            'business' => [
+                'name' => BusinessInfo::name(),
+                'address' => BusinessInfo::address($invoice->outlet),
+                'phone' => BusinessInfo::phone($invoice->outlet),
+            ],
         ]);
     }
 }

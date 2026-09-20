@@ -4,7 +4,7 @@ import type { Paginated } from '@/types/pagination';
 
 export interface InvoiceHistoryProps {
     invoices: Paginated<Invoice>;
-    accounts: Pick<Account, 'id' | 'name' | 'account_number'>[];
+    accounts: Pick<Account, 'id' | 'name' | 'account_number' | 'outlet_id'>[];
     filters: {
         search?: string;
         payment_status?: PaymentStatus | '';
@@ -32,6 +32,7 @@ export interface InvoiceDetail {
     id: string;
     invoice_uuid: string;
     date: string;
+    outlet?: { name: string } | null;
     client: { name: string; phone: string; address: string | null; type: ClientType };
     total: number;
     paid: number;
@@ -56,20 +57,30 @@ export interface InvoiceFieldChange {
 
 export interface InvoiceHistoryEntry {
     id: number;
-    action: 'created' | 'updated' | 'status_changed' | 'payment_status_changed';
+    action: 'created' | 'updated' | 'status_changed' | 'payment_status_changed' | 'cancelled';
     changes: { fields: InvoiceFieldChange[]; items: string[] } | null;
     user: { id: number; name: string } | null;
     created_at: string;
+}
+
+/** Resolved server-side per the invoice's own outlet — see App\Support\BusinessInfo. */
+export interface BusinessDetails {
+    name: string;
+    address: string | null;
+    phone: string | null;
+    logo_url?: string | null;
 }
 
 export interface InvoiceDetailProps {
     invoice: InvoiceDetail;
     accounts: Pick<Account, 'id' | 'name' | 'account_number'>[];
     histories: InvoiceHistoryEntry[];
+    business: BusinessDetails;
 }
 
 export interface PosPrintProps {
     invoice: InvoiceDetail;
+    business: BusinessDetails;
 }
 
 export interface EditInvoiceProps {
@@ -77,7 +88,7 @@ export interface EditInvoiceProps {
     products: Product[];
     clients: Client[];
     categories: Category[];
-    accounts: Pick<Account, 'id' | 'name' | 'account_number'>[];
+    accounts: Pick<Account, 'id' | 'name' | 'account_number' | 'outlet_id'>[];
 }
 
 export interface CreateInvoiceProps {
@@ -85,5 +96,5 @@ export interface CreateInvoiceProps {
     products: Product[];
     clients: Client[];
     categories: Category[];
-    accounts: Pick<Account, 'id' | 'name' | 'account_number'>[];
+    accounts: Pick<Account, 'id' | 'name' | 'account_number' | 'outlet_id'>[];
 }

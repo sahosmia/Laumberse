@@ -259,7 +259,9 @@ export default function Roles({ roles, availablePermissions, filters }: RolesPro
                     columns={columns}
                     renderCard={renderRoleCard}
                     cardGridClassName="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-                    pagination={roles.links}
+                    scrollProp="roles"
+                    currentPage={roles.current_page}
+                    lastPage={roles.last_page}
                     total={roles.total}
                     perPage={perPage}
                     onPerPageChange={setPerPage}

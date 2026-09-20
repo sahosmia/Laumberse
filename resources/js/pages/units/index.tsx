@@ -140,7 +140,9 @@ export default function Units({ units, filters }: UnitsProps) {
                     defaultView="table"
                     columns={columns}
                     renderCard={renderUnitCard}
-                    pagination={units.links}
+                    scrollProp="units"
+                    currentPage={units.current_page}
+                    lastPage={units.last_page}
                     total={units.total}
                     perPage={perPage}
                     onPerPageChange={setPerPage}

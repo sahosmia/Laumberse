@@ -148,7 +148,9 @@ export default function NoteCategories({ categories, filters }: NoteCategoriesPr
                     defaultView="table"
                     columns={columns}
                     renderCard={renderCategoryCard}
-                    pagination={categories.links}
+                    scrollProp="categories"
+                    currentPage={categories.current_page}
+                    lastPage={categories.last_page}
                     total={categories.total}
                     perPage={perPage}
                     onPerPageChange={setPerPage}

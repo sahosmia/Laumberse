@@ -13,7 +13,7 @@ import { type BreadcrumbItem, type CompanyLoanTransaction, type SharedData } fro
 import type { CompanyLoanShowProps } from '@/types/pages/company-loans';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const TRANSACTION_LABELS: Record<(typeof COMPANY_LOAN_TRANSACTION_TYPES)[number], string> = {
     loan: 'Loan (Principal Addition)',
@@ -44,6 +44,11 @@ export default function CompanyLoanShow({ companyLoan, transactions, accounts, f
 
     const isInterest = data.transaction_type === 'interest';
 
+    // Which outlet's accounts the Payment Account dropdown offers — the fixed active outlet, or
+    // whichever one the "All Outlets" picker below currently has selected.
+    const effectiveOutlet = outlet?.isAll ? outlet.available.find((o) => o.id === data.outlet_id) : outlet?.current;
+    const availableAccounts = !effectiveOutlet ? accounts : accounts.filter((a) => a.outlet_id === effectiveOutlet.id);
+
     const openModal = () => {
         reset();
         clearErrors();
@@ -54,6 +59,14 @@ export default function CompanyLoanShow({ companyLoan, transactions, accounts, f
         setShowModal(false);
         clearErrors();
     };
+
+    // If the selected account falls outside the (now-known) outlet's accounts — the "All Outlets"
+    // picker just changed — clear it instead of letting the submit round-trip through a 422.
+    useEffect(() => {
+        if (!showModal || isInterest || !data.account_id || availableAccounts.some((a) => a.id === Number(data.account_id))) return;
+        setData('account_id', '');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showModal, isInterest, data.account_id, data.outlet_id, availableAccounts.map((a) => a.id).join(',')]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -200,30 +213,8 @@ export default function CompanyLoanShow({ companyLoan, transactions, accounts, f
                         ))}
                     </FormSelect>
 
-                    {!isInterest && (
-                        <FormSelect
-                            id="account_id"
-                            label="Payment Account"
-                            required
-                            value={data.account_id}
-                            onChange={(e) => setData('account_id', e.target.value)}
-                            error={errors.account_id}
-                        >
-                            <option value="">Select Account</option>
-                            {accounts.map((a) => (
-                                <option key={a.id} value={a.id}>
-                                    {a.name} {a.account_number ? `(${a.account_number})` : ''}
-                                </option>
-                            ))}
-                        </FormSelect>
-                    )}
-
-                    {isInterest && (
-                        <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
-                            Interest only accrues on the loan balance — it does not move money in or out of a payment account.
-                        </p>
-                    )}
-
+                    {/* Outlet — picked first because it gates which accounts the Payment Account
+                        field below may offer. */}
                     {outlet?.isAll && (
                         <FormSelect
                             id="outlet_id"
@@ -240,6 +231,30 @@ export default function CompanyLoanShow({ companyLoan, transactions, accounts, f
                                 </option>
                             ))}
                         </FormSelect>
+                    )}
+
+                    {!isInterest && (
+                        <FormSelect
+                            id="account_id"
+                            label="Payment Account"
+                            required
+                            value={data.account_id}
+                            onChange={(e) => setData('account_id', e.target.value)}
+                            error={errors.account_id}
+                        >
+                            <option value="">Select Account</option>
+                            {availableAccounts.map((a) => (
+                                <option key={a.id} value={a.id}>
+                                    {a.name} {a.account_number ? `(${a.account_number})` : ''}
+                                </option>
+                            ))}
+                        </FormSelect>
+                    )}
+
+                    {isInterest && (
+                        <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+                            Interest only accrues on the loan balance — it does not move money in or out of a payment account.
+                        </p>
                     )}
 
                     <FormInput

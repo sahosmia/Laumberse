@@ -30,6 +30,24 @@ test('creating a corporate client syncs its custom prices', function () {
     ]);
 });
 
+test('creating a corporate client with a blank custom price is rejected', function () {
+    $user = User::factory()->admin()->create();
+    $category = Category::create(['name' => 'Gents Item', 'slug' => 'gents-item', 'description' => 'd']);
+    $product = Product::create(['name' => 'P1', 'category_id' => $category->id, 'price' => 50]);
+
+    $response = $this->actingAs($user)->post(route('clients.store'), [
+        'name' => 'Acme Corp',
+        'phone' => '01700000000',
+        'type' => 'Corporate',
+        'custom_prices' => [
+            ['product_id' => $product->id, 'custom_price' => ''],
+        ],
+    ]);
+
+    $response->assertSessionHasErrors(['custom_prices.0.custom_price']);
+    $this->assertDatabaseCount('clients', 0);
+});
+
 test('creating a consumer client ignores any custom prices sent', function () {
     $user = User::factory()->admin()->create();
     $category = Category::create(['name' => 'Gents Item', 'slug' => 'gents-item', 'description' => 'd']);

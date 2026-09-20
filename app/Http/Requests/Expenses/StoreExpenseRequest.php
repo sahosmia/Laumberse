@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Expenses;
 
+use App\Enums\AssetStatus;
 use App\Enums\ExpenseType;
 use App\Models\Expense;
 use App\Support\OutletContext;
@@ -18,10 +19,11 @@ class StoreExpenseRequest extends FormRequest
     public function rules(): array
     {
         $categoryId = $this->input('expense_category_id') !== null ? (int) $this->input('expense_category_id') : null;
-        $type = Expense::classifyType($categoryId, $this->boolean('is_asset_purchase'));
+        $type = Expense::classifyType($categoryId);
 
         $isPayroll = $type === ExpenseType::Salary;
         $isMaterial = $type === ExpenseType::Material;
+        $isAsset = $type === ExpenseType::Asset;
 
         return [
             // Only meaningful for a switch-capable user currently viewing "All Outlets" — see
@@ -58,6 +60,12 @@ class StoreExpenseRequest extends FormRequest
             'bonus' => $isPayroll ? 'nullable|numeric|min:0' : 'nullable',
             'deduction' => $isPayroll ? 'nullable|numeric|min:0' : 'nullable',
             'deduction_note' => ($isPayroll && $this->input('deduction') > 0) ? 'required|string' : 'nullable|string',
+
+            // Asset purchase specific fields — `amount`/`date`/`description` above double as the
+            // new Asset's cost/purchase_date/description (see ExpenseService::storeExpense).
+            'asset_name' => $isAsset ? 'required|string|max:255' : 'nullable|string|max:255',
+            'asset_category_id' => $isAsset ? 'required|exists:asset_categories,id' : 'nullable|exists:asset_categories,id',
+            'asset_status' => $isAsset ? ['required', Rule::enum(AssetStatus::class)] : 'nullable',
         ];
     }
 }

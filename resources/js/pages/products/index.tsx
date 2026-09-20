@@ -230,7 +230,9 @@ export default function Products({ products, categories, outlets, filters }: Pro
                     defaultView="table"
                     columns={columns}
                     renderCard={renderProductCard}
-                    pagination={products.links}
+                    scrollProp="products"
+                    currentPage={products.current_page}
+                    lastPage={products.last_page}
                     total={products.total}
                     perPage={perPage}
                     onPerPageChange={setPerPage}

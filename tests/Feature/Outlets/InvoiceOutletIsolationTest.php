@@ -251,6 +251,24 @@ test('an admin who switches to All Outlets sees invoices from every outlet', fun
     expect($uuids)->toContain($invoiceB->invoice_uuid);
 });
 
+test('an admin viewing All Outlets does not see invoices from an outlet configured as individual reporting only', function () {
+    $outletB = Outlet::factory()->individualReportingOnly()->create();
+    $admin = User::factory()->admin()->create();
+    $userB = User::factory()->for($outletB, 'outlet')->create();
+    $userB->assignRole('Manager');
+
+    $invoiceAdmin = makeInvoiceFor($admin);
+    $invoiceB = makeInvoiceFor($userB);
+
+    test()->actingAs($admin)->post(route('outlet-context.update'), ['outlet' => 'all'])->assertRedirect();
+
+    $response = test()->actingAs($admin)->get(route('history'));
+
+    $uuids = collect($response->viewData('page')['props']['invoices']['data'])->pluck('invoice_uuid');
+    expect($uuids)->toContain($invoiceAdmin->invoice_uuid);
+    expect($uuids)->not->toContain($invoiceB->invoice_uuid);
+});
+
 test('an admin who switches to a specific outlet only sees that outlet\'s invoices', function () {
     $outletB = Outlet::factory()->create();
     $admin = User::factory()->admin()->create();

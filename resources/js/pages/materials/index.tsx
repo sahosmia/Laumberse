@@ -32,7 +32,7 @@ export default function Materials({ materials, allMaterials, units, accounts, fi
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
     const [showPurchaseModal, setShowPurchaseModal] = useState(false);
 
-    const { settings } = usePage<SharedData>().props;
+    const { settings, outlet } = usePage<SharedData>().props;
     const materialCategoryId = settings.material_expense_category_id;
 
     const { data, setData, post, put, reset, errors, processing, clearErrors } = useForm({
@@ -51,11 +51,27 @@ export default function Materials({ materials, allMaterials, units, accounts, fi
     } = useForm({
         expense_category_id: (materialCategoryId ?? '') as string | number,
         account_id: '' as string | number,
+        outlet_id: '' as number | '',
         amount: 0 as number | string,
         date: new Date().toISOString().slice(0, 10),
         description: '',
         items: [] as MaterialItem[],
     });
+
+    // Which outlet's accounts the Payment Account dropdown offers — the fixed active outlet, or
+    // whichever one the "All Outlets" picker below currently has selected. This purchase posts to
+    // expenses.store (see handlePurchaseSubmit), so the same outlet_id requirement as any other
+    // expense applies here (see StoreExpenseRequest).
+    const effectiveOutlet = outlet?.isAll ? outlet.available.find((o) => o.id === purchaseData.outlet_id) : outlet?.current;
+    const availableAccounts = !effectiveOutlet ? accounts : accounts.filter((a) => a.outlet_id === effectiveOutlet.id);
+
+    // If the selected account falls outside the (now-known) outlet's accounts — the "All Outlets"
+    // picker just changed — clear it instead of letting the submit round-trip through a 422.
+    useEffect(() => {
+        if (!showPurchaseModal || !purchaseData.account_id || availableAccounts.some((a) => a.id === Number(purchaseData.account_id))) return;
+        setPurchaseData('account_id', '');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showPurchaseModal, purchaseData.account_id, purchaseData.outlet_id, availableAccounts.map((a) => a.id).join(',')]);
 
     useEffect(() => {
         const total = purchaseData.items.reduce((sum, item) => sum + Number(item.quantity) * Number(item.unit_price), 0);
@@ -241,7 +257,9 @@ export default function Materials({ materials, allMaterials, units, accounts, fi
                     defaultView="table"
                     columns={columns}
                     renderCard={renderMaterialCard}
-                    pagination={materials.links}
+                    scrollProp="materials"
+                    currentPage={materials.current_page}
+                    lastPage={materials.last_page}
                     total={materials.total}
                     perPage={perPage}
                     onPerPageChange={setPerPage}
@@ -311,6 +329,27 @@ export default function Materials({ materials, allMaterials, units, accounts, fi
 
             <Modal isOpen={showPurchaseModal} onClose={closePurchaseModal} title="Record Material Purchase" size="lg">
                 <form onSubmit={handlePurchaseSubmit} className="space-y-4">
+                    {/* Outlet — picked first because it gates which accounts the Payment Account
+                        field below may offer, and this purchase needs one either way (it posts to
+                        expenses.store). */}
+                    {outlet?.isAll && (
+                        <FormSelect
+                            id="purchase_outlet_id"
+                            label="Outlet"
+                            required
+                            value={purchaseData.outlet_id}
+                            onChange={(e) => setPurchaseData('outlet_id', e.target.value ? Number(e.target.value) : '')}
+                            error={purchaseErrors.outlet_id}
+                        >
+                            <option value="">Select an outlet</option>
+                            {outlet.available.map((o) => (
+                                <option key={o.id} value={o.id}>
+                                    {o.name}
+                                </option>
+                            ))}
+                        </FormSelect>
+                    )}
+
                     <FormSelect
                         id="purchase_account_id"
                         label="Payment Account"
@@ -320,7 +359,7 @@ export default function Materials({ materials, allMaterials, units, accounts, fi
                         error={purchaseErrors.account_id}
                     >
                         <option value="">Select Account</option>
-                        {accounts.map((a) => (
+                        {availableAccounts.map((a) => (
                             <option key={a.id} value={a.id}>
                                 {a.name} {a.account_number ? `(${a.account_number})` : ''}
                             </option>

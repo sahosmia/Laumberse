@@ -9,6 +9,6 @@ export interface InvestorsProps {
 export interface InvestorShowProps {
     investor: Investor;
     transactions: Paginated<InvestorTransaction>;
-    accounts: Pick<Account, 'id' | 'name' | 'account_number'>[];
+    accounts: Pick<Account, 'id' | 'name' | 'account_number' | 'outlet_id'>[];
     filters: { date_filter?: string; start_date?: string; end_date?: string; specific_date?: string };
 }

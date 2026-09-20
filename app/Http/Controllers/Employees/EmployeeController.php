@@ -57,7 +57,7 @@ class EmployeeController extends Controller
             ->withQueryString();
 
         return Inertia::render('employees/index', [
-            'employees' => $employees,
+            'employees' => Inertia::merge($employees)->append('data', 'id'),
             'filters' => [
                 'search' => $request->search,
                 'status' => $request->status,
@@ -135,7 +135,11 @@ class EmployeeController extends Controller
         return Inertia::render('employees/show', [
             'employee' => $employee,
             'transactions' => $transactions,
-            'accounts' => Account::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name', 'account_number']),
+            // This employee's outlet is fixed — scoped to it directly rather than the viewer's own
+            // session outlet, which would be wrong while viewing "All Outlets" or a *different*
+            // single outlet than this employee's own (see StoreEmployeeTransactionRequest/
+            // StoreEmployeePayrollRequest, which validate account_id against this same outlet_id).
+            'accounts' => Account::where('outlet_id', $employee->outlet_id)->orderBy('name')->get(['id', 'name', 'account_number']),
             'filters' => [
                 'date_filter' => $request->date_filter,
                 'start_date' => $request->start_date,
@@ -161,6 +165,11 @@ class EmployeeController extends Controller
             $data['employee_id'] = $employee->id;
             $data['amount'] = round($employee->base_salary + ($data['bonus'] ?? 0) - ($data['deduction'] ?? 0), 2);
             $data['description'] = "Salary - {$employee->name}";
+            // Fixed to the employee's own outlet rather than resolved from the admin's session —
+            // otherwise ExpenseService::storeExpense()'s OutletContext::resolveForWrite() throws
+            // while viewing "All Outlets" (it requires an explicit outlet_id there, and this form
+            // never collects one — the employee's outlet is already fixed and known).
+            $data['outlet_id'] = $employee->outlet_id;
 
             $expenseService->storeExpense($data);
 
@@ -217,6 +226,6 @@ class EmployeeController extends Controller
     {
         $validated = $request->validated();
 
-        return response()->json($action($validated['month'], $validated['year']));
+        return response()->json($action($validated['month'], $validated['year'], $validated['outlet_id'] ?? null));
     }
 }

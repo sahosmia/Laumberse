@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\AssetStatus;
 use App\Enums\ExpenseType;
 use App\Enums\PayrollStatus;
 use App\Models\Account;
+use App\Models\Asset;
 use App\Models\Employee;
 use App\Models\Expense;
 use App\Models\ExpenseMaterial;
@@ -44,6 +46,12 @@ class ExpenseService
                 $expense->payroll_id = $payroll->id;
                 $expense->save();
                 $payroll->update(['expense_id' => $expense->id]);
+            } elseif ($type === ExpenseType::Asset && empty($data['asset_id'])) {
+                // No asset_id yet means this came straight from the unified Expense form (as
+                // opposed to CreateAssetAction, which creates the Asset first and passes its id
+                // in) — create the Asset now from the asset_* fields.
+                $expense->asset_id = Asset::create($this->assetDataFromExpenseData($data) + ['outlet_id' => $expense->outlet_id])->id;
+                $expense->save();
             } else {
                 $expense->save();
             }
@@ -96,6 +104,18 @@ class ExpenseService
                 $data['payroll_id'] = null;
             }
 
+            // 2b. Handle Asset — update the already-linked Asset in place, or create one if this
+            // expense is only just becoming an asset purchase. Never deletes/unlinks an existing
+            // Asset on a type change away from Asset (see classifyType's "sticky" asset check
+            // above): it's a tracked physical asset, not something a category edit should discard.
+            if ($type === ExpenseType::Asset) {
+                if ($expense->asset_id) {
+                    $expense->asset()->update($this->assetDataFromExpenseData($data));
+                } else {
+                    $data['asset_id'] = Asset::create($this->assetDataFromExpenseData($data) + ['outlet_id' => $expense->outlet_id])->id;
+                }
+            }
+
             // 3. Update the expense record — restricted to fillable columns for the same reason
             // storeExpense() constructs its Expense explicitly (see the comment there).
             $expense->update(Arr::only($data, $expense->getFillable()));
@@ -136,6 +156,19 @@ class ExpenseService
             $this->accountService->reverseTransactionsFor($expense);
             $expense->delete();
         });
+    }
+
+    /** `amount`/`date`/`description` double as the linked Asset's cost/purchase_date/description. */
+    protected function assetDataFromExpenseData(array $data): array
+    {
+        return [
+            'name' => $data['asset_name'],
+            'description' => $data['description'] ?? null,
+            'purchase_date' => $data['date'],
+            'cost' => $data['amount'],
+            'status' => $data['asset_status'] ?? AssetStatus::Active->value,
+            'asset_category_id' => $data['asset_category_id'],
+        ];
     }
 
     protected function getUpdatedPayroll(array $data)

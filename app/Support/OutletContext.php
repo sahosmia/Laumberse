@@ -122,7 +122,12 @@ class OutletContext
     public static function resolveForWrite(mixed $submittedOutletId = null): int
     {
         if (! self::isAll()) {
-            return self::currentId();
+            // currentId() can only be null here when there's no authenticated user at all (a
+            // console command/seeder/queued job) — canSwitch() is false without one, so isAll()
+            // itself can never be true in that case. Falls back to the oldest outlet, the same
+            // default every outlet-scoped model's own booted() hook uses when a record is created
+            // directly without going through a controller/service at all.
+            return self::currentId() ?? Outlet::query()->oldest('id')->value('id');
         }
 
         $id = is_numeric($submittedOutletId) ? (int) $submittedOutletId : null;
@@ -169,19 +174,85 @@ class OutletContext
     }
 
     /**
-     * Applies the active outlet scope to a query — a no-op while viewing "All Outlets", and
-     * likewise a no-op outside any authenticated context (a console command or queued job): both
-     * cases resolve currentId() to null, and filtering to `outlet_id = null` would silently match
-     * nothing rather than "everything," which is never the intended behavior for either case.
+     * Applies the active outlet scope to a query — outside "All Outlets" this filters to the
+     * single active outlet; both cases resolve currentId() to null, and filtering to
+     * `outlet_id = null` would silently match nothing rather than "everything," which is never the
+     * intended behavior for either case. While viewing "All Outlets" it instead excludes any outlet
+     * configured as Individual Reporting Only (see Outlet::include_in_consolidated_reporting) — and
+     * remains a true no-op outside any authenticated context (a console command or queued job),
+     * since isAll() itself requires canSwitch(), which requires an authenticated user.
      */
     public static function scope(Builder $query, string $column = 'outlet_id'): Builder
     {
         $id = self::currentId();
 
         if ($id !== null) {
-            $query->where($column, $id);
+            return $query->where($column, $id);
+        }
+
+        if (self::isAll()) {
+            $query->whereNotIn($column, Outlet::query()->where('include_in_consolidated_reporting', false)->select('id'));
         }
 
         return $query;
+    }
+
+    /**
+     * Whether $feature (see App\Support\OutletFeatures) is enabled for a specific outlet —
+     * independent of the currently active session outlet, since a switch-capable user picks the
+     * target outlet explicitly while viewing "All Outlets" (see resolveForWrite()). A missing
+     * outlet id/record defaults to enabled — actual outlet existence is the `exists` rule's job,
+     * not this check's.
+     */
+    public static function featureEnabledFor(?int $outletId, string $feature): bool
+    {
+        if ($outletId === null) {
+            return true;
+        }
+
+        return Outlet::find($outletId)?->hasFeature($feature) ?? true;
+    }
+
+    /**
+     * Feature keys (see App\Support\OutletFeatures) enabled in the current context — used to hide
+     * a module's nav item/entry points once it's off. Every key while viewing "All Outlets" (no
+     * single outlet to answer for) or outside any authenticated context; otherwise just the keys
+     * the current single outlet has actually turned on.
+     *
+     * @return list<string>
+     */
+    public static function enabledFeatures(): array
+    {
+        $outlet = self::current();
+
+        if ($outlet === null) {
+            return array_keys(OutletFeatures::ALL);
+        }
+
+        return array_values(array_filter(array_keys(OutletFeatures::ALL), fn (string $feature) => $outlet->hasFeature($feature)));
+    }
+
+    /**
+     * Whether at least one of $keys is enabled in the current context — true while viewing "All
+     * Outlets" (no single outlet to answer for). Use this instead of
+     * `enabledFeatures() !== []` to gate a whole module: enabledFeatures() spans every registered
+     * module, so an unrelated module's key being enabled (e.g. a client type) would otherwise mask
+     * this one's (e.g. every activity type) being fully turned off.
+     */
+    public static function anyFeatureEnabled(array $keys): bool
+    {
+        $outlet = self::current();
+
+        if ($outlet === null) {
+            return true;
+        }
+
+        foreach ($keys as $key) {
+            if ($outlet->hasFeature($key)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Account;
+use App\Models\AssetCategory;
 use App\Models\Employee;
 use App\Models\ExpenseCategory;
 use App\Models\GlobalSetting;
@@ -123,4 +124,54 @@ test('salary expense can be stored and creates a payroll record', function () {
         'net_salary' => 20000,
         'status' => 'completed',
     ]);
+});
+
+test('asset purchase expense can be stored from the expense form and creates an asset record', function () {
+    $user = User::factory()->admin()->create();
+    $category = ExpenseCategory::create(['name' => 'Asset Purchase', 'description' => 'Asset Purchases']);
+    GlobalSetting::set('asset_purchase_category_id', $category->id);
+    $assetCategory = AssetCategory::create(['name' => 'Electronics']);
+    $account = Account::create(['name' => 'Bank', 'opening_balance' => 50000, 'current_balance' => 50000]);
+
+    $data = [
+        'expense_category_id' => $category->id,
+        'account_id' => $account->id,
+        'amount' => 35000,
+        'date' => now()->format('Y-m-d'),
+        'description' => 'Bought a laptop',
+        'asset_name' => 'Dell Laptop',
+        'asset_category_id' => $assetCategory->id,
+        'asset_status' => 'Active',
+    ];
+
+    $response = $this->actingAs($user)->post(route('expenses.store'), $data);
+
+    $response->assertSessionHasNoErrors();
+    $this->assertDatabaseHas('expenses', [
+        'expense_category_id' => $category->id,
+        'amount' => 35000,
+        'type' => 'asset',
+    ]);
+    $this->assertDatabaseHas('assets', [
+        'name' => 'Dell Laptop',
+        'asset_category_id' => $assetCategory->id,
+        'cost' => 35000,
+        'status' => 'Active',
+    ]);
+});
+
+test('asset purchase expense requires asset name and category', function () {
+    $user = User::factory()->admin()->create();
+    $category = ExpenseCategory::create(['name' => 'Asset Purchase', 'description' => 'Asset Purchases']);
+    GlobalSetting::set('asset_purchase_category_id', $category->id);
+    $account = Account::create(['name' => 'Bank', 'opening_balance' => 50000, 'current_balance' => 50000]);
+
+    $response = $this->actingAs($user)->post(route('expenses.store'), [
+        'expense_category_id' => $category->id,
+        'account_id' => $account->id,
+        'amount' => 35000,
+        'date' => now()->format('Y-m-d'),
+    ]);
+
+    $response->assertSessionHasErrors(['asset_name', 'asset_category_id']);
 });

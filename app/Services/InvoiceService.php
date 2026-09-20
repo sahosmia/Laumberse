@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ClientType;
+use App\Enums\InvoiceStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Account;
 use App\Models\Client;
@@ -259,6 +260,44 @@ class InvoiceService
             $invoice->update(['status' => $status]);
 
             $this->recordHistory($invoice, 'status_changed', $this->diffFields($before, $this->snapshotFields($invoice->fresh())));
+
+            return $invoice;
+        });
+    }
+
+    /**
+     * Voids an order: status → Bad Order, payment_status → Cancelled, any paid amount is reversed
+     * back out of the account it was credited to (the client gets nothing further, but nothing is
+     * owed either — see AccountService::reverseTransactionsFor), and paid/due both reset to 0. The
+     * client's own stats are decremented the same way deleteInvoice() does, since a bad order
+     * shouldn't count toward their order/paid/due history — it never actually completed. The
+     * invoice row itself is kept (not deleted) so it stays visible in history with its own audit
+     * trail, unlike a real delete.
+     */
+    public function cancelOrder(Invoice $invoice): Invoice
+    {
+        return DB::transaction(function () use ($invoice) {
+            $before = $this->snapshotFields($invoice);
+            $oldPaid = (float) $invoice->paid;
+            $oldDue = (float) $invoice->due;
+
+            $this->accountService->reverseTransactionsFor($invoice);
+
+            $invoice->update([
+                'status' => InvoiceStatus::BadOrder->value,
+                'payment_status' => PaymentStatus::Cancelled->value,
+                'paid' => 0,
+                'due' => 0,
+                'payment_date' => null,
+            ]);
+
+            if ($invoice->client) {
+                $invoice->client->decrement('total_orders');
+                $invoice->client->decrement('total_paid', $oldPaid);
+                $invoice->client->decrement('total_due', $oldDue);
+            }
+
+            $this->recordHistory($invoice, 'cancelled', $this->diffFields($before, $this->snapshotFields($invoice->fresh())));
 
             return $invoice;
         });

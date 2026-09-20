@@ -22,12 +22,14 @@ const QUICK_ACTIONS = [
         icon: CalendarClock,
         href: () => route('meetings.index', { action: 'add-meeting' }),
         permission: permission('clients', 'edit'),
+        requiresFeature: 'meeting',
     },
     {
         title: 'Add Follow-up',
         icon: CalendarClock,
         href: () => route('meetings.index', { action: 'add-follow-up' }),
         permission: permission('clients', 'edit'),
+        requiresFeature: 'follow_up',
     },
     {
         title: 'Add Product',
@@ -50,8 +52,11 @@ const QUICK_ACTIONS = [
 ];
 
 export function QuickActions() {
-    const { auth } = usePage<SharedData>().props;
-    const actions = QUICK_ACTIONS.filter((action) => auth.permissions.includes(action.permission));
+    const { auth, outlet } = usePage<SharedData>().props;
+    const enabledFeatures = outlet?.enabledFeatures ?? [];
+    const actions = QUICK_ACTIONS.filter(
+        (action) => auth.permissions.includes(action.permission) && (!action.requiresFeature || enabledFeatures.includes(action.requiresFeature)),
+    );
 
     if (actions.length === 0) {
         return null;

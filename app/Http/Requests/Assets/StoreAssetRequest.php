@@ -31,7 +31,15 @@ class StoreAssetRequest extends FormRequest
             'status' => ['required', 'string', Rule::enum(AssetStatus::class)],
             'asset_category_id' => 'required|exists:asset_categories,id',
             'is_new_purchase' => 'nullable|boolean',
-            'account_id' => 'nullable|required_if:is_new_purchase,true|exists:accounts,id',
+            // Must belong to the same outlet this asset is being written to (see
+            // OutletContext::resolvableForWrite) — matches StoreExpenseRequest/StoreInvoiceRequest.
+            'account_id' => [
+                'nullable',
+                'required_if:is_new_purchase,true',
+                Rule::exists('accounts', 'id')->where(
+                    fn ($q) => $q->where('outlet_id', OutletContext::resolvableForWrite($this->input('outlet_id')) ?? -1)
+                ),
+            ],
         ];
     }
 }

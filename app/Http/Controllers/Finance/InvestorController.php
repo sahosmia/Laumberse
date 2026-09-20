@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Finance\StoreInvestorRequest;
 use App\Models\Account;
 use App\Models\Investor;
+use App\Models\InvestorTransaction;
 use App\Services\InvestorService;
 use App\Support\LedgerQuery;
 use App\Support\OutletContext;
 use App\Support\PerPage;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class InvestorController extends Controller
@@ -37,7 +37,7 @@ class InvestorController extends Controller
             ->withQueryString();
 
         return Inertia::render('investors/index', [
-            'investors' => $investors,
+            'investors' => Inertia::merge($investors)->append('data', 'id'),
             'filters' => [
                 'search' => $request->search,
                 'sort' => $request->sort,
@@ -69,14 +69,18 @@ class InvestorController extends Controller
         // running balance that's missing everything before it — so it runs in a subquery first,
         // and the date filter (plus the account name/number, since we're no longer in
         // Eloquent-relation land) are applied outside it.
-        $withRunningBalance = DB::table('investor_transactions')
+        $withRunningBalance = InvestorTransaction::query()
             ->leftJoin('accounts', 'accounts.id', '=', 'investor_transactions.account_id')
             ->selectRaw(
                 'investor_transactions.*, accounts.name as account_name, accounts.account_number as account_number, '
                 ."SUM(CASE WHEN investor_transactions.transaction_type = 'invest' THEN investor_transactions.amount ELSE -investor_transactions.amount END) "
                 .'OVER (ORDER BY investor_transactions.date ASC, investor_transactions.id ASC) AS running_balance',
             )
-            ->where('investor_transactions.investor_id', $investor->id);
+            ->where('investor_transactions.investor_id', $investor->id)
+            // Investor is a global entity, but its individual transactions are outlet-scoped — a
+            // user pinned to one outlet must not see another outlet's investor activity here, same
+            // as GetFinancialPositionAction already scopes this same table for the P&L report.
+            ->tap(fn ($q) => OutletContext::scope($q, 'investor_transactions.outlet_id'));
 
         $transactions = LedgerQuery::paginate(
             $withRunningBalance,
@@ -89,7 +93,7 @@ class InvestorController extends Controller
         return Inertia::render('investors/show', [
             'investor' => $investor,
             'transactions' => $transactions,
-            'accounts' => Account::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name', 'account_number']),
+            'accounts' => Account::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name', 'account_number', 'outlet_id']),
             'filters' => [
                 'date_filter' => $request->date_filter,
                 'start_date' => $request->start_date,

@@ -2,6 +2,7 @@
 
 use App\Actions\Employees\GetEligibleEmployeesForPayrollAction;
 use App\Models\Employee;
+use App\Models\Outlet;
 use App\Models\Payroll;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -92,4 +93,54 @@ test('each eligible employee gets its own correct payroll values, in a fixed num
     // 1 query for the employee scan (including its whereDoesntHave NOT EXISTS subquery) + 1
     // batched eager-load for every eligible employee's payroll — never "1 + N" per-employee queries.
     expect($queryCount)->toBe(2);
+});
+
+test('the eligible list only includes the explicitly passed outlet while viewing All Outlets', function () {
+    // The admin's *session* context stays "all" for this whole request — OutletContext::scope()
+    // alone can't narrow it, so the outlet picked in the caller's own form (see expenses/index.tsx)
+    // has to be passed through explicitly.
+    $outletB = Outlet::factory()->create();
+    $admin = User::factory()->admin()->create();
+
+    $employeeA = Employee::create([
+        'name' => 'Outlet A Employee', 'phone' => '01700000030', 'designation' => 'Staff',
+        'base_salary' => 15000, 'is_active' => true, 'outlet_id' => $admin->outlet_id,
+    ]);
+    Employee::create([
+        'name' => 'Outlet B Employee', 'phone' => '01700000031', 'designation' => 'Staff',
+        'base_salary' => 15000, 'is_active' => true, 'outlet_id' => $outletB->id,
+    ]);
+
+    test()->actingAs($admin)->post(route('outlet-context.update'), ['outlet' => 'all'])->assertRedirect();
+
+    $response = test()->actingAs($admin)->getJson(
+        route('employees.payroll-eligible', ['month' => now()->month, 'year' => now()->year, 'outlet_id' => $admin->outlet_id])
+    );
+
+    $response->assertOk();
+    $response->assertJsonCount(1);
+    $response->assertJsonFragment(['id' => $employeeA->id]);
+});
+
+test('the eligible list includes every outlet while viewing All Outlets with no outlet_id passed', function () {
+    $outletB = Outlet::factory()->create();
+    $admin = User::factory()->admin()->create();
+
+    Employee::create([
+        'name' => 'Outlet A Employee', 'phone' => '01700000032', 'designation' => 'Staff',
+        'base_salary' => 15000, 'is_active' => true, 'outlet_id' => $admin->outlet_id,
+    ]);
+    Employee::create([
+        'name' => 'Outlet B Employee', 'phone' => '01700000033', 'designation' => 'Staff',
+        'base_salary' => 15000, 'is_active' => true, 'outlet_id' => $outletB->id,
+    ]);
+
+    test()->actingAs($admin)->post(route('outlet-context.update'), ['outlet' => 'all'])->assertRedirect();
+
+    $response = test()->actingAs($admin)->getJson(
+        route('employees.payroll-eligible', ['month' => now()->month, 'year' => now()->year])
+    );
+
+    $response->assertOk();
+    $response->assertJsonCount(2);
 });

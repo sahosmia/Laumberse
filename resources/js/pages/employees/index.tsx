@@ -306,7 +306,9 @@ export default function Employees({ employees, filters, summary }: EmployeesProp
                     defaultView="table"
                     columns={columns}
                     renderCard={renderEmployeeCard}
-                    pagination={employees.links}
+                    scrollProp="employees"
+                    currentPage={employees.current_page}
+                    lastPage={employees.last_page}
                     total={employees.total}
                     perPage={perPage}
                     onPerPageChange={setPerPage}

@@ -126,7 +126,9 @@ export default function Investors({ investors, filters }: InvestorsProps) {
                     defaultView="table"
                     columns={columns}
                     renderCard={renderInvestorCard}
-                    pagination={investors.links}
+                    scrollProp="investors"
+                    currentPage={investors.current_page}
+                    lastPage={investors.last_page}
                     total={investors.total}
                     perPage={perPage}
                     onPerPageChange={setPerPage}

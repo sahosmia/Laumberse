@@ -11,7 +11,7 @@ import { formatCurrency } from '@/lib/format';
 import { Account, Category, Client, Invoice as InvoiceRecord, Product, SharedData } from '@/types';
 import { useForm, usePage } from '@inertiajs/react';
 import { Calendar, CreditCard, Package, Printer, Search, Trash2, UserPlus, Users } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 /** The form's own working shape for a line item, distinct from the API's `InvoiceItem` (`@/types`). */
 export interface InvoiceItem {
@@ -27,7 +27,7 @@ interface InvoiceFormProps {
     products: Product[];
     clients: Client[];
     categories: Category[];
-    accounts: Pick<Account, 'id' | 'name' | 'account_number'>[];
+    accounts: Pick<Account, 'id' | 'name' | 'account_number' | 'outlet_id'>[];
     isEdit?: boolean;
 }
 
@@ -54,6 +54,14 @@ export default function InvoiceForm({ invoice, products, clients, accounts, isEd
     const { outlet } = usePage<SharedData>().props;
     const [searchTerm, setSearchTerm] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
+    // What was last typed into the client SearchableSelect — carried over into the inline "New
+    // Client" phone field when nothing matched, so a phone number the user already typed to
+    // search doesn't have to be retyped.
+    const [clientSearchQuery, setClientSearchQuery] = useState('');
+    // The value we last auto-filled into new_client_phone (not necessarily what's there now — the
+    // user may have edited it since). Lets a later search-then-recheck overwrite our own stale
+    // suggestion from an earlier search, while never clobbering something the user typed by hand.
+    const [autoFilledPhone, setAutoFilledPhone] = useState('');
     const [selectedCategory] = useState('All');
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
     const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
@@ -76,7 +84,12 @@ export default function InvoiceForm({ invoice, products, clients, accounts, isEd
 
     const { data, setData, post, put, processing, errors } = useForm({
         date: invoice?.date || new Date().toISOString().split('T')[0],
-        outlet_id: '' as number | '',
+        // Never shown as a picker in edit mode (the outlet is fixed once an invoice exists — see
+        // the "Outlet" field below, gated on `!isEdit`), but still needed so `effectiveOutlet`
+        // resolves correctly while viewing "All Outlets": without it, resolveProductPrice() can't
+        // find this invoice's own outlet_prices row for a newly-added item and silently falls back
+        // to the product's base catalog price instead.
+        outlet_id: invoice?.outlet_id || ('' as number | ''),
         client_id: invoice?.client_id || (null as string | number | null),
         create_new_client: false,
         new_client_name: '',
@@ -103,6 +116,20 @@ export default function InvoiceForm({ invoice, products, clients, accounts, isEd
             })) || ([] as InvoiceItem[]),
     });
 
+    // Which outlet's feature toggles gate the inline "New Client" Type dropdown — the fixed
+    // active outlet, or whichever one the "All Outlets" picker on this form currently has
+    // selected. Mirrors clients/index.tsx's own create-client modal (see StoreClientRequest,
+    // which StoreInvoiceRequest's own check on new_client_type now matches too).
+    const effectiveOutlet = outlet?.isAll ? outlet.available.find((o) => o.id === data.outlet_id) : outlet?.current;
+    const enabledNewClientTypes = effectiveOutlet ? CLIENT_TYPES.filter((t) => !effectiveOutlet.disabled_features?.includes(t)) : CLIENT_TYPES;
+    const availableNewClientTypes = enabledNewClientTypes.length === 0 ? CLIENT_TYPES : enabledNewClientTypes;
+
+    // Which outlet's accounts the Payment Account dropdown offers. In edit mode `accounts` is
+    // already scoped server-side to this invoice's own fixed outlet (see InvoiceController::edit),
+    // so effectiveOutlet being unresolved there (no in-form outlet picker while editing) correctly
+    // falls back to the already-correct full list rather than filtering it further.
+    const availableAccounts = effectiveOutlet ? accounts.filter((a) => a.outlet_id === effectiveOutlet.id) : accounts;
+
     const filtered = useMemo(() => {
         return products.filter((p) => {
             const matchCat = selectedCategory === 'All' || p.category?.name === selectedCategory;
@@ -127,7 +154,10 @@ export default function InvoiceForm({ invoice, products, clients, accounts, isEd
     ): number => {
         let price = Number(product.price);
 
-        const outletPrice = product.outlet_prices?.find((op) => op.outlet_id === outlet?.current?.id)?.price;
+        // effectiveOutlet, not outlet?.current — while viewing "All Outlets" the invoice's own
+        // target outlet is whatever's picked in this form (data.outlet_id), not the viewer's
+        // session-level active outlet (which is null under "All Outlets").
+        const outletPrice = product.outlet_prices?.find((op) => op.outlet_id === effectiveOutlet?.id)?.price;
         if (outletPrice !== undefined) {
             price = Number(outletPrice);
         }
@@ -339,6 +369,25 @@ export default function InvoiceForm({ invoice, products, clients, accounts, isEd
         }));
     };
 
+    // If the inline new-client type falls outside the (now-known) outlet's enabled types — the
+    // "All Outlets" outlet picker just changed, or an outlet was resolved after the type was
+    // already set — fall back to whatever's actually available instead of letting the submit
+    // round-trip through a 422.
+    useEffect(() => {
+        if (!data.create_new_client || availableNewClientTypes.includes(data.new_client_type)) return;
+        setData('new_client_type', availableNewClientTypes[0]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [data.create_new_client, data.new_client_type, data.outlet_id, availableNewClientTypes.join(',')]);
+
+    // If the selected payment account falls outside the (now-known) outlet's accounts — the "All
+    // Outlets" outlet picker just changed — clear it instead of letting the submit round-trip
+    // through a 422. Doesn't fire in edit mode (data.outlet_id never changes there).
+    useEffect(() => {
+        if (!data.account_id || availableAccounts.some((a) => a.id === data.account_id)) return;
+        setData('account_id', '');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [data.account_id, data.outlet_id, availableAccounts.map((a) => a.id).join(',')]);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (isEdit && invoice?.id) {
@@ -415,6 +464,29 @@ export default function InvoiceForm({ invoice, products, clients, accounts, isEd
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                     <div className="space-y-4 lg:col-span-2">
+                        {/* Outlet — picked first because it gates which client type the inline
+                            "New Client" section below may offer, and which outlet-specific prices
+                            apply to the items added further down. */}
+                        {!isEdit && outlet?.isAll && (
+                            <div className="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+                                <FormSelect
+                                    label="Outlet"
+                                    required
+                                    value={data.outlet_id}
+                                    onChange={(e) => setData('outlet_id', e.target.value ? Number(e.target.value) : '')}
+                                    error={errors.outlet_id}
+                                    helperText='This invoice needs a specific outlet — "All Outlets" is a view, not a place to save new records.'
+                                >
+                                    <option value="">Select an outlet</option>
+                                    {outlet.available.map((o) => (
+                                        <option key={o.id} value={o.id}>
+                                            {o.name}
+                                        </option>
+                                    ))}
+                                </FormSelect>
+                            </div>
+                        )}
+
                         <div className="space-y-4 rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
                             <div className="flex items-center justify-between">
                                 <h3 className="flex items-center gap-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
@@ -435,12 +507,27 @@ export default function InvoiceForm({ invoice, products, clients, accounts, isEd
                                                     deliveryCharge: isNew ? '' : data.delivery_charge,
                                                     isCorporate: isNew ? data.new_client_type === 'Corporate' : false,
                                                 });
+                                                // No existing client matched what was searched — carry a phone-looking
+                                                // search (mostly digits, long enough to be one) straight into the new
+                                                // client's phone field instead of making it be retyped. Overwrites only
+                                                // an empty field or our own earlier suggestion — never something the
+                                                // user typed into it by hand — so re-searching a different number after
+                                                // toggling "New Client" off and back on picks up the latest search
+                                                // instead of getting stuck on the first one tried.
+                                                const searchedPhone = clientSearchQuery.trim();
+                                                const searchedDigits = searchedPhone.replace(/\D/g, '');
+                                                const canPrefill =
+                                                    isNew &&
+                                                    searchedDigits.length >= 6 &&
+                                                    (data.new_client_phone === '' || data.new_client_phone === autoFilledPhone);
+                                                if (canPrefill) setAutoFilledPhone(searchedPhone);
                                                 setData((d) => ({
                                                     ...d,
                                                     create_new_client: isNew,
                                                     client_id: null,
                                                     items: [],
                                                     delivery_charge: isNew ? '' : d.delivery_charge,
+                                                    new_client_phone: canPrefill ? searchedPhone : d.new_client_phone,
                                                     total,
                                                     due,
                                                 }));
@@ -458,37 +545,33 @@ export default function InvoiceForm({ invoice, products, clients, accounts, isEd
                                     <SearchableSelect
                                         options={clientOptions}
                                         value={data.client_id}
+                                        onQueryChange={setClientSearchQuery}
                                         onChange={(val) => {
                                             const newClient = clients.find((c) => c.id == val);
                                             const newIsCorporate = newClient?.type === 'Corporate';
                                             const newDeliveryCharge = newIsCorporate ? '' : data.delivery_charge;
 
-                                            let newItems: InvoiceItem[];
-                                            if (newIsCorporate && data.items.length === 0) {
-                                                // Convenience for a fresh, empty invoice: pre-fill with the corporate
-                                                // client's full custom price list instead of leaving it empty.
-                                                newItems = (newClient?.custom_prices || [])
-                                                    .map((cp) => {
-                                                        const product = products.find((p) => p.id === cp.product_id);
-                                                        if (!product) return null;
-                                                        return {
-                                                            productId: product.id,
-                                                            name: product.name,
-                                                            price: Number(cp.custom_price),
-                                                            qty: 1,
-                                                            imageUrl: product.image_url,
-                                                        };
-                                                    })
-                                                    .filter(Boolean) as InvoiceItem[];
-                                            } else {
-                                                // Keep whatever's already selected (or already on the invoice, when
-                                                // editing) — just re-price each line for the new client instead of
-                                                // discarding the selection.
-                                                newItems = data.items.map((item) => {
-                                                    const product = products.find((p) => p.id === item.productId);
-                                                    return product ? { ...item, price: resolveProductPrice(product, newClient, false) } : item;
-                                                });
-                                            }
+                                            // Picking (or switching to) any client always replaces the cart with
+                                            // that client's own product list — a Corporate client's custom
+                                            // prices, or an empty cart for one with none (Consumer/B2B never
+                                            // have any — see clients/index.tsx, where that editor only shows for
+                                            // Corporate) — never mixing in whatever was selected for a previous
+                                            // client. The user can still add other products afterward; those get
+                                            // priced normally (outlet price / default) since they're outside
+                                            // this client's own list.
+                                            const newItems: InvoiceItem[] = (newClient?.custom_prices || [])
+                                                .map((cp) => {
+                                                    const product = products.find((p) => p.id === cp.product_id);
+                                                    if (!product) return null;
+                                                    return {
+                                                        productId: product.id,
+                                                        name: product.name,
+                                                        price: Number(cp.custom_price),
+                                                        qty: 1,
+                                                        imageUrl: product.image_url,
+                                                    };
+                                                })
+                                                .filter(Boolean) as InvoiceItem[];
 
                                             const { total, due } = computeInvoiceTotals({
                                                 items: newItems,
@@ -572,7 +655,7 @@ export default function InvoiceForm({ invoice, products, clients, accounts, isEd
                                                 }}
                                                 className="md:h-9 md:text-xs"
                                             >
-                                                {CLIENT_TYPES.map((t) => (
+                                                {availableNewClientTypes.map((t) => (
                                                     <option key={t} value={t}>
                                                         {t}
                                                     </option>
@@ -899,24 +982,6 @@ export default function InvoiceForm({ invoice, products, clients, accounts, isEd
                                     </option>
                                 ))}
                             </FormSelect>
-                            {!isEdit && outlet?.isAll && (
-                                <FormSelect
-                                    label="Outlet"
-                                    required
-                                    value={data.outlet_id}
-                                    onChange={(e) => setData('outlet_id', e.target.value ? Number(e.target.value) : '')}
-                                    className="md:h-9 md:text-xs"
-                                    error={errors.outlet_id}
-                                    helperText='This invoice needs a specific outlet — "All Outlets" is a view, not a place to save new records.'
-                                >
-                                    <option value="">Select an outlet</option>
-                                    {outlet.available.map((o) => (
-                                        <option key={o.id} value={o.id}>
-                                            {o.name}
-                                        </option>
-                                    ))}
-                                </FormSelect>
-                            )}
                         </div>
 
                         <div className="space-y-3 rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
@@ -974,7 +1039,7 @@ export default function InvoiceForm({ invoice, products, clients, accounts, isEd
                                     error={errors.account_id}
                                 >
                                     <option value="">{Number(data.paid) > 0 ? 'Select Account' : 'Select Account (optional — not yet paid)'}</option>
-                                    {accounts.map((a) => (
+                                    {availableAccounts.map((a) => (
                                         <option key={a.id} value={a.id}>
                                             {a.name}
                                             {a.account_number ? ` (${a.account_number})` : ''}

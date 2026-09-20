@@ -10,10 +10,12 @@ use App\Models\Account;
 use App\Models\Asset;
 use App\Models\AssetCategory;
 use App\Models\GlobalSetting;
+use App\Services\AccountService;
 use App\Support\DateRangeFilter;
 use App\Support\OutletContext;
 use App\Support\PerPage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -41,7 +43,7 @@ class AssetController extends Controller
         [$sortColumn, $sortDirection] = self::SORTABLE[$request->sort] ?? self::SORTABLE['created_at:desc'];
         $perPage = PerPage::resolve($request);
 
-        $assets = Asset::with('category')
+        $assets = Asset::with(['category', 'outlet:id,name,code', 'expense.account:id,name,account_number'])
             ->tap(fn ($q) => OutletContext::scope($q))
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('name', 'like', "%{$s}%")
@@ -56,9 +58,9 @@ class AssetController extends Controller
             ->withQueryString();
 
         return Inertia::render('assets/index', [
-            'assets' => $assets,
+            'assets' => Inertia::merge($assets)->append('data', 'id'),
             'categories' => AssetCategory::orderBy('name')->get(),
-            'accounts' => Account::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name', 'account_number']),
+            'accounts' => Account::tap(fn ($q) => OutletContext::scope($q))->orderBy('name')->get(['id', 'name', 'account_number', 'outlet_id']),
             'filters' => [
                 'search' => $request->search,
                 'status' => $request->status,
@@ -89,12 +91,41 @@ class AssetController extends Controller
         }
     }
 
-    public function update(UpdateAssetRequest $request, Asset $asset)
+    public function update(UpdateAssetRequest $request, Asset $asset, AccountService $accountService)
     {
         $this->ensureAccessible($asset);
 
         try {
-            $asset->update($request->validated());
+            DB::transaction(function () use ($request, $asset, $accountService) {
+                $asset->update($request->validated());
+
+                // Keep the linked purchase Expense (if this asset was bought as one — see
+                // CreateAssetAction) in sync: its amount/date/description mirror the asset's own
+                // cost/purchase_date/name, and the payment account's balance must reflect the new
+                // cost, not the one recorded at original purchase time. Reverse-then-reapply is
+                // the same pattern ExpenseService::updateExpense() already uses for this exact
+                // reason.
+                $expense = $asset->expense;
+
+                if ($expense) {
+                    $accountService->reverseTransactionsFor($expense);
+                    $expense->update([
+                        'amount' => $asset->cost,
+                        'date' => $asset->purchase_date,
+                        'description' => "Purchase of asset: {$asset->name}",
+                    ]);
+
+                    if ($expense->account) {
+                        $accountService->recordTransaction(
+                            $expense->account,
+                            'debit',
+                            $asset->cost,
+                            "Purchase of asset: {$asset->name}",
+                            $expense
+                        );
+                    }
+                }
+            });
 
             return redirect()->back()->with('success', 'Asset updated successfully.');
         } catch (\Throwable $e) {

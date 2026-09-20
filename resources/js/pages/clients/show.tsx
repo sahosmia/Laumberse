@@ -5,6 +5,7 @@ import { DateFilterBar } from '@/components/ui/date-filter-bar';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import {
     CLIENT_ACTIVITY_STATUS_STYLES,
+    CLIENT_ACTIVITY_TYPES,
     CLIENT_ACTIVITY_TYPE_LABELS,
     CLIENT_ACTIVITY_TYPE_STYLES,
     CLIENT_TYPE_STYLES,
@@ -17,9 +18,9 @@ import AppLayout from '@/layouts/app-layout';
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/format';
 import { toTelUrl, toWhatsAppUrl } from '@/lib/phone';
 import { cn } from '@/lib/utils';
-import { ClientActivity, Invoice, type BreadcrumbItem } from '@/types';
+import { ClientActivity, Invoice, type BreadcrumbItem, type SharedData } from '@/types';
 import type { ClientShowProps } from '@/types/pages/clients';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Briefcase,
@@ -44,6 +45,13 @@ const typeBadgeClass = (type: ClientType) => CLIENT_TYPE_STYLES[type] ?? CLIENT_
 
 export default function ClientShow({ client, orders, activities, employees, orderFilters, activityFilters }: ClientShowProps) {
     const isLoading = useTableLoading();
+    const { outlet } = usePage<SharedData>().props;
+    // outlet.enabledFeatures spans every outlet-toggleable module (activity types, client types,
+    // ...), so checking its length alone would stay "enabled" even with meeting+follow_up both
+    // off, as long as some unrelated module (e.g. a client type) is still on — only count the
+    // activity-type keys here, matching ClientActivityController::index's own 404 guard.
+    const enabledActivityFeatures = outlet?.enabledFeatures ?? [];
+    const activitiesEnabled = CLIENT_ACTIVITY_TYPES.some((type) => enabledActivityFeatures.includes(type));
 
     const [activeTab, setActiveTab] = useState<'orders' | 'meetings'>('orders');
 
@@ -120,10 +128,12 @@ export default function ClientShow({ client, orders, activities, employees, orde
 
     useEffect(() => {
         const action = new URLSearchParams(window.location.search).get('action');
-        if (action === 'add-meeting' || action === 'add-follow-up') {
+        const type = action === 'add-meeting' ? 'meeting' : action === 'add-follow-up' ? 'follow_up' : null;
+        if (type && (outlet?.enabledFeatures ?? []).includes(type)) {
             setActiveTab('meetings');
-            openCreateActivityModal(action === 'add-meeting' ? 'meeting' : 'follow_up');
+            openCreateActivityModal(type);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const openEditActivityModal = (activity: ClientActivity) => {
@@ -489,20 +499,22 @@ export default function ClientShow({ client, orders, activities, employees, orde
                                 >
                                     <History className="h-4 w-4" /> Order History
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveTab('meetings')}
-                                    className={cn(
-                                        'flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
-                                        activeTab === 'meetings'
-                                            ? 'bg-white text-neutral-900 shadow-sm dark:bg-neutral-900 dark:text-neutral-100'
-                                            : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300',
-                                    )}
-                                >
-                                    <CalendarClock className="h-4 w-4" /> Meetings &amp; Follow-ups
-                                </button>
+                                {activitiesEnabled && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('meetings')}
+                                        className={cn(
+                                            'flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
+                                            activeTab === 'meetings'
+                                                ? 'bg-white text-neutral-900 shadow-sm dark:bg-neutral-900 dark:text-neutral-100'
+                                                : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300',
+                                        )}
+                                    >
+                                        <CalendarClock className="h-4 w-4" /> Meetings &amp; Follow-ups
+                                    </button>
+                                )}
                             </div>
-                            {activeTab === 'meetings' && (
+                            {activeTab === 'meetings' && activitiesEnabled && (
                                 <button
                                     onClick={() => openCreateActivityModal()}
                                     className="flex items-center gap-1.5 rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white dark:bg-neutral-100 dark:text-neutral-900"
@@ -512,7 +524,7 @@ export default function ClientShow({ client, orders, activities, employees, orde
                             )}
                         </div>
 
-                        {activeTab === 'orders' ? (
+                        {activeTab === 'orders' || !activitiesEnabled ? (
                             <DataView
                                 data={orders.data}
                                 getKey={(inv) => inv.id}
@@ -539,7 +551,10 @@ export default function ClientShow({ client, orders, activities, employees, orde
                                 defaultView="table"
                                 columns={orderColumns}
                                 renderCard={renderOrderCard}
-                                pagination={orders.links}
+                                scrollProp="orders"
+                                currentPage={orders.current_page}
+                                lastPage={orders.last_page}
+                                pageParam="orders_page"
                                 total={orders.total}
                                 perPage={orderPerPage}
                                 onPerPageChange={setOrderPerPage}
@@ -571,7 +586,10 @@ export default function ClientShow({ client, orders, activities, employees, orde
                                 defaultView="table"
                                 columns={activityColumns}
                                 renderCard={renderActivityCard}
-                                pagination={activities.links}
+                                scrollProp="activities"
+                                currentPage={activities.current_page}
+                                lastPage={activities.last_page}
+                                pageParam="activities_page"
                                 total={activities.total}
                                 perPage={activityPerPage}
                                 onPerPageChange={setActivityPerPage}

@@ -47,7 +47,7 @@ class ProductController extends Controller
             ->withQueryString();
 
         return Inertia::render('products/index', [
-            'products' => $products,
+            'products' => Inertia::merge($products)->append('data', 'id'),
             'categories' => Category::query()
                 ->select('id', 'name')
                 ->get(),

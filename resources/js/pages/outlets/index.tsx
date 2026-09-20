@@ -1,11 +1,14 @@
 import { SaveConfirmationModal } from '@/components/save-confirmation-modal';
 import { TableRowActions } from '@/components/table-row-actions';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DataView, type DataViewColumn } from '@/components/ui/data-view';
 import { FilterSelect } from '@/components/ui/filter-select';
 import { FormButton } from '@/components/ui/form-button';
 import { FormInput } from '@/components/ui/form-input';
+import { FormLabel } from '@/components/ui/form-label';
 import { FormSelect } from '@/components/ui/form-select';
 import { Modal } from '@/components/ui/modal';
+import { CLIENT_ACTIVITY_TYPES, CLIENT_ACTIVITY_TYPE_LABELS, CLIENT_TYPES } from '@/constants/status';
 import { useDataViewSearch } from '@/hooks/use-data-view-search';
 import { useTableLoading } from '@/hooks/use-table-loading';
 import AppLayout from '@/layouts/app-layout';
@@ -39,6 +42,8 @@ export default function Outlets({ outlets, filters }: OutletsIndexProps) {
         phone: '',
         email: '',
         status: 'active' as Outlet['status'],
+        include_in_consolidated_reporting: true,
+        disabled_features: [] as string[],
     });
 
     const {
@@ -69,8 +74,14 @@ export default function Outlets({ outlets, filters }: OutletsIndexProps) {
             phone: outlet.phone || '',
             email: outlet.email || '',
             status: outlet.status,
+            include_in_consolidated_reporting: outlet.include_in_consolidated_reporting,
+            disabled_features: outlet.disabled_features ?? [],
         });
         setShowModal(true);
+    };
+
+    const toggleFeature = (feature: string, enabled: boolean) => {
+        setData('disabled_features', enabled ? data.disabled_features.filter((f) => f !== feature) : [...data.disabled_features, feature]);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -127,9 +138,7 @@ export default function Outlets({ outlets, filters }: OutletsIndexProps) {
             key: 'status',
             label: 'Status',
             align: 'center',
-            render: (o) => (
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${STATUS_STYLES[o.status]}`}>{o.status}</span>
-            ),
+            render: (o) => <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${STATUS_STYLES[o.status]}`}>{o.status}</span>,
         },
     ];
 
@@ -188,7 +197,9 @@ export default function Outlets({ outlets, filters }: OutletsIndexProps) {
                     defaultView="table"
                     columns={columns}
                     renderCard={renderOutletCard}
-                    pagination={outlets.links}
+                    scrollProp="outlets"
+                    currentPage={outlets.current_page}
+                    lastPage={outlets.last_page}
                     total={outlets.total}
                     perPage={perPage}
                     onPerPageChange={setPerPage}
@@ -258,6 +269,51 @@ export default function Outlets({ outlets, filters }: OutletsIndexProps) {
                             placeholder="uttara@launverse.com"
                             error={errors.email}
                         />
+                    </div>
+
+                    <div className="space-y-3 rounded-xl border border-neutral-200 p-3 dark:border-neutral-800">
+                        <label className="flex cursor-pointer items-start gap-2.5">
+                            <Checkbox
+                                checked={data.include_in_consolidated_reporting}
+                                onCheckedChange={(checked) => setData('include_in_consolidated_reporting', checked === true)}
+                                className="mt-0.5"
+                            />
+                            <span>
+                                <FormLabel className="cursor-pointer">Include in All Outlets reporting</FormLabel>
+                                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                                    Turn off to keep this outlet's data out of the consolidated "All Outlets" view — it will still report on its own.
+                                </p>
+                            </span>
+                        </label>
+
+                        <div className="space-y-1.5">
+                            <FormLabel>Meetings & Follow-ups</FormLabel>
+                            {CLIENT_ACTIVITY_TYPES.map((feature) => (
+                                <label key={feature} className="flex cursor-pointer items-center gap-2.5">
+                                    <Checkbox
+                                        checked={!data.disabled_features.includes(feature)}
+                                        onCheckedChange={(checked) => toggleFeature(feature, checked === true)}
+                                    />
+                                    <span className="text-sm text-neutral-700 dark:text-neutral-300">{CLIENT_ACTIVITY_TYPE_LABELS[feature]}</span>
+                                </label>
+                            ))}
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <FormLabel>Client Types Accepted</FormLabel>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                                Which client types can be created while working from this outlet.
+                            </p>
+                            {CLIENT_TYPES.map((type) => (
+                                <label key={type} className="flex cursor-pointer items-center gap-2.5">
+                                    <Checkbox
+                                        checked={!data.disabled_features.includes(type)}
+                                        onCheckedChange={(checked) => toggleFeature(type, checked === true)}
+                                    />
+                                    <span className="text-sm text-neutral-700 dark:text-neutral-300">{type}</span>
+                                </label>
+                            ))}
+                        </div>
                     </div>
 
                     {editingOutlet && (

@@ -21,5 +21,8 @@ Route::middleware('auth')->group(function () {
     })->name('appearance');
 
     Route::get('settings/global', [GlobalSettingController::class, 'edit'])->name('settings.global.edit')->middleware('permission:settings.view');
-    Route::patch('settings/global', [GlobalSettingController::class, 'update'])->name('settings.global.update')->middleware('permission:settings.edit');
+    Route::patch('settings/global/business', [GlobalSettingController::class, 'updateBusiness'])->name('settings.global.business.update')->middleware('permission:settings.edit');
+    Route::patch('settings/global/week', [GlobalSettingController::class, 'updateWeek'])->name('settings.global.week.update')->middleware('permission:settings.edit');
+    Route::patch('settings/global/branding', [GlobalSettingController::class, 'updateBranding'])->name('settings.global.branding.update')->middleware('permission:settings.edit');
+    Route::patch('settings/global/categories', [GlobalSettingController::class, 'updateCategories'])->name('settings.global.categories.update')->middleware('permission:settings.edit');
 });
